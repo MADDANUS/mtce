@@ -17,7 +17,7 @@
   </div>
   <div class="col-md-4">
     <div class="card-stat p-3 d-flex flex-column justify-content-center">
-      <a href="<?= site_url('checklist/mfg1-preventive') ?>" class="btn btn-primary">+ Buat Pengecekan Baru</a>
+      <a href="<?= site_url('checklist') ?>" class="btn btn-primary">+ Buat Pengecekan Baru</a>
     </div>
   </div>
 </div>
@@ -35,6 +35,7 @@
             <th>Mesin</th>
             <th>Waktu Mulai</th>
             <th>Waktu Selesai</th>
+            <th>Status</th>
             <th></th>
           </tr>
         </thead>
@@ -45,6 +46,13 @@
               <td><?= esc($r['no_mesin']) ?> - <?= esc($r['type_mesin']) ?></td>
               <td><?= esc($r['waktu_mulai']) ?></td>
               <td><?= esc($r['waktu_selesai'] ?? '-') ?></td>
+              <td>
+                <?php if (($r['status'] ?? 'Pending') === 'Approved'): ?>
+                  <span class="badge bg-success">Approved</span>
+                <?php else: ?>
+                  <span class="badge bg-warning text-dark">Pending</span>
+                <?php endif; ?>
+              </td>
               <td><a href="<?= site_url('riwayat/' . $r['id_transaksi']) ?>" class="btn btn-sm btn-outline-primary">Detail</a></td>
             </tr>
           <?php endforeach; ?>

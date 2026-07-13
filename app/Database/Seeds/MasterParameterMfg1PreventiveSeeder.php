@@ -23,6 +23,7 @@ class MasterParameterMfg1PreventiveSeeder extends Seeder
             ['Penerangan', 'Lampu Area Atas Mesin', 'Fungsi', 'Nyala'],
             ['Penerangan', 'Lampu Area Atas Mesin', 'Kelengkapan', 'Lampu Lengkap'],
             ['Penerangan', 'Lampu Area Atas Mesin', 'Kondisi Lampu', 'Nyala Terang'],
+            ['Penerangan', 'Lampu Area Atas Mesin', 'Kondisi Lampu', 'Bersih'],
             ['Penerangan', 'Lampu Area Atas Mesin', 'Kondisi Rumah Lampu', 'Bersih'],
             ['Penerangan', 'Lampu Area Atas Mesin', 'Lumen', '300 - 600'],
 

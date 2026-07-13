@@ -20,11 +20,22 @@ $routes->get('logout', 'Auth::logout');
 // Dashboard (semua role login, konten beda per role di dalam controller)
 $routes->get('dashboard', 'DashboardController::index', ['filter' => 'auth']);
 
-// Checklist MFG 1 - Preventive (semua role login, dipraktikkan oleh Staff/Admin)
-$routes->group('checklist/mfg1-preventive', ['filter' => 'auth'], static function ($routes) {
-    $routes->get('/', 'ChecklistController::index');
-    $routes->get('create/(:segment)', 'ChecklistController::createMfg1Preventive/$1');
-    $routes->post('store', 'ChecklistController::storeMfg1Preventive');
+// Checklist Dinamis (semua role login, dipraktikkan oleh Staff/Admin)
+$routes->group('checklist', ['filter' => 'auth'], static function ($routes) {
+    // 1. Pilih Lokasi (mfg1 / mfg2)
+    $routes->get('/', 'ChecklistController::pilihLokasi');
+    
+    // 2. Pilih Jenis Pengecekan (preventive / overhaul)
+    $routes->get('(:segment)', 'ChecklistController::pilihJenis/$1');
+    
+    // 3. Pilih Kategori untuk tipe Preventive / Overhaul
+    $routes->get('(:segment)/(:segment)', 'ChecklistController::indexKategori/$1/$2');
+    
+    // 4. Form Checklist (Create)
+    $routes->get('(:segment)/(:segment)/create/(:segment)', 'ChecklistController::create/$1/$2/$3');
+    
+    // 5. Simpan Pengecekan
+    $routes->post('(:segment)/(:segment)/store', 'ChecklistController::store/$1/$2');
 });
 
 // Riwayat & Detail Transaksi (semua role login, scoping data ditangani di controller)
@@ -32,6 +43,7 @@ $routes->group('riwayat', ['filter' => 'auth'], static function ($routes) {
     $routes->get('/', 'RiwayatController::index');
     $routes->get('kategori/(:segment)', 'RiwayatController::kategori/$1');
     $routes->get('(:num)', 'RiwayatController::detail/$1');
+    $routes->post('approve/(:num)', 'RiwayatController::approve/$1', ['filter' => 'role:leader,admin']);
 });
 
 // Laporan Durasi (khusus Leader & Admin)
@@ -45,6 +57,8 @@ $routes->group('admin/mesin', ['filter' => 'role:admin', 'namespace' => 'App\Con
     $routes->get('edit/(:num)', 'MesinController::edit/$1');
     $routes->post('update/(:num)', 'MesinController::update/$1');
     $routes->get('delete/(:num)', 'MesinController::delete/$1');
+    $routes->get('export', 'MesinController::export');
+    $routes->post('import', 'MesinController::import');
 });
 
 // Admin - Master User
@@ -55,6 +69,8 @@ $routes->group('admin/user', ['filter' => 'role:admin', 'namespace' => 'App\Cont
     $routes->get('edit/(:num)', 'UserController::edit/$1');
     $routes->post('update/(:num)', 'UserController::update/$1');
     $routes->get('delete/(:num)', 'UserController::delete/$1');
+    $routes->get('export', 'UserController::export');
+    $routes->post('import', 'UserController::import');
 });
 
 // Admin - Master Parameter Check

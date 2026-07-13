@@ -27,47 +27,120 @@ class ChecklistController extends BaseController
         'penerangan'     => 'Penerangan',
         'kabel-dan-pipa' => 'Kabel dan Pipa',
         'angin-bocor'    => 'Angin Bocor',
+        'bar-feeder-cnc' => 'Bar Feeder CNC',
+        'mesin-cnc'      => 'Mesin CNC',
     ];
 
-    public function index()
+    private function resolveLokasi(string $slug): string
     {
-        return view('checklist/index', [
-            'title'      => 'Pilih Kategori Pengecekan',
-            'categories' => $this->categoryMap,
+        return match (strtolower($slug)) {
+            'mfg2'  => 'MFG 2',
+            default => 'MFG 1',
+        };
+    }
+
+    private function resolveJenis(string $slug): string
+    {
+        return match (strtolower($slug)) {
+            'overhaul' => 'Overhaul',
+            default    => 'Preventive',
+        };
+    }
+
+    /**
+     * GET /checklist
+     * Halaman pilih lokasi (MFG 1 / MFG 2).
+     */
+    public function pilihLokasi()
+    {
+        return view('checklist/pilih_lokasi', [
+            'title' => 'Pilih Lokasi Pengecekan',
         ]);
     }
 
     /**
-     * GET /checklist/mfg1-preventive/create/(:segment)
-     * Menampilkan form pengecekan Preventive MFG 1 per kategori.
+     * GET /checklist/(:segment)
+     * Halaman pilih jenis pengecekan (Preventive / Overhaul).
      */
-    public function createMfg1Preventive(string $categorySlug)
+    public function pilihJenis(string $lokasiSlug)
     {
-        if (! isset($this->categoryMap[$categorySlug])) {
-            return redirect()->to('/checklist/mfg1-preventive')->with('error', 'Kategori tidak valid.');
+        return view('checklist/pilih_jenis', [
+            'title'      => 'Pilih Jenis Pengecekan',
+            'lokasiSlug' => $lokasiSlug,
+            'lokasiName' => $this->resolveLokasi($lokasiSlug),
+        ]);
+    }
+
+    /**
+     * GET /checklist/(:segment)/(:segment)
+     * Halaman pilih kategori berdasarkan jenis (Preventive / Overhaul).
+     */
+    public function indexKategori(string $lokasiSlug, string $jenisSlug)
+    {
+        $lokasiName = $this->resolveLokasi($lokasiSlug);
+        $jenisName  = $this->resolveJenis($jenisSlug);
+
+        // Pisahkan kategori berdasarkan jenis_check
+        if (strtolower($jenisSlug) === 'overhaul') {
+            $categories = [
+                'bar-feeder-cnc' => 'Bar Feeder CNC',
+                'mesin-cnc'      => 'Mesin CNC',
+            ];
+        } else {
+            $categories = [
+                'penerangan'     => 'Penerangan',
+                'kabel-dan-pipa' => 'Kabel dan Pipa',
+                'angin-bocor'    => 'Angin Bocor',
+            ];
         }
 
+        return view('checklist/index', [
+            'title'      => "Pilih Kategori - {$jenisName} {$lokasiName}",
+            'lokasiSlug' => $lokasiSlug,
+            'lokasiName' => $lokasiName,
+            'jenisSlug'  => $jenisSlug,
+            'jenisName'  => $jenisName,
+            'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * GET /checklist/(:segment)/(:segment)/create/(:segment)
+     * Menampilkan form pengecekan.
+     */
+    public function create(string $lokasiSlug, string $jenisSlug, string $categorySlug)
+    {
+        if (! isset($this->categoryMap[$categorySlug])) {
+            return redirect()->to("/checklist/{$lokasiSlug}/{$jenisSlug}")->with('error', 'Kategori tidak valid.');
+        }
+
+        $lokasiName   = $this->resolveLokasi($lokasiSlug);
+        $jenisName    = $this->resolveJenis($jenisSlug);
         $categoryName = $this->categoryMap[$categorySlug];
         $waktuMulai   = Time::now();
 
         $data = [
-            'title'             => 'Form Pengecekan - ' . $categoryName,
+            'title'             => "Form Pengecekan {$jenisName} - {$categoryName}",
+            'lokasiSlug'        => $lokasiSlug,
+            'lokasiName'        => $lokasiName,
+            'jenisSlug'         => $jenisSlug,
+            'jenisName'         => $jenisName,
             'categorySlug'      => $categorySlug,
             'categoryName'      => $categoryName,
-            'daftarMesin'       => $this->mesinModel->getByLokasi('MFG 1'),
-            'rows'              => $this->parameterModel->getFormRows('MFG 1', 'Preventive', $categoryName),
+            'daftarMesin'       => $this->mesinModel->getByLokasi($lokasiName),
+            'rows'              => $this->parameterModel->getFormRows($lokasiName, $jenisName, $categoryName),
             'namaStaff'         => session()->get('nama'),
             'waktuMulai'        => $waktuMulai->toDateTimeString(),
             'waktuMulaiDisplay' => $waktuMulai->toLocalizedString('dd MMMM yyyy, HH:mm:ss'),
         ];
 
-        return view('checklist/mfg1_preventive_form', $data);
+        return view('checklist/form', $data);
     }
 
     /**
-     * POST /checklist/mfg1-preventive/store
+     * POST /checklist/(:segment)/(:segment)/store
      */
-    public function storeMfg1Preventive()
+    public function store(string $lokasiSlug, string $jenisSlug)
     {
         $rules = [
             'id_mesin'    => 'required|numeric',
@@ -75,10 +148,17 @@ class ChecklistController extends BaseController
             'kategori'    => 'required',
         ];
 
+        if (strtolower($jenisSlug) === 'overhaul') {
+            $rules['bar_feeder_type'] = 'permit_empty|string';
+            $rules['support_pic']     = 'permit_empty|string';
+        }
+
         if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        $lokasiName   = $this->resolveLokasi($lokasiSlug);
+        $jenisName    = $this->resolveJenis($jenisSlug);
         $idMesin      = (int) $this->request->getPost('id_mesin');
         $waktuMulai   = $this->request->getPost('waktu_mulai');
         $kategoriName = $this->request->getPost('kategori');
@@ -95,11 +175,12 @@ class ChecklistController extends BaseController
         $idTransaksi = $this->transaksiModel->insert([
             'id_user'       => session()->get('user_id'),
             'id_mesin'      => $idMesin,
-            'lokasi_check'  => 'MFG 1',
-            'jenis_check'   => 'Preventive',
+            'lokasi_check'  => $lokasiName,
+            'jenis_check'   => $jenisName,
             'kategori'      => $kategoriName,
             'waktu_mulai'   => $waktuMulai,
             'waktu_selesai' => $waktuSelesai,
+            'status'        => 'Pending',
         ]);
 
         $detailData = [];
@@ -116,15 +197,34 @@ class ChecklistController extends BaseController
             $this->detailModel->insertBatch($detailData);
         }
 
+        // Simpan metadata khusus Overhaul (Opsi C: Tabel transaksi_overhaul)
+        if (strtolower($jenisSlug) === 'overhaul') {
+            $db->table('transaksi_overhaul')->insert([
+                'id_transaksi'    => $idTransaksi,
+                'bar_feeder_type' => $this->request->getPost('bar_feeder_type') ?: null,
+                'support_pic'     => $this->request->getPost('support_pic') ?: null,
+            ]);
+        }
+
         $db->transComplete();
 
         if ($db->transStatus() === false) {
             return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data pengecekan.');
         }
 
-        return redirect()->to('/checklist/mfg1-preventive/create/' . $categorySlug)
+        return redirect()->to("/checklist/{$lokasiSlug}/{$jenisSlug}/create/{$categorySlug}")
                           ->with('success', 'Pengecekan berhasil disimpan. Durasi: '
                               . $this->formatDurasi($waktuMulai, $waktuSelesai));
+    }
+
+    /**
+     * GET /checklist/(:segment)/overhaul
+     * Halaman placeholder Overhaul.
+     */
+    public function overhaulPlaceholder(string $lokasiSlug)
+    {
+        // Sejak Overhaul sudah aktif, kita redirect ke indexKategori
+        return redirect()->to("/checklist/{$lokasiSlug}/overhaul");
     }
 
     private function formatDurasi(string $mulai, string $selesai): string

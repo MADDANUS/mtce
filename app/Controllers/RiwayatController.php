@@ -11,6 +11,8 @@ class RiwayatController extends BaseController
         'penerangan'     => 'Penerangan',
         'kabel-dan-pipa' => 'Kabel dan Pipa',
         'angin-bocor'    => 'Angin Bocor',
+        'bar-feeder-cnc' => 'Bar Feeder CNC',
+        'mesin-cnc'      => 'Mesin CNC',
     ];
 
     public function index()
@@ -71,5 +73,36 @@ class RiwayatController extends BaseController
             'details'     => $details,
             'durasiDetik' => $durasiDetik,
         ]);
+    }
+
+    /**
+     * POST /riwayat/approve/(:num)
+     * Menyetujui transaksi pengecekan oleh Leader / Admin.
+     */
+    public function approve(int $id)
+    {
+        $role = session()->get('role');
+        if (! in_array($role, ['leader', 'admin'], true)) {
+            return redirect()->back()->with('error', 'Hanya Leader atau Admin yang dapat menyetujui pengecekan.');
+        }
+
+        $transaksiModel = new TransaksiCheckModel();
+        $header         = $transaksiModel->find($id);
+
+        if (! $header) {
+            return redirect()->back()->with('error', 'Transaksi tidak ditemukan.');
+        }
+
+        if ($header['status'] === 'Approved') {
+            return redirect()->back()->with('error', 'Transaksi ini sudah disetujui sebelumnya.');
+        }
+
+        $transaksiModel->update($id, [
+            'status'      => 'Approved',
+            'approved_by' => session()->get('user_id'),
+            'approved_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return redirect()->to('/riwayat/' . $id)->with('success', 'Pengecekan berhasil disetujui.');
     }
 }

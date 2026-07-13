@@ -110,6 +110,110 @@ class UserController extends BaseController
         return redirect()->to('/admin/user')->with('success', 'User berhasil dihapus.');
     }
 
+    public function export()
+    {
+        $users = $this->model->orderBy('nama', 'ASC')->findAll();
+        
+        $filename = 'users_export_' . date('Ymd_His') . '.csv';
+        
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=' . $filename);
+        
+        $output = fopen('php://output', 'w');
+        
+        // Header CSV
+        fputcsv($output, ['Nama', 'Username', 'Role', 'Password']);
+        
+        foreach ($users as $u) {
+            fputcsv($output, [
+                $u['nama'],
+                $u['username'],
+                $u['role'],
+                '' // Password dikosongkan saat ekspor demi keamanan
+            ]);
+        }
+        
+        fclose($output);
+        exit;
+    }
+
+    public function import()
+    {
+        $file = $this->request->getFile('file_csv');
+        if (! $file || ! $file->isValid() || $file->getExtension() !== 'csv') {
+            return redirect()->to('/admin/user')->with('error', 'Silakan pilih file CSV yang valid.');
+        }
+        
+        $filePath = $file->getTempName();
+        if (($handle = fopen($filePath, 'r')) !== false) {
+            // Lewati header row
+            fgetcsv($handle);
+            
+            $successInsert = 0;
+            $successUpdate = 0;
+            $errors = [];
+            $rowNum = 1;
+            
+            while (($row = fgetcsv($handle)) !== false) {
+                $rowNum++;
+                if (count($row) < 3) {
+                    $errors[] = "Baris {$rowNum}: Kolom kurang lengkap. Harus memuat Nama, Username, dan Role.";
+                    continue;
+                }
+                
+                $nama     = trim($row[0]);
+                $username = trim($row[1]);
+                $role     = strtolower(trim($row[2]));
+                $password = isset($row[3]) ? trim($row[3]) : '';
+                
+                if (empty($nama) || empty($username) || empty($role)) {
+                    $errors[] = "Baris {$rowNum}: Kolom Nama, Username, dan Role tidak boleh kosong.";
+                    continue;
+                }
+                
+                if (! in_array($role, ['admin', 'leader', 'staff'], true)) {
+                    $errors[] = "Baris {$rowNum}: Role '{$role}' tidak valid. Harus 'admin', 'leader', atau 'staff'.";
+                    continue;
+                }
+                
+                $existing = $this->model->where('username', $username)->first();
+                
+                if ($existing) {
+                    $updateData = [
+                        'nama' => $nama,
+                        'role' => $role,
+                    ];
+                    if (! empty($password)) {
+                        $updateData['password'] = password_hash($password, PASSWORD_DEFAULT);
+                    }
+                    $this->model->update($existing['id'], $updateData);
+                    $successUpdate++;
+                } else {
+                    $passToSave = ! empty($password) ? $password : 'password123';
+                    $this->model->insert([
+                        'nama'     => $nama,
+                        'username' => $username,
+                        'role'     => $role,
+                        'password' => password_hash($passToSave, PASSWORD_DEFAULT),
+                    ]);
+                    $successInsert++;
+                }
+            }
+            
+            fclose($handle);
+            
+            $msg = "Impor selesai. Ditambahkan: {$successInsert}, Diperbarui: {$successUpdate}.";
+            if (! empty($errors)) {
+                $msg .= " Beberapa baris dilewati:\n" . implode("\n", $errors);
+                return redirect()->to('/admin/user')->with('error', $msg);
+            }
+            
+            return redirect()->to('/admin/user')->with('success', $msg);
+        }
+        
+        return redirect()->to('/admin/user')->with('error', 'Gagal membuka file CSV.');
+    }
+
     private function rules(): array
     {
         return [

@@ -40,6 +40,7 @@
             <th>Mesin</th>
             <th>Waktu Mulai</th>
             <th>Durasi</th>
+            <th>Status</th>
             <th></th>
           </tr>
         </thead>
@@ -51,6 +52,13 @@
               <td><?= esc($t['no_mesin']) ?></td>
               <td><?= esc($t['waktu_mulai']) ?></td>
               <td><?= $t['durasi_detik'] !== null ? gmdate('i:s', (int) $t['durasi_detik']) : '-' ?></td>
+              <td>
+                <?php if (($t['status'] ?? 'Pending') === 'Approved'): ?>
+                  <span class="badge bg-success">Approved</span>
+                <?php else: ?>
+                  <span class="badge bg-warning text-dark">Pending</span>
+                <?php endif; ?>
+              </td>
               <td><a href="<?= site_url('riwayat/' . $t['id_transaksi']) ?>" class="btn btn-sm btn-outline-primary">Detail</a></td>
             </tr>
           <?php endforeach; ?>

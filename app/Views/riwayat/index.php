@@ -5,7 +5,7 @@
   <div>
     <a href="<?= site_url('riwayat') ?>" class="btn btn-sm btn-outline-secondary me-2">&laquo; Pilih Kategori</a>
     <?php if (in_array(session()->get('role'), ['staff', 'admin'], true)): ?>
-      <a href="<?= site_url('checklist/mfg1-preventive/create/' . esc($categorySlug)) ?>" class="btn btn-sm btn-primary">+ Buat Baru</a>
+      <a href="<?= site_url('checklist') ?>" class="btn btn-sm btn-primary">+ Buat Baru</a>
     <?php endif; ?>
   </div>
 </div>
@@ -25,6 +25,7 @@
             <th>Waktu Mulai</th>
             <th>Waktu Selesai</th>
             <th>Durasi</th>
+            <th>Status</th>
             <th></th>
           </tr>
         </thead>
@@ -44,6 +45,13 @@
               <td><?= esc($r['waktu_mulai']) ?></td>
               <td><?= esc($r['waktu_selesai'] ?? '-') ?></td>
               <td><?= $durasi ?></td>
+              <td>
+                <?php if (($r['status'] ?? 'Pending') === 'Approved'): ?>
+                  <span class="badge bg-success">Approved</span>
+                <?php else: ?>
+                  <span class="badge bg-warning text-dark">Pending</span>
+                <?php endif; ?>
+              </td>
               <td><a href="<?= site_url('riwayat/' . $r['id_transaksi']) ?>" class="btn btn-sm btn-outline-primary">Detail</a></td>
             </tr>
           <?php endforeach; ?>
