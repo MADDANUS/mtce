@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\TransaksiCheckDetailModel;
 use App\Models\TransaksiCheckModel;
+use App\Models\MesinModel;
 
 class RiwayatController extends BaseController
 {
@@ -11,40 +12,90 @@ class RiwayatController extends BaseController
         'penerangan'     => 'Penerangan',
         'kabel-dan-pipa' => 'Kabel dan Pipa',
         'angin-bocor'    => 'Angin Bocor',
+        'bearing'        => 'Bearing',
+        'gearbox'        => 'Gearbox',
+        'belt'           => 'Belt',
         'bar-feeder-cnc' => 'Bar Feeder CNC',
         'mesin-cnc'      => 'Mesin CNC',
     ];
 
+    private function resolveLokasi(string $slug): string
+    {
+        return match (strtolower($slug)) {
+            'mfg2'  => 'MFG 2',
+            default => 'MFG 1',
+        };
+    }
+
+    /**
+     * GET /riwayat
+     * Halaman pilih lokasi (MFG 1 / MFG 2) untuk melihat riwayat.
+     */
     public function index()
     {
         return view('riwayat/landing', [
-            'title'      => 'Pilih Kategori Riwayat',
-            'categories' => $this->categoryMap,
+            'title' => 'Pilih Lokasi Riwayat',
         ]);
     }
 
+    /**
+     * GET /riwayat/lokasi/(:segment)
+     * Daftar riwayat pengecekan untuk lokasi terpilih beserta filter pencarian.
+     */
+    public function lokasi(string $lokasiSlug)
+    {
+        $lokasiName = $this->resolveLokasi($lokasiSlug);
+        $mesinModel = new MesinModel();
+        $transaksiModel = new TransaksiCheckModel();
+
+        // Dropdown filter mesin dinamis (hanya mesin yang terdaftar di lokasi ini)
+        $daftarMesin = $mesinModel->getByLokasi($lokasiName);
+
+        // Ambil input filter pencarian
+        $filters = [
+            'lokasi'   => $lokasiName,
+            'id_mesin' => $this->request->getGet('id_mesin') ?: null,
+            'kategori' => $this->request->getGet('kategori') ?: null,
+            'tanggal'  => $this->request->getGet('tanggal') ?: null,
+            'status'   => $this->request->getGet('status') ?: null,
+            'sort_by'  => $this->request->getGet('sort_by') ?: 'id_transaksi',
+            'order'    => $this->request->getGet('order') ?: 'desc',
+        ];
+
+        $role = session()->get('role');
+        $riwayat = $role === 'staff'
+            ? $transaksiModel->getRiwayatFiltered($filters, session()->get('user_id'))
+            : $transaksiModel->getRiwayatFiltered($filters);
+
+        return view('riwayat/index', [
+            'title'           => 'Riwayat Pengecekan — ' . $lokasiName,
+            'lokasiSlug'      => $lokasiSlug,
+            'lokasiName'      => $lokasiName,
+            'daftarMesin'     => $daftarMesin,
+            'categories'      => $this->categoryMap,
+            'riwayat'         => $riwayat,
+            'selectedFilters' => $filters,
+        ]);
+    }
+
+    /**
+     * GET /riwayat/kategori/(:segment)
+     * Fallback redirect untuk kompatibilitas tautan lama agar mengarah ke riwayat lokasi MFG 1.
+     */
     public function kategori(string $categorySlug)
     {
         if (! isset($this->categoryMap[$categorySlug])) {
             return redirect()->to('/riwayat')->with('error', 'Kategori tidak valid.');
         }
 
-        $categoryName   = $this->categoryMap[$categorySlug];
-        $transaksiModel = new TransaksiCheckModel();
-        $role           = session()->get('role');
-
-        $riwayat = $role === 'staff'
-            ? $transaksiModel->getRiwayat(session()->get('user_id'), null, $categoryName)
-            : $transaksiModel->getRiwayat(null, null, $categoryName);
-
-        return view('riwayat/index', [
-            'title'        => 'Riwayat Pengecekan - ' . $categoryName,
-            'categorySlug' => $categorySlug,
-            'categoryName' => $categoryName,
-            'riwayat'      => $riwayat,
-        ]);
+        $categoryName = $this->categoryMap[$categorySlug];
+        return redirect()->to('/riwayat/lokasi/mfg1?kategori=' . urlencode($categoryName));
     }
 
+    /**
+     * GET /riwayat/(:num)
+     * Detail pengerjaan checklist riwayat pengecekan.
+     */
     public function detail(int $id)
     {
         $transaksiModel = new TransaksiCheckModel();
@@ -61,6 +112,7 @@ class RiwayatController extends BaseController
 
         $detailModel = new TransaksiCheckDetailModel();
         $details     = $detailModel->getDetailByTransaksi($id);
+        $details     = $detailModel->calculateRowspans($details, $header['jenis_check']);
 
         $durasiDetik = null;
         if (! empty($header['waktu_mulai']) && ! empty($header['waktu_selesai'])) {

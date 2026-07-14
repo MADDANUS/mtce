@@ -1,8 +1,10 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h5 class="mb-0">Detail Pengecekan #<?= (int) $header['id_transaksi'] ?></h5>
-  <a href="<?= site_url('riwayat') ?>" class="btn btn-sm btn-outline-secondary">&laquo; Kembali</a>
+<div class="page-header">
+  <h5><i class="bi bi-clipboard-check me-2 text-primary"></i>Detail Pengecekan <span class="badge bg-primary ms-1">#<?= (int) $header['id_transaksi'] ?></span></h5>
+  <a href="<?= site_url('riwayat') ?>" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Kembali
+  </a>
 </div>
 
 <div class="card-stat p-3 mb-3">
@@ -85,38 +87,105 @@
 <?php endif; ?>
 
 <div class="card-stat p-3">
-  <table class="table table-bordered align-middle checklist-table bg-white">
-    <thead>
-      <tr>
-        <th>BAGIAN CHECK</th>
-        <th>POINT CHECK</th>
-        <th>STANDARD CHECK</th>
-        <th style="width:10%;">HASIL</th>
-        <th>ULASAN</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php foreach ($details as $d): ?>
+  <?php if (strtolower($header['jenis_check']) === 'overhaul'): ?>
+    <!-- OVERHAUL DETAIL TABLE -->
+    <table class="table table-bordered align-middle checklist-table bg-white">
+      <thead>
         <tr>
-          <td class="bagian-cell"><?= esc($d['bagian_check']) ?></td>
-          <td><?= esc($d['point_check']) ?></td>
-          <td><?= esc($d['standard_check']) ?></td>
-          <td class="text-center">
-            <?php if ($d['hasil_check'] === 'V'): ?>
-              <span class="badge badge-v">V</span>
-            <?php elseif ($d['hasil_check'] === 'Δ'): ?>
-              <span class="badge badge-d">Δ</span>
-            <?php elseif ($d['hasil_check'] === 'X'): ?>
-              <span class="badge badge-x">X</span>
-            <?php else: ?>
-              <span class="text-muted">-</span>
-            <?php endif; ?>
-          </td>
-          <td><?= esc($d['ulasan'] ?? '-') ?></td>
+          <th style="width:5%;">NO</th>
+          <th colspan="2" style="width:30%;">ITEM CHECK</th>
+          <th style="width:20%;">POINT CHECK</th>
+          <th style="width:15%;">STANDAR ITEM</th>
+          <th style="width:10%;">HASIL</th>
+          <th style="width:20%;">ULASAN</th>
         </tr>
-      <?php endforeach; ?>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <?php foreach ($details as $d): ?>
+          <?php if ($d['is_section_start']): ?>
+            <tr class="section-header">
+              <td colspan="7"><?= esc($d['dynamic_section_header']) ?></td>
+            </tr>
+          <?php endif; ?>
+          <tr>
+            <?php if ($d['show_no']): ?>
+              <td class="text-center fw-semibold text-muted" rowspan="<?= (int) $d['no_rowspan'] ?>"><?= esc($d['dynamic_no']) ?></td>
+            <?php endif; ?>
+
+            <?php if ($d['sub_item_check'] !== null && $d['sub_item_check'] !== ''): ?>
+              <?php if ($d['show_bagian']): ?>
+                <td class="bagian-cell" rowspan="<?= (int) $d['bagian_rowspan'] ?>"><?= esc($d['bagian_check']) ?></td>
+              <?php endif; ?>
+              <td><?= esc($d['sub_item_check']) ?></td>
+            <?php else: ?>
+              <td class="bagian-cell" colspan="2"><?= esc($d['bagian_check']) ?></td>
+            <?php endif; ?>
+
+            <?php if ($d['show_point']): ?>
+              <td rowspan="<?= (int) $d['point_rowspan'] ?>"><?= esc($d['point_check']) ?></td>
+            <?php endif; ?>
+
+            <?php if ($d['show_standard']): ?>
+              <td rowspan="<?= (int) $d['standard_rowspan'] ?>"><?= nl2br(esc($d['standard_check'])) ?></td>
+            <?php endif; ?>
+
+            <td class="text-center">
+              <?php if ($d['hasil_check'] === 'V'): ?>
+                <span class="text-success fw-bold">V</span>
+              <?php elseif ($d['hasil_check'] === 'Δ'): ?>
+                <span class="text-warning fw-bold">Δ</span>
+              <?php elseif ($d['hasil_check'] === 'X'): ?>
+                <span class="text-danger fw-bold">X</span>
+              <?php else: ?>
+                <span class="text-muted">-</span>
+              <?php endif; ?>
+            </td>
+            <td><?= esc($d['ulasan'] ?? '-') ?></td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  <?php else: ?>
+    <!-- PREVENTIVE DETAIL TABLE -->
+    <table class="table table-bordered align-middle checklist-table bg-white">
+      <thead>
+        <tr>
+          <th>BAGIAN CHECK</th>
+          <th>POINT CHECK</th>
+          <th>STANDARD CHECK</th>
+          <th style="width:10%;">HASIL</th>
+          <th>ULASAN</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach ($details as $d): ?>
+          <tr>
+            <?php if ($d['show_bagian']): ?>
+              <td class="bagian-cell" rowspan="<?= (int) $d['bagian_rowspan'] ?>"><?= esc($d['bagian_check']) ?></td>
+            <?php endif; ?>
+
+            <?php if ($d['show_point']): ?>
+              <td rowspan="<?= (int) $d['point_rowspan'] ?>"><?= esc($d['point_check']) ?></td>
+            <?php endif; ?>
+
+            <td><?= esc($d['standard_check']) ?></td>
+            <td class="text-center">
+              <?php if ($d['hasil_check'] === 'V'): ?>
+                <span class="text-success fw-bold">V</span>
+              <?php elseif ($d['hasil_check'] === 'Δ'): ?>
+                <span class="text-warning fw-bold">Δ</span>
+              <?php elseif ($d['hasil_check'] === 'X'): ?>
+                <span class="text-danger fw-bold">X</span>
+              <?php else: ?>
+                <span class="text-muted">-</span>
+              <?php endif; ?>
+            </td>
+            <td><?= esc($d['ulasan'] ?? '-') ?></td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  <?php endif; ?>
 </div>
 
 <?= view('layout/footer') ?>

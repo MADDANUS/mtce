@@ -12,374 +12,498 @@
 <!-- Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
+    /* ============================================================
+       GLOBAL DESIGN SYSTEM - MTCE (Modern Minimalist)
+       Font: Inter | Palette: Slate + Indigo accent
+    ============================================================ */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
     :root {
-        --sidebar-bg: #0f172a;
-        --sidebar-color: #94a3b8;
-        --sidebar-active-color: #ffffff;
-        --sidebar-active-bg: #1e293b;
-        --primary-color: #4f46e5;
-        --body-bg: #f8fafc;
-        --card-border: #e2e8f0;
+        --sidebar-w: 240px;
+        --sidebar-bg: #111827;
+        --sidebar-item: #9ca3af;
+        --sidebar-active: #ffffff;
+        --sidebar-active-bg: rgba(255,255,255,0.08);
+        --sidebar-border: rgba(255,255,255,0.06);
+        --accent: #4f46e5;
+        --accent-hover: #4338ca;
+        --accent-light: #eef2ff;
+        --body-bg: #f3f4f6;
+        --white: #ffffff;
+        --border: #e5e7eb;
+        --border-strong: #d1d5db;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --text-muted: #9ca3af;
+        --success: #059669;
+        --success-bg: #d1fae5;
+        --warning: #d97706;
+        --warning-bg: #fef3c7;
+        --danger: #dc2626;
+        --danger-bg: #fee2e2;
+        --radius-sm: 6px;
+        --radius: 10px;
+        --radius-lg: 14px;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
+        --shadow: 0 4px 12px rgba(0,0,0,0.07);
     }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { font-size: 14px; }
+
     body {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         background: var(--body-bg);
-        color: #1e293b;
+        color: var(--text-primary);
         overflow-x: hidden;
-        font-size: 0.975rem;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
     }
-    
-    /* Layout */
-    .app-container {
-        display: flex;
-        min-height: 100vh;
-    }
-    
-    /* Sidebar */
+
+    /* ---- LAYOUT ---- */
+    .app-container { display: flex; min-height: 100vh; }
+
+    /* ---- SIDEBAR ---- */
     .sidebar {
-        width: 260px;
+        width: var(--sidebar-w);
         background: var(--sidebar-bg);
-        color: var(--sidebar-color);
         position: fixed;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        z-index: 100;
+        top: 0; left: 0; bottom: 0;
+        z-index: 200;
         display: flex;
         flex-direction: column;
-        transition: all 0.3s;
-        border-right: 1px solid rgba(255,255,255,0.05);
+        border-right: 1px solid var(--sidebar-border);
+        transition: left 0.25s ease;
     }
     .sidebar-brand {
-        height: 70px;
+        height: 64px;
         display: flex;
         align-items: center;
-        padding: 0 1.5rem;
+        padding: 0 1.25rem;
         font-weight: 700;
-        font-size: 1.25rem;
+        font-size: 1.05rem;
+        letter-spacing: -0.01em;
         color: #ffffff;
         text-decoration: none;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+        border-bottom: 1px solid var(--sidebar-border);
+        gap: 0.6rem;
     }
-    .sidebar-menu {
-        flex: 1;
-        padding: 1.5rem 0;
-        overflow-y: auto;
+    .sidebar-brand .brand-icon {
+        width: 32px; height: 32px;
+        background: var(--accent);
+        border-radius: var(--radius-sm);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; flex-shrink: 0;
     }
+    .sidebar-menu { flex: 1; padding: 1rem 0; overflow-y: auto; }
     .menu-label {
-        font-size: 0.825rem;
+        font-size: 0.7rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        padding: 1.5rem 1.5rem 0.5rem;
-        color: #475569;
+        letter-spacing: 0.12em;
+        color: var(--text-muted);
+        padding: 1.25rem 1.25rem 0.4rem;
         display: block;
     }
     .menu-item {
         display: flex;
         align-items: center;
-        padding: 0.75rem 1.5rem;
-        color: var(--sidebar-color);
+        gap: 0.7rem;
+        padding: 0.62rem 1.25rem;
+        color: var(--sidebar-item);
         text-decoration: none;
+        font-size: 0.875rem;
         font-weight: 500;
-        font-size: 0.975rem;
+        border-radius: 0;
         border-left: 3px solid transparent;
-        transition: all 0.2s;
+        transition: color 0.15s, background 0.15s;
+        margin: 1px 0;
     }
-    .menu-item i {
-        margin-right: 0.75rem;
-        font-size: 1.1rem;
-    }
+    .menu-item i { font-size: 1rem; flex-shrink: 0; }
     .menu-item:hover {
-        color: var(--sidebar-active-color);
+        color: var(--sidebar-active);
         background: var(--sidebar-active-bg);
     }
     .menu-item.active {
-        color: var(--sidebar-active-color);
+        color: var(--sidebar-active);
         background: var(--sidebar-active-bg);
-        border-left-color: var(--primary-color);
+        border-left-color: var(--accent);
     }
     .sidebar-footer {
-        padding: 1.25rem 1.5rem;
-        border-top: 1px solid rgba(255,255,255,0.05);
+        padding: 1rem 1.25rem;
+        border-top: 1px solid var(--sidebar-border);
+        display: flex; align-items: center; gap: 0.75rem;
     }
-    
-    /* Main Content */
+    .sidebar-footer .user-avatar {
+        width: 34px; height: 34px;
+        border-radius: 50%;
+        background: var(--accent);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.8rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .sidebar-footer .user-name {
+        font-size: 0.825rem; font-weight: 600; color: #e5e7eb;
+        line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .sidebar-footer .user-role {
+        font-size: 0.68rem; font-weight: 600;
+        text-transform: uppercase; letter-spacing: 0.08em;
+        color: var(--text-muted);
+    }
+
+    /* ---- MAIN WRAPPER ---- */
     .main-wrapper {
-        margin-left: 260px;
+        margin-left: var(--sidebar-w);
         flex: 1;
         display: flex;
         flex-direction: column;
         min-width: 0;
     }
-    
-    /* Topbar */
+
+    /* ---- TOPBAR ---- */
     .topbar {
-        height: 70px;
-        background: #ffffff;
-        border-bottom: 1px solid var(--card-border);
+        height: 64px;
+        background: var(--white);
+        border-bottom: 1px solid var(--border);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 2rem;
+        padding: 0 1.75rem;
         position: sticky;
         top: 0;
-        z-index: 99;
+        z-index: 100;
+        box-shadow: var(--shadow-sm);
     }
     .topbar-title {
+        font-size: 1.05rem;
         font-weight: 700;
-        font-size: 1.2rem;
+        color: var(--text-primary);
         margin: 0;
-        color: #0f172a;
+        letter-spacing: -0.01em;
     }
-    
-    /* Content Area */
-    .content-area {
-        padding: 2rem;
-        flex: 1;
+
+    /* ---- CONTENT ---- */
+    .content-area { padding: 1.75rem; flex: 1; }
+
+    /* ---- PAGE HEADER utility ---- */
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.25rem;
+        gap: 1rem;
+        flex-wrap: wrap;
     }
-    
-    /* Modern Card & Stat Box styles */
+    .page-header h1, .page-header h5 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        letter-spacing: -0.01em;
+    }
+
+    /* ---- CARDS ---- */
     .card, .card-stat {
-        background: #ffffff !important;
-        border: 1px solid var(--card-border) !important;
-        border-radius: 0.75rem !important;
-        padding: 1.5rem !important;
-        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05) !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: var(--white) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius) !important;
+        box-shadow: var(--shadow-sm) !important;
+        transition: box-shadow 0.2s;
+    }
+    .card-stat { padding: 1.25rem !important; }
+    .card-hover:hover {
+        box-shadow: var(--shadow) !important;
+        border-color: var(--border-strong) !important;
+    }
+    .card-stat .label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-secondary);
     }
     .card-stat .value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #0f172a;
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: var(--text-primary);
         line-height: 1.1;
-        margin-top: 0.25rem;
+        letter-spacing: -0.02em;
     }
-    .card-stat .text-muted {
-        font-size: 0.825rem;
-        font-weight: 500;
-        color: #64748b !important;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    .card-hover:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 20px -8px rgba(0,0,0,0.08), 0 4px 12px -2px rgba(0,0,0,0.03) !important;
-        border-color: #cbd5e1 !important;
-    }
-    
-    /* Form inputs */
-    .form-control, .form-select {
-        border-radius: 0.5rem;
-        border-color: #cbd5e1;
-        padding: 0.65rem 0.9rem;
-        font-size: 0.975rem;
-        color: #1e293b;
-        background-color: #ffffff;
-        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    }
-    .form-control:focus, .form-select:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
-        color: #0f172a;
-    }
-    .form-control:read-only {
-        background-color: #f1f5f9;
-        color: #64748b;
-        border-color: #e2e8f0;
-    }
+
+    /* ---- BUTTONS ---- */
     .btn {
-        border-radius: 0.5rem;
-        padding: 0.6rem 1.25rem;
+        border-radius: var(--radius-sm);
         font-weight: 600;
-        font-size: 0.95rem;
-        transition: all 0.2s;
+        font-size: 0.8rem;
+        letter-spacing: 0.01em;
+        padding: 0.5rem 1rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.5rem;
+        gap: 0.4rem;
+        transition: all 0.15s;
+        border: 1.5px solid transparent;
+        line-height: 1.4;
     }
+    .btn-sm { padding: 0.38rem 0.8rem; font-size: 0.775rem; }
+    .btn-lg { padding: 0.65rem 1.5rem; font-size: 0.875rem; }
+
     .btn-primary {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
     }
     .btn-primary:hover, .btn-primary:focus {
-        background-color: #4338ca;
-        border-color: #4338ca;
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+        color: #fff;
+        box-shadow: 0 0 0 3px rgba(79,70,229,0.2);
     }
     .btn-success {
-        background-color: #10b981;
-        border-color: #10b981;
+        background: var(--success);
+        border-color: var(--success);
+        color: #fff;
     }
-    .btn-success:hover, .btn-success:focus {
-        background-color: #059669;
-        border-color: #059669;
+    .btn-success:hover {
+        background: #047857;
+        border-color: #047857;
+        color: #fff;
+        box-shadow: 0 0 0 3px rgba(5,150,105,0.2);
     }
-    
-    /* Badges */
+    .btn-danger {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: #fff;
+    }
+    .btn-danger:hover { background: #b91c1c; border-color: #b91c1c; color: #fff; }
+
+    .btn-outline-secondary {
+        background: transparent;
+        border-color: var(--border-strong);
+        color: var(--text-secondary);
+    }
+    .btn-outline-secondary:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+        color: var(--text-primary);
+    }
+    .btn-outline-primary {
+        background: transparent;
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+    .btn-outline-primary:hover {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+    }
+    .btn-outline-danger {
+        background: transparent;
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+    .btn-outline-danger:hover { background: var(--danger); color: #fff; }
+
+    /* ---- BADGES ---- */
     .badge {
-        font-weight: 600;
-        padding: 0.35em 0.65em;
-        border-radius: 0.375rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.3em 0.7em;
+        border-radius: 100px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
     }
-    .badge.bg-success {
-        background-color: #d1fae5 !important;
-        color: #065f46 !important;
-    }
-    .badge.bg-warning {
-        background-color: #fef3c7 !important;
-        color: #92400e !important;
-    }
-    .badge.bg-secondary {
-        background-color: #e2e8f0 !important;
-        color: #475569 !important;
-    }
-    .badge.bg-danger {
-        background-color: #fee2e2 !important;
-        color: #991b1b !important;
-    }
-    
-    /* General Tables & Checklist Tables Overrides */
+    .badge.bg-success { background: var(--success-bg) !important; color: var(--success) !important; }
+    .badge.bg-warning { background: var(--warning-bg) !important; color: var(--warning) !important; }
+    .badge.bg-danger  { background: var(--danger-bg)  !important; color: var(--danger)  !important; }
+    .badge.bg-secondary { background: #f3f4f6 !important; color: #6b7280 !important; }
+    .badge.bg-primary { background: var(--accent-light) !important; color: var(--accent) !important; }
+
+    /* ---- TABLES ---- */
     .table-responsive {
-        border-radius: 0.75rem;
+        border-radius: var(--radius);
         overflow: hidden;
-        border: 1px solid var(--card-border);
+        border: 1px solid var(--border);
     }
     .table {
         margin-bottom: 0;
-        border-collapse: separate;
-        border-spacing: 0;
         width: 100%;
+        border-collapse: collapse;
     }
     .table th {
+        font-size: 0.72rem !important;
         font-weight: 700 !important;
-        font-size: 0.875rem !important;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #475569;
-        background-color: #f8fafc !important;
-        padding: 1.1rem 1.25rem;
-        border: none !important;
-        border-bottom: 2px solid #e2e8f0 !important;
+        letter-spacing: 0.09em;
+        color: var(--text-secondary) !important;
+        background: #f9fafb !important;
+        padding: 0.85rem 1rem !important;
+        border-bottom: 1.5px solid var(--border) !important;
+        border-right: none !important;
+        border-left: none !important;
+        border-top: none !important;
+        white-space: nowrap;
         vertical-align: middle;
     }
     .table td {
-        padding: 1.1rem 1.25rem !important;
-        border: none !important;
-        border-bottom: 1px solid #f1f5f9 !important;
+        padding: 0.85rem 1rem !important;
+        border-bottom: 1px solid #f3f4f6 !important;
+        border-right: none !important;
+        border-left: none !important;
+        border-top: none !important;
+        font-size: 0.875rem !important;
+        color: var(--text-primary) !important;
         vertical-align: middle;
-        font-size: 0.975rem !important;
-        color: #334155;
     }
-    .table tbody tr:hover td {
-        background-color: #f8fafc !important;
+    .table tbody tr:last-child td { border-bottom: none !important; }
+    .table tbody tr:hover td { background: #fafafa !important; }
+
+    /* Checklist specific table */
+    .checklist-table { border: none !important; }
+    .checklist-table th {
+        background: #f9fafb !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        color: var(--text-secondary) !important;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        padding: 0.8rem 0.9rem !important;
+        border: 1px solid var(--border) !important;
     }
-    table.checklist-table td.bagian-cell {
+    .checklist-table td {
+        padding: 0.75rem 0.9rem !important;
+        border: 1px solid #f0f0f0 !important;
+        font-size: 0.83rem !important;
+        vertical-align: middle;
+        color: var(--text-primary) !important;
+    }
+    .checklist-table td.bagian-cell {
         font-weight: 700;
-        color: #0f172a;
-        background-color: #f8fafc !important;
-        border-right: 1px solid #e2e8f0 !important;
+        color: var(--text-primary) !important;
+        background: #f9fafb !important;
+        border-right: 2px solid var(--border) !important;
+        font-size: 0.82rem !important;
+    }
+    .checklist-table tr.section-header td {
+        background: #1e293b !important;
+        color: #ffffff !important;
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.6rem 0.9rem !important;
     }
 
-    /* Radio Segmented Control - Modern style buttons instead of browser defaults */
-    .form-check-inline {
-        margin-right: 0.5rem;
-        display: inline-block;
+    /* ---- FORMS ---- */
+    .form-control, .form-select {
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--border);
+        padding: 0.55rem 0.85rem;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        background: var(--white);
+        transition: border-color 0.15s, box-shadow 0.15s;
+        line-height: 1.5;
     }
-    .form-check-input[type="radio"] {
-        display: none !important; /* Sembunyikan default input radio bulat */
+    .form-control:focus, .form-select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+        color: var(--text-primary);
+        outline: none;
     }
+    .form-control:read-only {
+        background: #f9fafb;
+        color: var(--text-secondary);
+        border-color: var(--border);
+    }
+    .form-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.35rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* ---- RADIO BUTTONS (Checklist V/Δ/X) ---- */
+    .form-check-inline { margin-right: 0.4rem; }
+    .form-check-input[type="radio"] { display: none !important; }
     .form-check-label {
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
-        width: 38px;
-        height: 38px;
+        width: 36px; height: 36px;
         border-radius: 50% !important;
-        border: 2px solid #cbd5e1;
-        font-size: 0.95rem;
+        border: 2px solid var(--border);
+        font-size: 0.85rem;
         font-weight: 700 !important;
         cursor: pointer;
-        transition: all 0.2s ease-in-out;
+        transition: all 0.15s ease;
         user-select: none;
+        background: var(--white);
+        color: var(--text-muted);
     }
-    /* V Label (OK/Centang) */
+    /* V Label */
     .form-check-input[value="V"] + .form-check-label {
-        color: #10b981 !important;
-        border-color: #a7f3d0;
-        background-color: #ecfdf5;
+        color: var(--success) !important;
+        border-color: #6ee7b7;
+        background: #f0fdf4;
     }
     .form-check-input[value="V"]:checked + .form-check-label {
-        color: #ffffff !important;
-        border-color: #10b981;
-        background-color: #10b981;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
-        transform: scale(1.05);
+        color: #fff !important;
+        border-color: var(--success);
+        background: var(--success);
+        box-shadow: 0 0 0 3px rgba(5,150,105,0.2);
     }
-    /* Δ Label (Tindakan) */
+    /* Δ Label */
     .form-check-input[value="Δ"] + .form-check-label {
-        color: #f59e0b !important;
-        border-color: #fde68a;
-        background-color: #fffbeb;
+        color: var(--warning) !important;
+        border-color: #fcd34d;
+        background: #fffbeb;
     }
     .form-check-input[value="Δ"]:checked + .form-check-label {
-        color: #ffffff !important;
-        border-color: #f59e0b;
-        background-color: #f59e0b;
-        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
-        transform: scale(1.05);
+        color: #fff !important;
+        border-color: var(--warning);
+        background: var(--warning);
+        box-shadow: 0 0 0 3px rgba(217,119,6,0.2);
     }
-    /* X Label (Problem) */
+    /* X Label */
     .form-check-input[value="X"] + .form-check-label {
-        color: #f43f5e !important;
-        border-color: #fecdd3;
-        background-color: #fff1f2;
+        color: var(--danger) !important;
+        border-color: #fca5a5;
+        background: #fff5f5;
     }
     .form-check-input[value="X"]:checked + .form-check-label {
-        color: #ffffff !important;
-        border-color: #f43f5e;
-        background-color: #f43f5e;
-        box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.25);
-        transform: scale(1.05);
+        color: #fff !important;
+        border-color: var(--danger);
+        background: var(--danger);
+        box-shadow: 0 0 0 3px rgba(220,38,38,0.2);
     }
-    
-    /* Alerts */
+
+    /* ---- ALERTS ---- */
     .alert {
-        border-radius: 0.75rem;
+        border-radius: var(--radius);
         border: none;
-        padding: 1rem 1.25rem;
-        font-size: 0.875rem;
+        padding: 0.85rem 1.1rem;
+        font-size: 0.85rem;
         font-weight: 500;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.02), 0 2px 4px -2px rgb(0 0 0 / 0.02);
     }
-    
-    /* Scrollbars */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-        background: #f1f5f9;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-    }
-    
-    /* Responsive layout toggles */
+    .alert-success { background: var(--success-bg); color: var(--success); }
+    .alert-danger { background: var(--danger-bg); color: var(--danger); }
+    .alert-warning { background: var(--warning-bg); color: var(--warning); }
+
+    /* ---- SCROLLBAR ---- */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+    /* ---- RESPONSIVE ---- */
     @media (max-width: 991.98px) {
-        .sidebar {
-            left: -260px;
-        }
-        .sidebar.show {
-            left: 0;
-        }
-        .main-wrapper {
-            margin-left: 0;
-        }
+        .sidebar { left: calc(-1 * var(--sidebar-w)); }
+        .sidebar.show { left: 0; }
+        .main-wrapper { margin-left: 0; }
     }
 </style>
 </head>
@@ -395,7 +519,8 @@ $seg3 = $uri->getTotalSegments() >= 3 ? $uri->getSegment(3) : '';
   <!-- Left Sidebar -->
   <aside class="sidebar">
     <a href="<?= site_url('dashboard') ?>" class="sidebar-brand">
-      <i class="bi bi-shield-fill-check text-primary me-2"></i>MTCE SYSTEM
+      <div class="brand-icon"><i class="bi bi-shield-fill-check text-white"></i></div>
+      MTCE SYSTEM
     </a>
     
     <div class="sidebar-menu">
@@ -407,10 +532,19 @@ $seg3 = $uri->getTotalSegments() >= 3 ? $uri->getSegment(3) : '';
         <a href="<?= site_url('checklist') ?>" class="menu-item <?= $seg1 === 'checklist' ? 'active' : '' ?>">
           <i class="bi bi-check2-square"></i>Buat Pengecekan
         </a>
+        <a href="<?= site_url('scan') ?>" class="menu-item <?= $seg1 === 'scan' ? 'active' : '' ?>">
+          <i class="bi bi-qr-code-scan"></i>Scan QR Mesin
+        </a>
       <?php endif; ?>
       
       <a href="<?= site_url('riwayat') ?>" class="menu-item <?= $seg1 === 'riwayat' ? 'active' : '' ?>">
         <i class="bi bi-clock-history"></i>Riwayat Pengecekan
+      </a>
+      <a href="<?= site_url('kontrol') ?>" class="menu-item <?= $seg1 === 'kontrol' ? 'active' : '' ?>">
+        <i class="bi bi-calendar-check"></i>Ceklis Kontrol
+      </a>
+      <a href="<?= site_url('abnormal') ?>" class="menu-item <?= $seg1 === 'abnormal' ? 'active' : '' ?>">
+        <i class="bi bi-exclamation-triangle"></i>Laporan Abnormal
       </a>
 
       <?php if (in_array($role, ['leader', 'admin'], true)): ?>
@@ -434,14 +568,10 @@ $seg3 = $uri->getTotalSegments() >= 3 ? $uri->getSegment(3) : '';
     </div>
     
     <div class="sidebar-footer">
-      <div class="d-flex align-items-center">
-        <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-2" style="width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
-          <i class="bi bi-person-fill"></i>
-        </div>
-        <div class="overflow-hidden">
-          <h6 class="mb-0 text-white text-truncate" style="font-size:0.85rem;"><?= esc(session()->get('nama')) ?></h6>
-          <small class="text-uppercase text-muted" style="font-size:0.7rem; font-weight:600;"><?= esc($role) ?></small>
-        </div>
+      <div class="user-avatar"><?= strtoupper(substr(session()->get('nama') ?? 'U', 0, 1)) ?></div>
+      <div class="overflow-hidden">
+        <div class="user-name"><?= esc(session()->get('nama')) ?></div>
+        <div class="user-role"><?= esc($role) ?></div>
       </div>
     </div>
   </aside>
@@ -449,16 +579,16 @@ $seg3 = $uri->getTotalSegments() >= 3 ? $uri->getSegment(3) : '';
   <!-- Main Content Wrapper -->
   <div class="main-wrapper">
     <!-- Header Topbar -->
-    <header class="topbar shadow-sm">
-      <div class="d-flex align-items-center">
-        <button class="btn btn-sm btn-outline-secondary d-lg-none me-2" id="sidebarToggle">
+    <header class="topbar">
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggle" style="padding:0.35rem 0.6rem;">
           <i class="bi bi-list"></i>
         </button>
         <h1 class="topbar-title"><?= esc($title ?? 'Dashboard') ?></h1>
       </div>
-      <div>
-        <a href="<?= site_url('logout') ?>" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1">
-          <i class="bi bi-box-arrow-right"></i>Logout
+      <div class="d-flex align-items-center gap-2">
+        <a href="<?= site_url('logout') ?>" class="btn btn-sm btn-outline-secondary" style="color:var(--danger); border-color:var(--danger);">
+          <i class="bi bi-box-arrow-right"></i> Keluar
         </a>
       </div>
     </header>

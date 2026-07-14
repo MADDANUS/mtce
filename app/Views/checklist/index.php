@@ -1,117 +1,222 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<?php
+// Helper to build the create form URL preserving the dynamic machine ID
+$getCreateUrl = function(string $categorySlug) use ($lokasiSlug, $jenisSlug, $idMesin) {
+    $url = "checklist/{$lokasiSlug}/{$jenisSlug}/create/{$categorySlug}";
+    if (!empty($idMesin)) {
+        $url .= "?id_mesin=" . (int)$idMesin;
+    }
+    return site_url($url);
+};
+?>
+
+<div class="page-header">
   <div>
-    <a href="<?= site_url("checklist/{$lokasiSlug}") ?>" class="btn btn-sm btn-outline-secondary mb-2">&laquo; Kembali ke Tipe</a>
-    <h5 class="mb-0 text-dark fw-bold">Buat Pengecekan Baru (<?= esc($jenisName) ?> <?= esc($lokasiName) ?>)</h5>
+    <a href="<?= site_url("checklist/{$lokasiSlug}") ?>" class="btn btn-sm btn-outline-secondary mb-2">
+      <i class="bi bi-arrow-left"></i> Kembali ke Tipe
+    </a>
+    <h5 class="mb-0">
+      Buat Pengecekan Baru — <span style="color:var(--accent)"><?= esc($jenisName) ?> <?= esc($lokasiName) ?></span>
+      <?php if (!empty($idMesin)): ?>
+        <span class="badge bg-info ms-2" style="font-size:0.75rem;"><i class="bi bi-qr-code me-1"></i>Mesin Terkunci</span>
+      <?php endif; ?>
+    </h5>
   </div>
 </div>
 
-<div class="row g-4 justify-content-center">
+<div class="row g-3">
   <?php if (strtolower($jenisSlug) === 'overhaul'): ?>
-    <!-- OVERHAUL CARDS (2 Cards) -->
-    
+    <!-- OVERHAUL CARDS -->
+
     <!-- Card Bar Feeder CNC -->
-    <div class="col-md-5">
-      <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden card-hover transition" style="transition: transform 0.2s, box-shadow 0.2s;">
+    <div class="col-md-6">
+      <div class="card card-hover h-100">
         <div class="card-body p-4 d-flex flex-column">
-          <div class="d-flex align-items-center mb-3">
-            <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3 me-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-hdd-stack-fill" viewBox="0 0 16 16">
-                <path d="M2 9a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2H2zm0-7a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>
-              </svg>
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="width:44px;height:44px;background:var(--accent-light);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="bi bi-hdd-stack-fill" style="color:var(--accent);font-size:1.2rem;"></i>
             </div>
-            <h5 class="card-title mb-0 fw-bold">Bar Feeder CNC</h5>
+            <div>
+              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);">Overhaul</div>
+              <h6 class="mb-0 fw-700" style="font-weight:700;">Bar Feeder CNC</h6>
+            </div>
           </div>
-          <p class="card-text text-muted mb-4">Pengecekan overhaul menyeluruh untuk unit Bar Feeder CNC, meliputi Equipment Check, Electrical Check, dan pengujian fungsi (Function Test).</p>
-          <a href="<?= site_url("checklist/{$lokasiSlug}/{$jenisSlug}/create/bar-feeder-cnc") ?>" class="btn btn-primary w-100 mt-auto fw-semibold py-2">Mulai Overhaul &raquo;</a>
+          <p style="font-size:0.83rem;color:var(--text-secondary);line-height:1.6;" class="mb-4">
+            Pengecekan overhaul menyeluruh untuk unit Bar Feeder CNC, meliputi Equipment Check, Electrical Check, dan Function Test.
+          </p>
+          <a href="<?= $getCreateUrl('bar-feeder-cnc') ?>" class="btn btn-primary w-100 mt-auto">
+            <i class="bi bi-play-fill"></i> Mulai Overhaul
+          </a>
         </div>
       </div>
     </div>
 
     <!-- Card Mesin CNC -->
-    <div class="col-md-5">
-      <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden card-hover transition" style="transition: transform 0.2s, box-shadow 0.2s;">
+    <div class="col-md-6">
+      <div class="card card-hover h-100">
         <div class="card-body p-4 d-flex flex-column">
-          <div class="d-flex align-items-center mb-3">
-            <div class="bg-success bg-opacity-10 text-success p-3 rounded-3 me-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-cpu-fill" viewBox="0 0 16 16">
-                <path d="M6.5 1A1.5 1.5 0 0 0 5 2.5v1A1.5 1.5 0 0 0 6.5 5h3A1.5 1.5 0 0 0 11 3.5v-1A1.5 1.5 0 0 0 9.5 1h-3Zm0 11a1.5 1.5 0 0 0-1.5 1.5v1A1.5 1.5 0 0 0 6.5 16h3a1.5 1.5 0 0 0 1.5-1.5v-1A1.5 1.5 0 0 0 9.5 12h-3Z"/>
-                <path d="M1 6.5A1.5 1.5 0 0 1 2.5 5h1A1.5 1.5 0 0 1 5 6.5v3A1.5 1.5 0 0 1 3.5 11h-1A1.5 1.5 0 0 1 1 9.5v-3Zm11 0A1.5 1.5 0 0 1 13.5 5h1a1.5 1.5 0 0 1 1.5 6.5v3a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5v-3Z"/>
-              </svg>
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="width:44px;height:44px;background:#d1fae5;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="bi bi-cpu-fill" style="color:var(--success);font-size:1.2rem;"></i>
             </div>
-            <h5 class="card-title mb-0 fw-bold">Mesin CNC</h5>
+            <div>
+              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);">Overhaul</div>
+              <h6 class="mb-0" style="font-weight:700;">Mesin CNC</h6>
+            </div>
           </div>
-          <p class="card-text text-muted mb-4">Pengecekan overhaul menyeluruh untuk Mesin CNC utama, meliputi Ballscrew, Belt, Bearing, Electrical Check, dan pengujian fungsi (Function Test).</p>
-          <a href="<?= site_url("checklist/{$lokasiSlug}/{$jenisSlug}/create/mesin-cnc") ?>" class="btn btn-success text-white w-100 mt-auto fw-semibold py-2">Mulai Overhaul &raquo;</a>
+          <p style="font-size:0.83rem;color:var(--text-secondary);line-height:1.6;" class="mb-4">
+            Pengecekan overhaul menyeluruh untuk Mesin CNC utama, meliputi Ballscrew, Belt, Bearing, Electrical Check, dan Function Test.
+          </p>
+          <a href="<?= $getCreateUrl('mesin-cnc') ?>" class="btn btn-success w-100 mt-auto">
+            <i class="bi bi-play-fill"></i> Mulai Overhaul
+          </a>
         </div>
       </div>
     </div>
 
   <?php else: ?>
-    <!-- PREVENTIVE CARDS (3 Cards) -->
+    <!-- PREVENTIVE CARDS (6 Kategori) -->
 
-    <!-- Card Penerangan -->
+    <!-- 1. Penerangan -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden card-hover transition" style="transition: transform 0.2s, box-shadow 0.2s;">
+      <div class="card card-hover h-100">
         <div class="card-body p-4 d-flex flex-column">
-          <div class="d-flex align-items-center mb-3">
-            <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-3 me-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-lightbulb-fill" viewBox="0 0 16 16">
-                <path d="M2 6a6 6 0 1 1 10.174 4.31c-.203.196-.359.4-.453.619l-.762 1.769A.5.5 0 0 1 8 13H8a.5.5 0 0 1-.46-.302l-.761-1.77a1.964 1.964 0 0 0-.453-.618A5.984 5.984 0 0 1 2 6zm3 8.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
-              </svg>
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="width:44px;height:44px;background:#fef3c7;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="bi bi-lightbulb-fill" style="color:var(--warning);font-size:1.2rem;"></i>
             </div>
-            <h5 class="card-title mb-0 fw-bold">Penerangan</h5>
+            <div>
+              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);">Preventive</div>
+              <h6 class="mb-0" style="font-weight:700;">Penerangan</h6>
+            </div>
           </div>
-          <p class="card-text text-muted mb-4">Pengecekan lampu sorot, headstock room, cutting room, lampu area atas mesin, dan lumen ruangan.</p>
-          <a href="<?= site_url("checklist/{$lokasiSlug}/{$jenisSlug}/create/penerangan") ?>" class="btn btn-warning text-white w-100 mt-auto fw-semibold">Mulai Pengecekan &raquo;</a>
+          <p style="font-size:0.83rem;color:var(--text-secondary);line-height:1.6;" class="mb-4">
+            Cek lampu sorot, headstock room, cutting room, lampu area atas mesin, kelengkapan dan lumen.
+          </p>
+          <a href="<?= $getCreateUrl('penerangan') ?>" class="btn btn-primary w-100 mt-auto">
+            <i class="bi bi-play-fill"></i> Mulai Pengecekan
+          </a>
         </div>
       </div>
     </div>
 
-    <!-- Card Kabel & Pipa -->
+    <!-- 2. Kabel & Pipa -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden card-hover transition" style="transition: transform 0.2s, box-shadow 0.2s;">
+      <div class="card card-hover h-100">
         <div class="card-body p-4 d-flex flex-column">
-          <div class="d-flex align-items-center mb-3">
-            <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3 me-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-hdd-network-fill" viewBox="0 0 16 16">
-                <path d="M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h5.5v3A1.5 1.5 0 0 0 6 11.5c0 .253.062.492.17.703l-1.015 1.014A.5.5 0 0 0 5.5 14h5a.5.5 0 0 0 .344-.863l-1.01-1.01c.107-.21.166-.45.166-.703a1.5 1.5 0 0 0-1.5-1.5v-3H14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zM2 3h12a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm6.5 8.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>
-              </svg>
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="width:44px;height:44px;background:var(--accent-light);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="bi bi-hdd-network-fill" style="color:var(--accent);font-size:1.2rem;"></i>
             </div>
-            <h5 class="card-title mb-0 fw-bold">Kabel & Pipa</h5>
+            <div>
+              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);">Preventive</div>
+              <h6 class="mb-0" style="font-weight:700;">Kabel &amp; Pipa</h6>
+            </div>
           </div>
-          <p class="card-text text-muted mb-4">Pengecekan instalasi kabel mesin ke panel/bartop, selang hydraulic, saluran amano/vacuum, kabel, dan selang oli.</p>
-          <a href="<?= site_url("checklist/{$lokasiSlug}/{$jenisSlug}/create/kabel-dan-pipa") ?>" class="btn btn-primary w-100 mt-auto fw-semibold">Mulai Pengecekan &raquo;</a>
+          <p style="font-size:0.83rem;color:var(--text-secondary);line-height:1.6;" class="mb-4">
+            Cek kabel mesin ke panel/bartop, selang hydraulic, saluran amano/vacuum, kabel, dan selang oli.
+          </p>
+          <a href="<?= $getCreateUrl('kabel-dan-pipa') ?>" class="btn btn-primary w-100 mt-auto">
+            <i class="bi bi-play-fill"></i> Mulai Pengecekan
+          </a>
         </div>
       </div>
     </div>
 
-    <!-- Card Angin Bocor -->
+    <!-- 3. Angin Bocor -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden card-hover transition" style="transition: transform 0.2s, box-shadow 0.2s;">
+      <div class="card card-hover h-100">
         <div class="card-body p-4 d-flex flex-column">
-          <div class="d-flex align-items-center mb-3">
-            <div class="bg-info bg-opacity-10 text-info p-3 rounded-3 me-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-wind" viewBox="0 0 16 16">
-                <path d="M12.5 2a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11a.5.5 0 0 1 .5-.5zm-2-1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm-2 2a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-1 0v-9a.5.5 0 0 1 .5-.5zm-2 1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zm-2 1a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5z"/>
-              </svg>
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="width:44px;height:44px;background:#e0f2fe;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="bi bi-wind" style="color:#0284c7;font-size:1.2rem;"></i>
             </div>
-            <h5 class="card-title mb-0 fw-bold">Angin Bocor</h5>
+            <div>
+              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);">Preventive</div>
+              <h6 class="mb-0" style="font-weight:700;">Angin Bocor</h6>
+            </div>
           </div>
-          <p class="card-text text-muted mb-4">Pengecekan kebocoran solenoid unit, regulator unit, fitting, coupler, selang angin, dan air gun.</p>
-          <a href="<?= site_url("checklist/{$lokasiSlug}/{$jenisSlug}/create/angin-bocor") ?>" class="btn btn-info text-white w-100 mt-auto fw-semibold">Mulai Pengecekan &raquo;</a>
+          <p style="font-size:0.83rem;color:var(--text-secondary);line-height:1.6;" class="mb-4">
+            Cek kebocoran solenoid, regulator, fitting, coupler, selang angin bartop/mesin, dan air gun.
+          </p>
+          <a href="<?= $getCreateUrl('angin-bocor') ?>" class="btn btn-primary w-100 mt-auto">
+            <i class="bi bi-play-fill"></i> Mulai Pengecekan
+          </a>
         </div>
       </div>
     </div>
+
+    <!-- 4. Bearing -->
+    <div class="col-md-4">
+      <div class="card card-hover h-100">
+        <div class="card-body p-4 d-flex flex-column">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="width:44px;height:44px;background:#fce7f3;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="bi bi-gear-wide-connected" style="color:#db2777;font-size:1.2rem;"></i>
+            </div>
+            <div>
+              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);">Preventive</div>
+              <h6 class="mb-0" style="font-weight:700;">Bearing</h6>
+            </div>
+          </div>
+          <p style="font-size:0.83rem;color:var(--text-secondary);line-height:1.6;" class="mb-4">
+            Cek noise &amp; temperature pada Bearing Spindle, Chucking, Center Shaft A/B/C, dan Bearing CAM.
+          </p>
+          <a href="<?= $getCreateUrl('bearing') ?>" class="btn btn-primary w-100 mt-auto">
+            <i class="bi bi-play-fill"></i> Mulai Pengecekan
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Gearbox -->
+    <div class="col-md-4">
+      <div class="card card-hover h-100">
+        <div class="card-body p-4 d-flex flex-column">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="width:44px;height:44px;background:#ede9fe;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="bi bi-gear-fill" style="color:#7c3aed;font-size:1.2rem;"></i>
+            </div>
+            <div>
+              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);">Preventive</div>
+              <h6 class="mb-0" style="font-weight:700;">Gearbox</h6>
+            </div>
+          </div>
+          <p style="font-size:0.83rem;color:var(--text-secondary);line-height:1.6;" class="mb-4">
+            Cek kondisi oli (terlihat dari lubang pengisian), mata gear (tidak backloss), dan nok seal (tidak rembes).
+          </p>
+          <a href="<?= $getCreateUrl('gearbox') ?>" class="btn btn-primary w-100 mt-auto">
+            <i class="bi bi-play-fill"></i> Mulai Pengecekan
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Belt -->
+    <div class="col-md-4">
+      <div class="card card-hover h-100">
+        <div class="card-body p-4 d-flex flex-column">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="width:44px;height:44px;background:#d1fae5;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="bi bi-arrow-repeat" style="color:var(--success);font-size:1.2rem;"></i>
+            </div>
+            <div>
+              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);">Preventive</div>
+              <h6 class="mb-0" style="font-weight:700;">Belt</h6>
+            </div>
+          </div>
+          <p style="font-size:0.83rem;color:var(--text-secondary);line-height:1.6;" class="mb-4">
+            Cek sambungan &amp; kondisi belt pada Belt Spindle, Gearbox, Motor, Optional, Oil Pump, dan Belt CAM.
+          </p>
+          <a href="<?= $getCreateUrl('belt') ?>" class="btn btn-primary w-100 mt-auto">
+            <i class="bi bi-play-fill"></i> Mulai Pengecekan
+          </a>
+        </div>
+      </div>
+    </div>
+
   <?php endif; ?>
 </div>
-
-<style>
-  .card-hover:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 .4rem 1.2rem rgba(0,0,0,.12)!important;
-  }
-</style>
 
 <?= view('layout/footer') ?>

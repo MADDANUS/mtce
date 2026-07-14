@@ -44,9 +44,18 @@
               <td><?= esc($m['serial_nomor']) ?></td>
               <td><span class="badge bg-secondary"><?= esc($m['lokasi']) ?></span></td>
               <td>
-                <a href="<?= site_url('admin/mesin/edit/' . $m['id_mesin']) ?>" class="btn btn-sm btn-outline-secondary">Edit</a>
-                <a href="<?= site_url('admin/mesin/delete/' . $m['id_mesin']) ?>" class="btn btn-sm btn-outline-danger"
-                   onclick="return confirm('Hapus mesin <?= esc($m['no_mesin'], 'js') ?>?');">Hapus</a>
+                <div class="d-flex gap-1 flex-wrap">
+                  <button type="button" class="btn btn-sm btn-outline-primary show-qr-btn"
+                          data-id="<?= (int)$m['id_mesin'] ?>"
+                          data-no="<?= esc($m['no_mesin']) ?>"
+                          data-type="<?= esc($m['type_mesin']) ?>"
+                          data-lokasi="<?= esc($m['lokasi']) ?>">
+                    <i class="bi bi-qr-code"></i> QR
+                  </button>
+                  <a href="<?= site_url('admin/mesin/edit/' . $m['id_mesin']) ?>" class="btn btn-sm btn-outline-secondary">Edit</a>
+                  <a href="<?= site_url('admin/mesin/delete/' . $m['id_mesin']) ?>" class="btn btn-sm btn-outline-danger"
+                     onclick="return confirm('Hapus mesin <?= esc($m['no_mesin'], 'js') ?>?');">Hapus</a>
+                </div>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -55,5 +64,161 @@
     </div>
   <?php endif; ?>
 </div>
+
+<!-- Modal QR Code -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 340px;">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-0 pb-0">
+        <h6 class="modal-title fw-bold" id="qrModalLabel">QR Code Mesin</h6>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center p-4">
+        <div class="bg-light p-3 rounded-4 mb-3 d-inline-block">
+          <img id="qrImage" src="" alt="QR Code" class="img-fluid" style="width: 200px; height: 200px; display: block; margin: 0 auto; image-rendering: pixelated;">
+        </div>
+        <h6 class="fw-bold mb-1" id="qrNoMesin"></h6>
+        <p class="text-muted small mb-2" id="qrTypeMesin"></p>
+        <span class="badge bg-primary" id="qrLokasiMesin" style="background-color: var(--accent) !important;"></span>
+      </div>
+      <div class="modal-footer border-0 pt-0 justify-content-center">
+        <button type="button" class="btn btn-sm btn-primary w-100 py-2 rounded-3" id="printQrBtn">
+          <i class="bi bi-printer-fill me-1"></i> Cetak QR Code
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
+    const qrImage = document.getElementById('qrImage');
+    const qrNoMesin = document.getElementById('qrNoMesin');
+    const qrTypeMesin = document.getElementById('qrTypeMesin');
+    const qrLokasiMesin = document.getElementById('qrLokasiMesin');
+
+    document.querySelectorAll('.show-qr-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        const no = this.getAttribute('data-no');
+        const type = this.getAttribute('data-type');
+        const lokasi = this.getAttribute('data-lokasi');
+
+        // URL scan mesin MTCE
+        const scanUrl = "<?= site_url('scan/mesin/') ?>" + id;
+
+        // Load QR Code menggunakan API qrserver gratis
+        qrImage.src = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(scanUrl);
+
+        qrNoMesin.innerText = no;
+        qrTypeMesin.innerText = type;
+        qrLokasiMesin.innerText = lokasi;
+
+        qrModal.show();
+      });
+    });
+
+    document.getElementById('printQrBtn').addEventListener('click', function() {
+      const no = qrNoMesin.innerText;
+      const type = qrTypeMesin.innerText;
+      const lokasi = qrLokasiMesin.innerText;
+      const qrSrc = qrImage.src;
+
+      // Buka popup window baru khusus cetak
+      const printWin = window.open('', '_blank', 'width=450,height=550');
+      printWin.document.write(`
+        <html>
+        <head>
+          <title>Cetak QR Code - \${no}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+          <style>
+            body {
+              font-family: 'Inter', sans-serif;
+              text-align: center;
+              padding: 20px;
+              margin: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              height: 100vh;
+              box-sizing: border-box;
+              background-color: #ffffff;
+            }
+            .card {
+              border: 3px solid #e5e7eb;
+              border-radius: 24px;
+              padding: 30px;
+              max-width: 320px;
+              background: #ffffff;
+              box-sizing: border-box;
+            }
+            .logo {
+              font-size: 0.75rem;
+              font-weight: 700;
+              letter-spacing: 0.12em;
+              color: #4f46e5;
+              margin-bottom: 25px;
+              text-transform: uppercase;
+            }
+            .qr-wrapper {
+              background: #f9fafb;
+              padding: 15px;
+              border-radius: 16px;
+              display: inline-block;
+              margin-bottom: 25px;
+              border: 1px solid #f3f4f6;
+            }
+            .qr-img {
+              width: 210px;
+              height: 210px;
+              display: block;
+            }
+            h2 {
+              margin: 0 0 6px 0;
+              font-size: 1.6rem;
+              font-weight: 700;
+              color: #111827;
+            }
+            p {
+              margin: 0 0 18px 0;
+              font-size: 0.85rem;
+              color: #6b7280;
+            }
+            .badge {
+              background: #4f46e5;
+              color: #ffffff;
+              padding: 6px 14px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              border-radius: 50px;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <div class="logo">MTCE SYSTEM QR</div>
+            <div class="qr-wrapper">
+              <img class="qr-img" src="\${qrSrc}">
+            </div>
+            <h2>\${no}</h2>
+            <p>\${type}</p>
+            <span class="badge">\${lokasi}</span>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWin.document.close();
+    });
+  });
+</script>
 
 <?= view('layout/footer') ?>

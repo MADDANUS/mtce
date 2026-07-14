@@ -36,103 +36,134 @@ class CreateTransaksiOverhaulAndOverhaulParameters extends Migration
         $this->forge->addForeignKey('id_transaksi', 'transaksi_check', 'id_transaksi', 'CASCADE', 'CASCADE');
         $this->forge->createTable('transaksi_overhaul');
 
-        // 2. Seeding parameter Overhaul untuk MFG 1 & MFG 2
+        // 2. Tambah kolom struktur di master_parameter_check
+        $this->forge->addColumn('master_parameter_check', [
+            'section_check' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 150,
+                'null'       => true,
+                'after'      => 'kategori',
+            ],
+            'sub_item_check' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 150,
+                'null'       => true,
+                'after'      => 'bagian_check',
+            ],
+        ]);
+
+        // 3. Seeding parameter Overhaul untuk MFG 1 & MFG 2
         $now = date('Y-m-d H:i:s');
         $locations = ['MFG 1', 'MFG 2'];
         $insertData = [];
 
-        // Bar Feeder CNC Parameters (29 items)
+        // Bar Feeder CNC Parameters
+        // Kolom: section_check, bagian_check, sub_item_check, point_check, standard_check
         $barFeederRows = [
             // 1. Equipment Check
-            ['1. EQUIPMENT CHECK', 'RELL URETHAN', 'RUBBER LAYER', 'NOT PEELED'],
-            ['1. EQUIPMENT CHECK', 'FEED BAR', 'TENSION', '3 - 5 CM'],
-            ['1. EQUIPMENT CHECK', 'MOTOR POWER', 'TENSION', '3 - 5 CM'],
-            ['1. EQUIPMENT CHECK', 'SYNCRONOUS', 'TENSION', '3 - 5 CM'],
-            ['1. EQUIPMENT CHECK', 'MATERIAL PUSH', 'TENSION', '3 - 5 CM'],
-            ['1. EQUIPMENT CHECK', 'FEED BAR/CJ/FC', 'STANDARD CONDITION', 'BASE ON BARTOP TYPE'],
-            ['1. EQUIPMENT CHECK', 'FRONT VIBRATION ROLLER DIA .20MM', 'MECHANICS, ROLLER, & FUCTION', 'OPEN - CLOSE STANDARD ROLLER'],
-            ['1. EQUIPMENT CHECK', 'NR IN VIBRATION ROLLER DIA 40MM ROLLER ARM', 'MECHANICS, ROLLER, & FUNCTION', 'OPEN - CLOSE STANDARD ROLLER'],
-            ['1. EQUIPMENT CHECK', 'SYNCHRONOUS DEVICE', 'MECHANICS & FUNCTION', 'MACHINE CONNECTION'],
-            ['1. EQUIPMENT CHECK', 'INDEX DISK', 'MECHANICS & FUNCTION', 'FLAT IRON PLATE'],
-            ['1. EQUIPMENT CHECK', 'SLIDER DISK', 'MECHANICS & FUNCTION', 'STRAIGHT PLATE'],
-            ['1. EQUIPMENT CHECK', 'BAR TIP DETECTION', 'MECHANICS & FUNCTION', 'NOT BENT'],
-            ['1. EQUIPMENT CHECK', 'SHUTTER 1', 'MECHANICS & FUNCTION', 'NOT BENT'],
-            ['1. EQUIPMENT CHECK', 'SHUTTER 2', 'MECHANICS & FUNCTION', 'NOT BENT'],
-            ['1. EQUIPMENT CHECK', 'SHUTTER 3', 'MECHANICS & FUNCTION', 'NOT BENT'],
-            ['1. EQUIPMENT CHECK', 'SHUTTER 4', 'MECHANICS & FUNCTION', 'NOT BENT'],
-            ['1. EQUIPMENT CHECK', 'CLAMP', 'MECHANICS & FUNCTION', 'NOT BROKEN'],
-            ['1. EQUIPMENT CHECK', 'SOLEOID VALVE NR IN L', 'MECHANICS & FUNCTION', 'MOVING VALVE'],
-            ['1. EQUIPMENT CHECK', 'BAR FEEDER OIL', 'CHANGE', 'SPINDLE 10'],
+            ['EQUIPMENT CHECK', 'RELL URETHAN', null, 'RUBBER LAYER', 'NOT PEELED'],
+            ['EQUIPMENT CHECK', 'RANTAI', 'FEED BAR', 'TENSION', '3 - 5 CM'],
+            ['EQUIPMENT CHECK', 'RANTAI', 'MOTOR POWER', 'TENSION', '3 - 5 CM'],
+            ['EQUIPMENT CHECK', 'RANTAI', 'SYNCRONOUS', 'TENSION', '3 - 5 CM'],
+            ['EQUIPMENT CHECK', 'RANTAI', 'MATERIAL PUSH', 'TENSION', '3 - 5 CM'],
+            ['EQUIPMENT CHECK', 'FEED BAR/CJ/FC', null, 'STANDARD CONDITION', 'BASE ON BARTOP TYPE'],
+            ['EQUIPMENT CHECK', 'FRONT VIBRATION ROLLER DIA .20MM', null, 'MECHANICS, ROLLER, & FUCTION', 'OPEN - CLOSE STANDARD ROLLER'],
+            ['EQUIPMENT CHECK', 'NR IN VIBRATION ROLLER DIA 40MM ROLLER ARM', null, 'MECHANICS, ROLLER, & FUNCTION', 'OPEN - CLOSE STANDARD ROLLER'],
+            ['EQUIPMENT CHECK', 'SYNCHRONOUS DEVICE', null, 'MECHANICS & FUNCTION', 'MACHINE CONNECTION'],
+            ['EQUIPMENT CHECK', 'INDEX DISK', null, 'MECHANICS & FUNCTION', 'FLAT IRON PLATE'],
+            ['EQUIPMENT CHECK', 'SLIDER DISK', null, 'MECHANICS & FUNCTION', 'STRAIGHT PLATE'],
+            ['EQUIPMENT CHECK', 'BAR TIP DETECTION', null, 'MECHANICS & FUNCTION', 'NOT BENT'],
+            ['EQUIPMENT CHECK', 'SHUTTER 1', null, 'MECHANICS & FUNCTION', 'NOT BENT'],
+            ['EQUIPMENT CHECK', 'SHUTTER 2', null, 'MECHANICS & FUNCTION', 'NOT BENT'],
+            ['EQUIPMENT CHECK', 'SHUTTER 3', null, 'MECHANICS & FUNCTION', 'NOT BENT'],
+            ['EQUIPMENT CHECK', 'SHUTTER 4', null, 'MECHANICS & FUNCTION', 'NOT BENT'],
+            ['EQUIPMENT CHECK', 'CLAMP', null, 'MECHANICS & FUNCTION', 'NOT BROKEN'],
+            ['EQUIPMENT CHECK', 'SOLEOID VALVE NR IN L', null, 'MECHANICS & FUNCTION', 'MOVING VALVE'],
+            ['EQUIPMENT CHECK', 'BAR FEEDER OIL', null, 'CHANGE', 'SPINDLE 10'],
 
             // 2. Electrical Check
-            ['2. ELECTRICAL CHECK', 'OPERATION BOX PANEL', 'PHYSICAL', 'NOT BROKEN'],
-            ['2. ELECTRICAL CHECK', 'TOUCH PANEL', 'PHYSICAL & FUNCTION', 'NOT REFLECTING'],
-            ['2. ELECTRICAL CHECK', 'CONTROL SWITCH', 'PHYSICAL & FUNCTION', 'NOT BROKEN'],
-            ['2. ELECTRICAL CHECK', 'AC SERVO MOTOR ( M1 )', 'PHYSICAL & FUNCTION', 'NOT BROKEN'],
-            ['2. ELECTRICAL CHECK', 'AC SERVO AMPLIFIER', 'PHYSICAL & FUNCTION', 'NOT BROKEN'],
-            ['2. ELECTRICAL CHECK', 'AC MOTOR GEARBOX', 'PHYSICAL & FUNCTION', 'NOT BROKEN'],
-            ['2. ELECTRICAL CHECK', 'GEAR HEAD', 'PHYSICAL & FUNCTION', 'NOT BROKEN'],
-            ['2. ELECTRICAL CHECK', 'LIMIT SWITCH / SENSOR', 'PHYSICAL & FUNCTION', 'NOT BROKEN'],
-            ['2. ELECTRICAL CHECK', 'OIL MOTOR PUMP', 'SOUND, FUNCTION & PHYSICAL CONDITION', 'NOT BROKEN'],
-            ['2. ELECTRICAL CHECK', 'BATTERY MEMORY', 'VOLTAGE CAPACITY', '3 - 3.6 VDC'],
+            ['ELECTRICAL CHECK', 'OPERATION BOX PANEL', null, 'PHYSICAL', 'NOT BROKEN'],
+            ['ELECTRICAL CHECK', 'TOUCH PANEL', null, 'PHYSICAL & FUNCTION', 'NOT REFLECTING'],
+            ['ELECTRICAL CHECK', 'CONTROL SWITCH', null, 'PHYSICAL & FUNCTION', 'NOT BROKEN'],
+            ['ELECTRICAL CHECK', 'AC SERVO MOTOR ( M1 )', null, 'PHYSICAL & FUNCTION', 'NOT BROKEN'],
+            ['ELECTRICAL CHECK', 'AC SERVO AMPLIFIER', null, 'PHYSICAL & FUNCTION', 'NOT BROKEN'],
+            ['ELECTRICAL CHECK', 'AC MOTOR GEARBOX', null, 'PHYSICAL & FUNCTION', 'NOT BROKEN'],
+            ['ELECTRICAL CHECK', 'GEAR HEAD', null, 'PHYSICAL & FUNCTION', 'NOT BROKEN'],
+            ['ELECTRICAL CHECK', 'LIMIT SWITCH / SENSOR', null, 'PHYSICAL & FUNCTION', 'NOT BROKEN'],
+            ['ELECTRICAL CHECK', 'OIL MOTOR PUMP', null, 'SOUND, FUNCTION & PHYSICAL CONDITION', 'NOT BROKEN'],
+            ['ELECTRICAL CHECK', 'BATTERY MEMORY', null, 'VOLTAGE CAPACITY', '3 - 3.6 VDC'],
 
-            // 3. Function Test
-            ['3. FUNCTION TEST', 'CHECK MANUAL', 'FUNCTION TEST', ''],
-            ['3. FUNCTION TEST', 'CHECK AUTO', 'FUNCTION TEST', ''],
-            ['3. FUNCTION TEST', 'CHECK MDI', 'FUNCTION TEST', ''],
-            ['3. FUNCTION TEST', 'CHECK ALARM', 'FUNCTION TEST', ''],
+            // Bottom Items (No Section Check)
+            [null, 'CHECK MANUAL', null, 'FUNCTION TEST', ''],
+            [null, 'CHECK AUTO', null, 'FUNCTION TEST', ''],
+            [null, 'CHECK MDI', null, 'FUNCTION TEST', ''],
+            [null, 'CHECK ALARM', null, 'FUNCTION TEST', ''],
         ];
 
-        // Mesin CNC Parameters (44 items)
+        // Mesin CNC Parameters
+        // Kolom: section_check, bagian_check, sub_item_check, point_check, standard_check
         $mesinCncRows = [
             // 1. Ballscrew
-            ['1. BALLSCREW', 'X AXIS', 'BACKLASH & SOUND', '< 15μ & SMOOTH'],
-            ['1. BALLSCREW', 'Y AXIS', 'BACKLASH & SOUND', '< 15μ & SMOOTH'],
-            ['1. BALLSCREW', 'Z AXIS', 'BACKLASH & SOUND', '< 15μ & SMOOTH'],
-            ['1. BALLSCREW', 'XB AXIS', 'BACKLASH & SOUND', '< 15μ & SMOOTH'],
-            ['1. BALLSCREW', 'ZB AXIS', 'BACKLASH & SOUND', '< 15μ & SMOOTH'],
-            ['1. BALLSCREW', 'YB AXIS', 'BACKLASH & SOUND', '< 15μ & SMOOTH'],
-            ['1. BALLSCREW', 'ROTARY GUIDEUSH', 'BACKLASH', '< 10μ'],
-            ['1. BALLSCREW', 'BALL SCREW ( CINCOM )', 'GREASING', '10 GRAM'],
-            ['1. BALLSCREW', 'LUBRICANT OIL PUMP', 'PHYSICAL', 'CLEAN'],
-            ['1. BALLSCREW', 'BATTERY ABS', 'CHANGE / CHECK DIAGNOS', '5 - 6 VDC'],
-            ['1. BALLSCREW', 'BATTERY MEMORY', 'CHANGE / CHECK DIAGNOS', '5 - 6 VDC'],
+            ['BALLSCREW', 'X AXIS', null, 'BACKLASH & SOUND', '< 15μ & SMOOTH'],
+            ['BALLSCREW', 'Y AXIS', null, 'BACKLASH & SOUND', '< 15μ & SMOOTH'],
+            ['BALLSCREW', 'Z AXIS', null, 'BACKLASH & SOUND', '< 15μ & SMOOTH'],
+            ['BALLSCREW', 'XB AXIS', null, 'BACKLASH & SOUND', '< 15μ & SMOOTH'],
+            ['BALLSCREW', 'ZB AXIS', null, 'BACKLASH & SOUND', '< 15μ & SMOOTH'],
+            ['BALLSCREW', 'YB AXIS', null, 'BACKLASH & SOUND', '< 15μ & SMOOTH'],
+            ['BALLSCREW', 'ROTARY GUIDEUSH', null, 'BACKLASH', '< 10μ'],
+            ['BALLSCREW', 'BALL SCREW ( CINCOM )', null, 'GREASING', '10 GRAM'],
+            ['BALLSCREW', 'LUBRICANT OIL PUMP', null, 'PHYSICAL', 'CLEAN'],
+            ['BALLSCREW', 'BATTERY ABS', null, 'CHANGE / CHECK DIAGNOS', '5 - 6 VDC'],
+            ['BALLSCREW', 'BATTERY MEMORY', null, 'CHANGE / CHECK DIAGNOS', '5 - 6 VDC'],
 
             // 2. Belt
-            ['2. BELT', 'SPINDLE HEAD 1', 'TENSION & BELT', 'NOT CRACKED / NOT WORN OUT / NOT LOOSE'],
-            ['2. BELT', 'SPINDLE HEAD 2', 'TENSION & BELT', 'NOT CRACKED / NOT WORN OUT / NOT LOOSE'],
-            ['2. BELT', 'COUNTER UNIT / RGB', 'TENSION & BELT', 'NOT CRACKED / NOT WORN OUT / NOT LOOSE'],
-            ['2. BELT', 'CONVEYOR', 'TENSION & BELT', 'NOT CRACKED / NOT WORN OUT / NOT LOOSE'],
-            ['2. BELT', 'BARFEEDER', 'TENSION & BELT', 'NOT CRACKED / NOT WORN OUT / NOT LOOSE'],
+            ['BELT', 'SPINDLE HEAD 1', null, 'TENSION & BELT', 'NOT CRACKED / NOT WORN OUT / NOT LOOSE'],
+            ['BELT', 'SPINDLE HEAD 2', null, 'TENSION & BELT', 'NOT CRACKED / NOT WORN OUT / NOT LOOSE'],
+            ['BELT', 'COUNTER UNIT / RGB', null, 'TENSION & BELT', 'NOT CRACKED / NOT WORN OUT / NOT LOOSE'],
+            ['BELT', 'CONVEYOR', null, 'TENSION & BELT', 'NOT CRACKED / NOT WORN OUT / NOT LOOSE'],
+            ['BELT', 'BARFEEDER', null, 'TENSION & BELT', 'NOT CRACKED / NOT WORN OUT / NOT LOOSE'],
 
             // 3. Bearing
-            ['3. BEARING', 'SPINDLE HEAD 1 (1000/3000/5000 RPM)', 'ROTATION & SOUND', 'NOT NOISY'],
-            ['3. BEARING', 'SPINDLE HEAD 2 (1000/3000/5000 RPM)', 'ROTATION & SOUND', 'NOT NOISY'],
-            ['3. BEARING', 'COUNTER UNIT / RGB (1000/3000/5000 RPM)', 'ROTATION & SOUND', 'NOT NOISY'],
-            ['3. BEARING', 'SPINDLE CHUCK HEAD 1 (1000/3000/5000 RPM)', 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
-            ['3. BEARING', 'SPINDLE CHUCK HEAD 2 (1000/3000/5000 RPM)', 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
-            ['3. BEARING', 'CROSS DRILL UNIT (1000/3000/5000 RPM)', 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
-            ['3. BEARING', 'CONVEYOR', 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
+            ['BEARING', 'SPINDLE HEAD 1', '1000 RPM', 'ROTATION & SOUND', 'NOT NOISY'],
+            ['BEARING', 'SPINDLE HEAD 1', '3000 RPM', 'ROTATION & SOUND', 'NOT NOISY'],
+            ['BEARING', 'SPINDLE HEAD 1', '5000 RPM', 'ROTATION & SOUND', 'NOT NOISY'],
+            ['BEARING', 'SPINDLE HEAD 2', '1000 RPM', 'ROTATION & SOUND', 'NOT NOISY'],
+            ['BEARING', 'SPINDLE HEAD 2', '3000 RPM', 'ROTATION & SOUND', 'NOT NOISY'],
+            ['BEARING', 'SPINDLE HEAD 2', '5000 RPM', 'ROTATION & SOUND', 'NOT NOISY'],
+            ['BEARING', 'COUNTER UNIT / RGB', '1000 RPM', 'ROTATION & SOUND', 'NOT NOISY'],
+            ['BEARING', 'COUNTER UNIT / RGB', '3000 RPM', 'ROTATION & SOUND', 'NOT NOISY'],
+            ['BEARING', 'COUNTER UNIT / RGB', '5000 RPM', 'ROTATION & SOUND', 'NOT NOISY'],
+            ['BEARING', 'SPINDLE CHUCK HEAD 1', '1000 RPM', 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
+            ['BEARING', 'SPINDLE CHUCK HEAD 1', '3000 RPM', 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
+            ['BEARING', 'SPINDLE CHUCK HEAD 1', '5000 RPM', 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
+            ['BEARING', 'SPINDLE CHUCK HEAD 2', '1000 RPM', 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
+            ['BEARING', 'SPINDLE CHUCK HEAD 2', '3000 RPM', 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
+            ['BEARING', 'SPINDLE CHUCK HEAD 2', '5000 RPM', 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
+            ['BEARING', 'CROSS DRILL UNIT', '1000 RPM', 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
+            ['BEARING', 'CROSS DRILL UNIT', '3000 RPM', 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
+            ['BEARING', 'CROSS DRILL UNIT', '5000 RPM', 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
+            ['BEARING', 'CONVEYOR', null, 'ROTATION, SOUND & PHYSICAL CONDITION', 'NO NOISE & SURFACE IS NOT WORN'],
 
             // 4. Electrical Check
-            ['4. ELECTRICAL CHECK', 'DOORLOCK (HEAD 1 / HEAD 2)', 'PHYSICAL & FUNCTION', '1 WHEN THE DOOR IS CLOSED / CLOSED'],
-            ['4. ELECTRICAL CHECK', 'AC FAN MOTOR', 'PHYSICAL & FUNCTION', 'SPINNING'],
-            ['4. ELECTRICAL CHECK', 'EMERGENCY SWITCH', 'PHYSICAL & FUNCTION', 'ALARM WHEN PRESSED'],
-            ['4. ELECTRICAL CHECK', 'CONTROL SWITCH', 'PHYSICAL & FUNCTION', 'OUTPUT WHEN PRESSED'],
-            ['4. ELECTRICAL CHECK', 'MONITOR', 'DISPLAY BRIGHTNESS', 'CLEARLY VISIBLE'],
-            ['4. ELECTRICAL CHECK', 'KEYPAD / SOFTKEY', 'PHYSICAL & FUNCTION', 'OUTPUT WHEN PRESSED'],
-            ['4. ELECTRICAL CHECK', 'SOCKET MEMORY CARD', 'PHYSICAL & FUNCTION', 'SD CARD CONNECTION'],
-            ['4. ELECTRICAL CHECK', 'TOWER LIGHT', 'PHYSICAL & FUNCTION', 'LIGHT IS ON'],
-            ['4. ELECTRICAL CHECK', 'BACK UP PARAMETER', 'MACHINE TO MEMORY CARD', 'SAVED'],
-            ['4. ELECTRICAL CHECK', 'SENSOR TOOL BROKEN (STAR)', 'MDI : M27 (HEAD 1)', 'NO ALARM'],
-            ['4. ELECTRICAL CHECK', 'LEVELING LOCK', 'LOCKING BOLT', 'LOCKED'],
-            ['4. ELECTRICAL CHECK', 'COUPLING EXTERNAL PUMP', 'PHYSICAL', 'NOT CRACKED'],
+            ['ELECTRICAL CHECK', 'DOORLOCK', 'HEAD 1', 'PHYSICAL & FUNCTION', '1 WHEN THE DOOR IS CLOSED'],
+            ['ELECTRICAL CHECK', 'DOORLOCK', 'HEAD 2', 'PHYSICAL & FUNCTION', 'CLOSED'],
+            ['ELECTRICAL CHECK', 'AC FAN MOTOR', null, 'PHYSICAL & FUNCTION', 'SPINNING'],
+            ['ELECTRICAL CHECK', 'EMERGENCY SWITCH', null, 'PHYSICAL & FUNCTION', 'ALARM WHEN PRESSED'],
+            ['ELECTRICAL CHECK', 'CONTROL SWITCH', null, 'PHYSICAL & FUNCTION', 'OUTPUT WHEN PRESSED'],
+            ['ELECTRICAL CHECK', 'MONITOR', null, 'DISPLAY BRIGHTNESS', 'CLEARLY VISIBLE'],
+            ['ELECTRICAL CHECK', 'KEYPAD / SOFTKEY', null, 'PHYSICAL & FUNCTION', 'OUTPUT WHEN PRESSED'],
+            ['ELECTRICAL CHECK', 'SOCKET MEMORY CARD', null, 'PHYSICAL & FUNCTION', 'SD CARD CONNECTION'],
+            ['ELECTRICAL CHECK', 'TOWER LIGHT', null, 'PHYSICAL & FUNCTION', 'LIGHT IS ON'],
+            ['ELECTRICAL CHECK', 'BACK UP PARAMETER', null, 'MACHINE TO MEMORY CARD', 'SAVED'],
+            ['ELECTRICAL CHECK', 'SENSOR TOOL BROKEN (STAR)', null, 'MDI : M27 (HEAD 1)', 'NO ALARM'],
+            ['ELECTRICAL CHECK', 'LEVELING LOCK', null, 'LOCKING BOLT', 'LOCKED'],
+            ['ELECTRICAL CHECK', 'COUPLING EXTERNAL PUMP', null, 'PHYSICAL', 'NOT CRACKED'],
 
-            // 5. Function Test
-            ['5. FUNCTION TEST', 'CHECK MANUAL', 'FUNCTION TEST', ''],
-            ['5. FUNCTION TEST', 'CHECK AUTO', 'FUNCTION TEST', ''],
-            ['5. FUNCTION TEST', 'CHECK MDI', 'FUNCTION TEST', ''],
-            ['5. FUNCTION TEST', 'CHECK ALARM', 'FUNCTION TEST', ''],
+            // Bottom Items (No Section Check)
+            [null, 'CHECK MANUAL', null, 'FUNCTION TEST', ''],
+            [null, 'CHECK AUTO', null, 'FUNCTION TEST', ''],
+            [null, 'CHECK MDI', null, 'FUNCTION TEST', ''],
+            [null, 'CHECK ALARM', null, 'FUNCTION TEST', ''],
         ];
 
         foreach ($locations as $loc) {
@@ -143,9 +174,11 @@ class CreateTransaksiOverhaulAndOverhaulParameters extends Migration
                     'lokasi'         => $loc,
                     'jenis_check'    => 'Overhaul',
                     'kategori'       => 'Bar Feeder CNC',
-                    'bagian_check'   => $r[0],
-                    'point_check'    => $r[1],
-                    'standard_check' => $r[2],
+                    'section_check'  => $r[0],
+                    'bagian_check'   => $r[1],
+                    'sub_item_check' => $r[2],
+                    'point_check'    => $r[3],
+                    'standard_check' => $r[4],
                     'urutan'         => $idx++,
                     'created_at'     => $now,
                     'updated_at'     => $now,
@@ -159,9 +192,11 @@ class CreateTransaksiOverhaulAndOverhaulParameters extends Migration
                     'lokasi'         => $loc,
                     'jenis_check'    => 'Overhaul',
                     'kategori'       => 'Mesin CNC',
-                    'bagian_check'   => $r[0],
-                    'point_check'    => $r[1],
-                    'standard_check' => $r[2],
+                    'section_check'  => $r[0],
+                    'bagian_check'   => $r[1],
+                    'sub_item_check' => $r[2],
+                    'point_check'    => $r[3],
+                    'standard_check' => $r[4],
                     'urutan'         => $idx++,
                     'created_at'     => $now,
                     'updated_at'     => $now,
@@ -182,5 +217,8 @@ class CreateTransaksiOverhaulAndOverhaulParameters extends Migration
 
         // 2. Drop table transaksi_overhaul
         $this->forge->dropTable('transaksi_overhaul');
+
+        // 3. Drop kolom di master_parameter_check
+        $this->forge->dropColumn('master_parameter_check', ['section_check', 'sub_item_check']);
     }
 }

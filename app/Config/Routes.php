@@ -41,9 +41,28 @@ $routes->group('checklist', ['filter' => 'auth'], static function ($routes) {
 // Riwayat & Detail Transaksi (semua role login, scoping data ditangani di controller)
 $routes->group('riwayat', ['filter' => 'auth'], static function ($routes) {
     $routes->get('/', 'RiwayatController::index');
+    $routes->get('lokasi/(:segment)', 'RiwayatController::lokasi/$1');
     $routes->get('kategori/(:segment)', 'RiwayatController::kategori/$1');
     $routes->get('(:num)', 'RiwayatController::detail/$1');
     $routes->post('approve/(:num)', 'RiwayatController::approve/$1', ['filter' => 'role:leader,admin']);
+});
+
+// Scan QR Code (semua role login)
+$routes->group('scan', ['filter' => 'auth'], static function ($routes) {
+    $routes->get('/', 'ScanController::index');
+    $routes->get('mesin/(:num)', 'ScanController::mesin/$1');
+});
+
+// Ceklis Kontrol Bulanan (semua role login)
+$routes->group('kontrol', ['filter' => 'auth'], static function ($routes) {
+    $routes->get('/', 'KontrolController::index');
+    $routes->post('update-cell', 'KontrolController::updateCell');
+});
+
+// Laporan Abnormal Condition (semua role login)
+$routes->group('abnormal', ['filter' => 'auth'], static function ($routes) {
+    $routes->get('/', 'AbnormalController::index');
+    $routes->post('update', 'AbnormalController::update');
 });
 
 // Laporan Durasi (khusus Leader & Admin)
@@ -76,6 +95,7 @@ $routes->group('admin/user', ['filter' => 'role:admin', 'namespace' => 'App\Cont
 // Admin - Master Parameter Check
 $routes->group('admin/parameter', ['filter' => 'role:admin', 'namespace' => 'App\Controllers\Admin'], static function ($routes) {
     $routes->get('/', 'ParameterController::index');
+    $routes->get('fixUrutan', 'ParameterController::fixUrutan');
     $routes->get('create', 'ParameterController::create');
     $routes->post('store', 'ParameterController::store');
     $routes->get('edit/(:num)', 'ParameterController::edit/$1');

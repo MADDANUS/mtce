@@ -24,9 +24,14 @@ class ChecklistController extends BaseController
     }
 
     private array $categoryMap = [
+        // Preventive
         'penerangan'     => 'Penerangan',
         'kabel-dan-pipa' => 'Kabel dan Pipa',
         'angin-bocor'    => 'Angin Bocor',
+        'bearing'        => 'Bearing',
+        'gearbox'        => 'Gearbox',
+        'belt'           => 'Belt',
+        // Overhaul
         'bar-feeder-cnc' => 'Bar Feeder CNC',
         'mesin-cnc'      => 'Mesin CNC',
     ];
@@ -79,6 +84,7 @@ class ChecklistController extends BaseController
     {
         $lokasiName = $this->resolveLokasi($lokasiSlug);
         $jenisName  = $this->resolveJenis($jenisSlug);
+        $idMesin    = $this->request->getGet('id_mesin') ?: null;
 
         // Pisahkan kategori berdasarkan jenis_check
         if (strtolower($jenisSlug) === 'overhaul') {
@@ -91,6 +97,9 @@ class ChecklistController extends BaseController
                 'penerangan'     => 'Penerangan',
                 'kabel-dan-pipa' => 'Kabel dan Pipa',
                 'angin-bocor'    => 'Angin Bocor',
+                'bearing'        => 'Bearing',
+                'gearbox'        => 'Gearbox',
+                'belt'           => 'Belt',
             ];
         }
 
@@ -101,6 +110,7 @@ class ChecklistController extends BaseController
             'jenisSlug'  => $jenisSlug,
             'jenisName'  => $jenisName,
             'categories' => $categories,
+            'idMesin'    => $idMesin,
         ]);
     }
 
@@ -118,6 +128,7 @@ class ChecklistController extends BaseController
         $jenisName    = $this->resolveJenis($jenisSlug);
         $categoryName = $this->categoryMap[$categorySlug];
         $waktuMulai   = Time::now();
+        $idMesin      = $this->request->getGet('id_mesin') ?: null;
 
         $data = [
             'title'             => "Form Pengecekan {$jenisName} - {$categoryName}",
@@ -132,6 +143,7 @@ class ChecklistController extends BaseController
             'namaStaff'         => session()->get('nama'),
             'waktuMulai'        => $waktuMulai->toDateTimeString(),
             'waktuMulaiDisplay' => $waktuMulai->toLocalizedString('dd MMMM yyyy, HH:mm:ss'),
+            'idMesin'           => $idMesin,
         ];
 
         return view('checklist/form', $data);
@@ -185,16 +197,101 @@ class ChecklistController extends BaseController
 
         $detailData = [];
         foreach ($hasilCheck as $idParameter => $hasil) {
-            $detailData[] = [
+            $idDetail = $this->detailModel->insert([
                 'id_transaksi' => $idTransaksi,
                 'id_parameter' => (int) $idParameter,
                 'hasil_check'  => $hasil !== '' ? $hasil : null,
                 'ulasan'       => $ulasan[$idParameter] ?? null,
-            ];
+            ]);
+
+            // Save to laporan_abnormal if status is Δ or X
+            if (in_array($hasil, ['Δ', 'X'], true)) {
+                $paramInfo = $this->parameterModel->find((int)$idParameter);
+                $pointCheckName = $paramInfo ? $paramInfo['point_check'] : 'Parameter #' . $idParameter;
+                
+                $abnormalDesc = $ulasan[$idParameter] ?? '';
+                if (empty($abnormalDesc)) {
+                    $abnormalDesc = 'Ditemukan kondisi abnormal (' . $hasil . ')';
+                }
+
+                $picNama = $this->request->getPost('pic_nama') ?: 'Staff';
+
+                $db->table('laporan_abnormal')->insert([
+                    'id_transaksi'       => $idTransaksi,
+                    'id_detail'          => $idDetail,
+                    'id_mesin'           => $idMesin,
+                    'point_check'        => $pointCheckName,
+                    'abnormal_condition' => $abnormalDesc,
+                    'pengecekan_tanggal' => date('Y-m-d', strtotime($waktuSelesai)),
+                    'pengecekan_pic'     => $picNama,
+                    'created_at'         => $waktuSelesai,
+                    'updated_at'         => $waktuSelesai,
+                ]);
+            }
         }
 
-        if (! empty($detailData)) {
-            $this->detailModel->insertBatch($detailData);
+        // Simpan atau update Ceklis Kontrol jika jenisnya adalah Preventive
+        if (strtolower($jenisSlug) === 'preventive') {
+            $picNama       = $this->request->getPost('pic_nama') ?: 'Staff';
+            $isOutOfPlan   = $this->request->getPost('is_out_of_plan') === '1';
+            $outOfPlanDate = $isOutOfPlan ? ($this->request->getPost('out_of_plan_date') ?: date('Y-m-d')) : null;
+            $ulasanKontrol = $this->request->getPost('ulasan_kontrol') ?: null;
+
+            // Hitung status akumulatif (X > Δ > V)
+            $overallStatus = 'V';
+            $hasTriangle   = false;
+            foreach ($hasilCheck as $hasil) {
+                if ($hasil === 'X') {
+                    $overallStatus = 'X';
+                    break;
+                }
+                if ($hasil === 'Δ') {
+                    $hasTriangle = true;
+                }
+            }
+            if ($overallStatus !== 'X' && $hasTriangle) {
+                $overallStatus = 'Δ';
+            }
+
+            // Hitung periode ke (1 s.d 5)
+            $day = (int) date('d', strtotime($waktuSelesai));
+            $periodeKe = intval(($day - 1) / 7) + 1;
+            if ($periodeKe > 5) {
+                $periodeKe = 5;
+            }
+
+            $bulanTahun = date('Y-m', strtotime($waktuSelesai));
+
+            $kontrolData = [
+                'id_mesin'      => $idMesin,
+                'kategori'      => $kategoriName,
+                'bulan_tahun'   => $bulanTahun,
+                'periode_ke'    => $periodeKe,
+                'status_check'  => $overallStatus,
+                'pic_nama'      => $picNama,
+                'out_of_plan'   => $outOfPlanDate,
+                'ulasan'        => $ulasanKontrol,
+                'tanggal_check' => date('Y-m-d', strtotime($waktuSelesai)),
+                'updated_at'    => $waktuSelesai,
+            ];
+
+            // Cek apakah sudah terisi di database untuk periode ini
+            $exist = $db->table('ceklis_kontrol')
+                        ->where('id_mesin', $idMesin)
+                        ->where('kategori', $kategoriName)
+                        ->where('bulan_tahun', $bulanTahun)
+                        ->where('periode_ke', $periodeKe)
+                        ->get()
+                        ->getRowArray();
+
+            if ($exist) {
+                $db->table('ceklis_kontrol')
+                   ->where('id_kontrol', $exist['id_kontrol'])
+                   ->update($kontrolData);
+            } else {
+                $kontrolData['created_at'] = $waktuSelesai;
+                $db->table('ceklis_kontrol')->insert($kontrolData);
+            }
         }
 
         // Simpan metadata khusus Overhaul (Opsi C: Tabel transaksi_overhaul)
@@ -210,6 +307,17 @@ class ChecklistController extends BaseController
 
         if ($db->transStatus() === false) {
             return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data pengecekan.');
+        }
+
+        if (strtolower($jenisSlug) === 'preventive') {
+            $redirectParams = [
+                'lokasi'   => $lokasiName,
+                'kategori' => $kategoriName,
+                'bulan'    => $bulanTahun,
+                'auto'     => 1
+            ];
+            $redirectUrl = site_url('kontrol') . '?' . http_build_query($redirectParams);
+            return redirect()->to($redirectUrl)->with('success', 'Pengecekan berhasil disimpan. Mengalihkan ke Ceklis Kontrol...');
         }
 
         return redirect()->to("/checklist/{$lokasiSlug}/{$jenisSlug}/create/{$categorySlug}")

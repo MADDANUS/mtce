@@ -55,6 +55,67 @@ class TransaksiCheckModel extends Model
     }
 
     /**
+     * Daftar riwayat transaksi terfilter (join users + master_mesin), terbaru dulu.
+     */
+    public function getRiwayatFiltered(array $filters = [], ?int $userId = null, ?int $limit = null): array
+    {
+        $builder = $this->select('transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, master_mesin.no_mesin, master_mesin.type_mesin')
+                         ->join('users', 'users.id = transaksi_check.id_user')
+                         ->join('users as approver', 'approver.id = transaksi_check.approved_by', 'left')
+                         ->join('master_mesin', 'master_mesin.id_mesin = transaksi_check.id_mesin');
+
+        if ($userId !== null) {
+            $builder->where('transaksi_check.id_user', $userId);
+        }
+
+        if (!empty($filters['lokasi'])) {
+            $builder->where('transaksi_check.lokasi_check', $filters['lokasi']);
+        }
+
+        if (!empty($filters['id_mesin'])) {
+            $builder->where('transaksi_check.id_mesin', (int)$filters['id_mesin']);
+        }
+
+        if (!empty($filters['kategori'])) {
+            $builder->where('transaksi_check.kategori', $filters['kategori']);
+        }
+
+        if (!empty($filters['status'])) {
+            $builder->where('transaksi_check.status', $filters['status']);
+        }
+
+        if (!empty($filters['tanggal'])) {
+            $builder->where('DATE(transaksi_check.waktu_mulai)', $filters['tanggal']);
+        }
+
+        // Dynamic Sorting
+        $sortBy = $filters['sort_by'] ?? 'id_transaksi';
+        $order  = strtoupper($filters['order'] ?? 'DESC');
+        if (!in_array($order, ['ASC', 'DESC'], true)) {
+            $order = 'DESC';
+        }
+
+        $allowedSortFields = [
+            'id_transaksi' => 'transaksi_check.id_transaksi',
+            'nama_staff'   => 'users.nama',
+            'no_mesin'     => 'master_mesin.no_mesin',
+            'kategori'     => 'transaksi_check.kategori',
+            'waktu_mulai'  => 'transaksi_check.waktu_mulai',
+            'status'       => 'transaksi_check.status',
+            'durasi'       => 'TIMESTAMPDIFF(SECOND, transaksi_check.waktu_mulai, transaksi_check.waktu_selesai)',
+        ];
+
+        $sortColumn = $allowedSortFields[$sortBy] ?? 'transaksi_check.id_transaksi';
+        $builder->orderBy($sortColumn, $order);
+
+        if ($limit !== null) {
+            $builder->limit($limit);
+        }
+
+        return $builder->findAll();
+    }
+
+    /**
      * Header transaksi + info staff & mesin, untuk halaman detail riwayat.
      */
     public function getDetailTransaksi(int $idTransaksi): ?array
