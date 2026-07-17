@@ -3,7 +3,7 @@
 <div class="page-header">
   <div>
     <h5 class="mb-0"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Laporan Abnormal Condition</h5>
-    <p class="text-muted small mb-0">Kelola dan tindak lanjuti temuan kondisi abnormal (status Δ atau X) hasil pengecekan preventive.</p>
+    <p class="text-muted small mb-0">Kelola dan tindak lanjuti temuan kondisi abnormal (status Δ atau X) hasil pengecekan checklist report.</p>
   </div>
 </div>
 
@@ -11,21 +11,43 @@
 <div class="card border-0 shadow-sm bg-white p-3 mb-4">
   <form id="filterForm" method="get" action="<?= site_url('abnormal') ?>">
     <div class="row g-3 align-items-center">
-      <!-- Lokasi Select -->
+      <!-- Lokasi Switcher -->
       <div class="col-md-3">
         <label class="form-label small fw-semibold text-muted mb-1.5">Lokasi MFG</label>
-        <select name="lokasi" class="form-select form-select-sm rounded-3 py-1.5" onchange="document.getElementById('filterForm').submit()">
-          <option value="">Semua Lokasi</option>
-          <option value="MFG 1" <?= $lokasiFilter === 'MFG 1' ? 'selected' : '' ?>>MFG 1</option>
-          <option value="MFG 2" <?= $lokasiFilter === 'MFG 2' ? 'selected' : '' ?>>MFG 2</option>
+        <div class="d-flex gap-1 bg-light p-1 rounded-3">
+          <a href="<?= site_url('abnormal?lokasi=MFG+1&kategori=' . urlencode($kategoriFilter) . '&search=' . urlencode($searchFilter)) ?>" 
+             class="btn btn-xs w-50 py-1.5 fw-semibold rounded-2 <?= $lokasiFilter === 'MFG 1' ? 'btn-white shadow-sm bg-white' : 'text-secondary' ?>" style="font-size:0.75rem;">MFG 1</a>
+          <a href="<?= site_url('abnormal?lokasi=MFG+2&kategori=' . urlencode($kategoriFilter) . '&search=' . urlencode($searchFilter)) ?>" 
+             class="btn btn-xs w-50 py-1.5 fw-semibold rounded-2 <?= $lokasiFilter === 'MFG 2' ? 'btn-white shadow-sm bg-white' : 'text-secondary' ?>" style="font-size:0.75rem;">MFG 2</a>
+        </div>
+        <input type="hidden" name="lokasi" value="<?= esc($lokasiFilter) ?>">
+      </div>
+
+      <!-- Kategori Select -->
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold text-muted mb-1.5">Kategori Checklist Report</label>
+        <select name="kategori" class="form-select form-select-sm rounded-3 py-1.5" onchange="document.getElementById('filterForm').submit()">
+          <?php foreach ($categories as $cat): ?>
+            <option value="<?= esc($cat) ?>" <?= $kategoriFilter === $cat ? 'selected' : '' ?>><?= esc($cat) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <!-- Bulan & Tahun Select -->
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold text-muted mb-1.5">Pilih Bulan</label>
+        <select name="bulan" class="form-select form-select-sm rounded-3 py-1.5" onchange="document.getElementById('filterForm').submit()">
+          <?php foreach ($bulanList as $bVal => $bLabel): ?>
+            <option value="<?= esc($bVal) ?>" <?= $bulanFilter === $bVal ? 'selected' : '' ?>><?= esc($bLabel) ?></option>
+          <?php endforeach; ?>
         </select>
       </div>
 
       <!-- Search Input -->
-      <div class="col-md-5 ms-auto">
+      <div class="col-md-3 ms-auto">
         <label class="form-label small fw-semibold text-muted mb-1.5">Cari Temuan</label>
         <div class="input-group input-group-sm">
-          <input type="text" name="search" class="form-control rounded-start-3 py-1.5" placeholder="Cari mesin, point check, dll..." value="<?= esc($searchFilter) ?>">
+          <input type="text" name="search" class="form-control rounded-start-3 py-1.5" placeholder="Cari mesin..." value="<?= esc($searchFilter) ?>">
           <button class="btn btn-primary btn-sm px-3 rounded-end-3" type="submit"><i class="bi bi-search"></i></button>
         </div>
       </div>
@@ -72,7 +94,7 @@
           <?php else: ?>
             <?php $no = 1; foreach ($reports as $r): ?>
               <?php 
-                $canEdit = in_array(session()->get('role'), ['leader', 'admin'], true);
+                $canEdit = in_array(session()->get('role'), ['member', 'sheadprd', 'sheadmtc', 'admin'], true);
                 $rowClass = $canEdit ? 'row-editable' : '';
               ?>
               <tr class="<?= $rowClass ?>" 
@@ -89,7 +111,7 @@
                   data-keterangan="<?= esc($r['keterangan'] ?? '') ?>">
                 
                 <td class="fw-bold font-monospace text-secondary" style="background-color: #f8fafc;"><?= $no++ ?></td>
-                <td class="text-start fw-bold text-dark ps-3"><?= esc($r['no_mesin']) ?> - <?= esc($r['type_mesin']) ?> <span class="badge bg-light text-secondary border ms-1"><?= esc($r['lokasi']) ?></span></td>
+                <td class="text-start fw-bold text-dark ps-3"><?= esc($r['no_mesin']) ?> - <?= esc($r['type_mesin']) ?></td>
                 <td><?= esc($r['point_check']) ?></td>
                 <td class="text-danger fw-semibold"><?= esc($r['abnormal_condition']) ?></td>
                 <td><?= esc($r['type_sparepart']) ?: '<span class="text-muted small">-</span>' ?></td>
@@ -148,7 +170,7 @@
 </style>
 
 <!-- MODAL QUICK EDIT ABNORMAL (LEADER & ADMIN ONLY) -->
-<?php if (in_array(session()->get('role'), ['leader', 'admin'], true)): ?>
+<?php if (in_array(session()->get('role'), ['member', 'sheadprd', 'sheadmtc', 'admin'], true)): ?>
 <div class="modal fade" id="editAbnormalModal" tabindex="-1" aria-labelledby="editAbnormalModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-md">
     <div class="modal-content border-0 shadow-lg rounded-4">

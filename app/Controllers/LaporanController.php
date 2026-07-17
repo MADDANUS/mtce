@@ -8,7 +8,10 @@ class LaporanController extends BaseController
 {
     public function durasi()
     {
-        $laporan = (new TransaksiCheckModel())->getLaporanDurasi();
+        $role = session()->get('role');
+        $lokasi = ($role === 'leader') ? session()->get('lokasi') : null;
+        
+        $laporan = (new TransaksiCheckModel())->getLaporanDurasi($lokasi);
 
         $totalDurasi = 0;
         $count       = 0;

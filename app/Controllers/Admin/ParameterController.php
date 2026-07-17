@@ -79,7 +79,7 @@ class ParameterController extends BaseController
             'urutan'         => (int) $this->request->getPost('urutan'),
         ]);
 
-        return redirect()->to('/admin/parameter?lokasi=' . urlencode($this->request->getPost('lokasi')) . '&jenis_check=' . urlencode($this->request->getPost('jenis_check')))->with('success', 'Parameter check berhasil ditambahkan.');
+        return redirect()->to('/admin/parameter?lokasi=' . urlencode($this->request->getPost('lokasi')) . '&jenis_check=' . urlencode($this->request->getPost('jenis_check')) . '&kategori=' . urlencode($this->request->getPost('kategori')))->with('success', 'Parameter check berhasil ditambahkan.');
     }
 
     public function edit(int $id)
@@ -118,7 +118,7 @@ class ParameterController extends BaseController
             'urutan'         => (int) $this->request->getPost('urutan'),
         ]);
 
-        return redirect()->to('/admin/parameter?lokasi=' . urlencode($this->request->getPost('lokasi')) . '&jenis_check=' . urlencode($this->request->getPost('jenis_check')))->with('success', 'Parameter check berhasil diperbarui.');
+        return redirect()->to('/admin/parameter?lokasi=' . urlencode($this->request->getPost('lokasi')) . '&jenis_check=' . urlencode($this->request->getPost('jenis_check')) . '&kategori=' . urlencode($this->request->getPost('kategori')))->with('success', 'Parameter check berhasil diperbarui.');
     }
 
     public function delete(int $id)
@@ -180,5 +180,153 @@ class ParameterController extends BaseController
             'standard_check' => 'required|max_length[150]',
             'urutan'         => 'required|is_natural',
         ];
+    }
+    public function export()
+    {
+        $parameters = $this->model->orderBy('lokasi', 'ASC')->orderBy('kategori', 'ASC')->orderBy('urutan', 'ASC')->findAll();
+        
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Header
+        $sheet->setCellValue('A1', 'Lokasi');
+        $sheet->setCellValue('B1', 'Jenis Check');
+        $sheet->setCellValue('C1', 'Kategori');
+        $sheet->setCellValue('D1', 'Section Check');
+        $sheet->setCellValue('E1', 'Bagian Check');
+        $sheet->setCellValue('F1', 'Sub Item Check');
+        $sheet->setCellValue('G1', 'Point Check');
+        $sheet->setCellValue('H1', 'Standard Check');
+        $sheet->setCellValue('I1', 'Urutan');
+        
+        // Data
+        $row = 2;
+        foreach ($parameters as $p) {
+            $sheet->setCellValue('A' . $row, $p['lokasi']);
+            $sheet->setCellValue('B' . $row, $p['jenis_check']);
+            $sheet->setCellValue('C' . $row, $p['kategori']);
+            $sheet->setCellValue('D' . $row, $p['section_check']);
+            $sheet->setCellValue('E' . $row, $p['bagian_check']);
+            $sheet->setCellValue('F' . $row, $p['sub_item_check']);
+            $sheet->setCellValue('G' . $row, $p['point_check']);
+            $sheet->setCellValue('H' . $row, $p['standard_check']);
+            $sheet->setCellValue('I' . $row, $p['urutan']);
+            $row++;
+        }
+        
+        $filename = 'parameter_export_' . date('Ymd_His') . '.xlsx';
+        
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    public function template()
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Header
+        $sheet->setCellValue('A1', 'Lokasi');
+        $sheet->setCellValue('B1', 'Jenis Check');
+        $sheet->setCellValue('C1', 'Kategori');
+        $sheet->setCellValue('D1', 'Section Check');
+        $sheet->setCellValue('E1', 'Bagian Check');
+        $sheet->setCellValue('F1', 'Sub Item Check');
+        $sheet->setCellValue('G1', 'Point Check');
+        $sheet->setCellValue('H1', 'Standard Check');
+        $sheet->setCellValue('I1', 'Urutan');
+        
+        $filename = 'template_parameter.xlsx';
+        
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    public function import()
+    {
+        $file = $this->request->getFile('file_excel');
+        if (! $file || ! $file->isValid()) {
+            return redirect()->to('/admin/parameter')->with('error', 'Silakan pilih file Excel yang valid.');
+        }
+        
+        $extension = $file->getExtension();
+        if (! in_array($extension, ['xlsx', 'xls', 'csv'], true)) {
+            return redirect()->to('/admin/parameter')->with('error', 'Format file tidak didukung. Gunakan .xlsx, .xls, atau .csv');
+        }
+        
+        try {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getTempName());
+            $sheet = $spreadsheet->getActiveSheet();
+            $highestRow = $sheet->getHighestDataRow();
+            
+            $successInsert = 0;
+            $errors = [];
+            
+            for ($row = 2; $row <= $highestRow; $row++) {
+                $lokasi        = trim($sheet->getCell('A' . $row)->getValue() ?? '');
+                $jenisCheck    = trim($sheet->getCell('B' . $row)->getValue() ?? '');
+                $kategori      = trim($sheet->getCell('C' . $row)->getValue() ?? '');
+                $sectionCheck  = trim($sheet->getCell('D' . $row)->getValue() ?? '');
+                $bagianCheck   = trim($sheet->getCell('E' . $row)->getValue() ?? '');
+                $subItemCheck  = trim($sheet->getCell('F' . $row)->getValue() ?? '');
+                $pointCheck    = trim($sheet->getCell('G' . $row)->getValue() ?? '');
+                $standardCheck = trim($sheet->getCell('H' . $row)->getValue() ?? '');
+                $urutan        = trim($sheet->getCell('I' . $row)->getValue() ?? '');
+                
+                // Lewati baris kosong
+                if (empty($lokasi) && empty($jenisCheck) && empty($kategori) && empty($bagianCheck)) {
+                    continue;
+                }
+                
+                if (empty($lokasi) || empty($jenisCheck) || empty($kategori) || empty($bagianCheck) || empty($pointCheck) || empty($standardCheck) || $urutan === '') {
+                    $errors[] = "Baris {$row}: Lokasi, Jenis, Kategori, Bagian, Point, Standard, Urutan wajib diisi.";
+                    continue;
+                }
+                
+                if (! in_array($lokasi, ['MFG 1', 'MFG 2'], true)) {
+                    $errors[] = "Baris {$row}: Lokasi '{$lokasi}' tidak valid. Harus 'MFG 1' atau 'MFG 2'.";
+                    continue;
+                }
+                
+                if (! in_array($jenisCheck, ['Preventive', 'Overhaul'], true)) {
+                    $errors[] = "Baris {$row}: Jenis Check '{$jenisCheck}' tidak valid. Harus 'Preventive' atau 'Overhaul'.";
+                    continue;
+                }
+                
+                $this->model->insert([
+                    'lokasi'         => $lokasi,
+                    'jenis_check'    => $jenisCheck,
+                    'kategori'       => $kategori,
+                    'section_check'  => empty($sectionCheck) ? null : $sectionCheck,
+                    'bagian_check'   => $bagianCheck,
+                    'sub_item_check' => empty($subItemCheck) ? null : $subItemCheck,
+                    'point_check'    => $pointCheck,
+                    'standard_check' => $standardCheck,
+                    'urutan'         => (int) $urutan,
+                ]);
+                $successInsert++;
+            }
+            
+            $msg = "Impor selesai. Ditambahkan: {$successInsert} parameter.";
+            if (! empty($errors)) {
+                $msg .= " Beberapa baris dilewati:\n" . implode("\n", $errors);
+                return redirect()->to('/admin/parameter')->with('error', $msg);
+            }
+            
+            return redirect()->to('/admin/parameter')->with('success', $msg);
+            
+        } catch (\Exception $e) {
+            return redirect()->to('/admin/parameter')->with('error', 'Gagal membaca file Excel: ' . $e->getMessage());
+        }
     }
 }

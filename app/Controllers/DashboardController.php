@@ -12,13 +12,18 @@ class DashboardController extends BaseController
     public function index()
     {
         return match (session()->get('role')) {
-            'admin'  => $this->admin(),
-            'leader' => $this->leader(),
-            default  => $this->staff(),
+            'admin'    => $this->admin(),
+            'sheadmtc' => $this->sheadmtc(),
+            'sheadprd' => $this->sheadprd(),
+            'member'   => $this->member(),
+            default    => $this->magang(),   // magang & fallback
         };
     }
 
-    private function staff()
+    /**
+     * Dashboard Magang — lihat ringkasan pengecekan sendiri.
+     */
+    private function magang()
     {
         $transaksiModel = new TransaksiCheckModel();
         $userId         = session()->get('user_id');
@@ -40,21 +45,47 @@ class DashboardController extends BaseController
         }
 
         return view('dashboard/staff', [
-            'title'         => 'Dashboard Staff',
+            'title'         => 'Dashboard Magang',
             'hariIni'       => $hariIni,
             'minggu'        => $minggu,
             'riwayatTerbaru' => array_slice($riwayat, 0, 5),
         ]);
     }
 
-    private function leader()
+    /**
+     * Dashboard Member (PIC MTC) — lihat semua data, scope MTC.
+     */
+    private function member()
+    {
+        return $this->leaderStyleDashboard('Dashboard Member — PIC MTC');
+    }
+
+    /**
+     * Dashboard SHead Produksi — lihat data scope produksi.
+     */
+    private function sheadprd()
+    {
+        return $this->leaderStyleDashboard('Dashboard Section Head Produksi');
+    }
+
+    /**
+     * Dashboard SHead MTC — lihat data scope global MTC.
+     */
+    private function sheadmtc()
+    {
+        return $this->leaderStyleDashboard('Dashboard Section Head MTC');
+    }
+
+    /**
+     * Shared leader-style dashboard (untuk member, sheadprd, sheadmtc).
+     */
+    private function leaderStyleDashboard(string $title)
     {
         $transaksiModel = new TransaksiCheckModel();
         $laporan        = $transaksiModel->getLaporanDurasi();
 
         $totalTransaksi = count($laporan);
         $totalDurasi    = 0;
-        $perluTindakan  = 0; // jumlah temuan Δ / X yang butuh perhatian
 
         $detailModel = new \App\Models\TransaksiCheckDetailModel();
         $findings    = $detailModel->whereIn('hasil_check', ['Δ', 'X'])->countAllResults();
@@ -67,7 +98,7 @@ class DashboardController extends BaseController
         $rataDetik = $totalTransaksi > 0 ? intdiv($totalDurasi, $totalTransaksi) : 0;
 
         return view('dashboard/leader', [
-            'title'          => 'Dashboard Leader',
+            'title'          => $title,
             'totalTransaksi' => $totalTransaksi,
             'rataDetik'      => $rataDetik,
             'perluTindakan'  => $findings,
@@ -75,6 +106,9 @@ class DashboardController extends BaseController
         ]);
     }
 
+    /**
+     * Dashboard Admin — full overview.
+     */
     private function admin()
     {
         return view('dashboard/admin', [

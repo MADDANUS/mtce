@@ -84,6 +84,17 @@ class TransaksiCheckDetailModel extends Model
         // Logic for Overhaul
         $total = count($rows);
 
+        // Inject virtual categories for 'Mesin CNC & Bar Feeder' so the numbering restarts for Bar Feeder
+        for ($i = 0; $i < $total; $i++) {
+            if (strtolower($rows[$i]['kategori'] ?? '') === 'mesin cnc & bar feeder') {
+                if ($i >= 52) { // 52 parameters are Mesin CNC, the rest are Bar Feeder
+                    $rows[$i]['kategori'] = 'Bar Feeder CNC';
+                } else {
+                    $rows[$i]['kategori'] = 'Mesin CNC';
+                }
+            }
+        }
+
         $sectionCounter = 0;
         $currentSection = null;
         $itemLetterSuffixIndex = 0;

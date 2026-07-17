@@ -16,22 +16,22 @@ class MasterParameterMfg1BearingGearboxBeltSeeder extends Seeder
     {
         $rows = [
             // ============================================================
-            // KATEGORI: Bearing
+            // KATEGORI: Bearing Cam
             // Sumber: foto form (baris Bearing Spindle sampai Bearing Center Shaft C)
             // + tambahan Bearing CAM sesuai permintaan user
             // ============================================================
-            ['Bearing', 'Bearing Spindle',       'Noise',       'Halus'],
-            ['Bearing', 'Bearing Spindle',       'Temperature', '40°C - 50°C'],
-            ['Bearing', 'Bearing Chucking',      'Noise',       'Halus'],
-            ['Bearing', 'Bearing Chucking',      'Temperature', '40°C - 50°C'],
-            ['Bearing', 'Bearing Center Shaft A','Noise',       'Halus'],
-            ['Bearing', 'Bearing Center Shaft A','Temperature', '40°C - 50°C'],
-            ['Bearing', 'Bearing Center Shaft B','Noise',       'Halus'],
-            ['Bearing', 'Bearing Center Shaft B','Temperature', '40°C - 50°C'],
-            ['Bearing', 'Bearing Center Shaft C','Noise',       'Halus'],
-            ['Bearing', 'Bearing Center Shaft C','Temperature', '40°C - 50°C'],
-            ['Bearing', 'Bearing CAM',           'Noise',       'Halus'],
-            ['Bearing', 'Bearing CAM',           'Temperature', '40°C - 50°C'],
+            ['Bearing Cam', 'Bearing Spindle',       'Noise',       'Halus'],
+            ['Bearing Cam', 'Bearing Spindle',       'Temperature', '40°C - 50°C'],
+            ['Bearing Cam', 'Bearing Chucking',      'Noise',       'Halus'],
+            ['Bearing Cam', 'Bearing Chucking',      'Temperature', '40°C - 50°C'],
+            ['Bearing Cam', 'Bearing Center Shaft A','Noise',       'Halus'],
+            ['Bearing Cam', 'Bearing Center Shaft A','Temperature', '40°C - 50°C'],
+            ['Bearing Cam', 'Bearing Center Shaft B','Noise',       'Halus'],
+            ['Bearing Cam', 'Bearing Center Shaft B','Temperature', '40°C - 50°C'],
+            ['Bearing Cam', 'Bearing Center Shaft C','Noise',       'Halus'],
+            ['Bearing Cam', 'Bearing Center Shaft C','Temperature', '40°C - 50°C'],
+            ['Bearing Cam', 'Bearing CAM',           'Noise',       'Halus'],
+            ['Bearing Cam', 'Bearing CAM',           'Temperature', '40°C - 50°C'],
 
             // ============================================================
             // KATEGORI: Gearbox
@@ -42,24 +42,24 @@ class MasterParameterMfg1BearingGearboxBeltSeeder extends Seeder
             ['Gearbox', 'Gearbox', 'Nok Seal',  'Tidak Rembes'],
 
             // ============================================================
-            // KATEGORI: Belt
+            // KATEGORI: Belt Cam
             // Sumber: foto form (Belt Spindle, Belt Gearbox, Belt Motor,
             //         Belt Optional, Belt Oil Pump)
             // + tambahan Belt CAM sesuai permintaan user
             // ============================================================
-            ['Belt', 'Belt Spindle',  'Sambungan', 'Lem Tidak Mengelupas'],
-            ['Belt', 'Belt Spindle',  'Belt',      'Tidak Sobek/Berlubang/Terkikis'],
-            ['Belt', 'Belt Gearbox',  'Sambungan', 'Tidak Pecah'],
-            ['Belt', 'Belt Gearbox',  'Belt',      'Tidak Getas/Pecah'],
-            ['Belt', 'Belt Motor',    'Belt',      'Tidak Pecah'],
-            ['Belt', 'Belt Motor',    'Belt',      'Tidak Terbalik'],
-            ['Belt', 'Belt Motor',    'Belt',      'Tidak Sobek'],
-            ['Belt', 'Belt Optional', 'Sambungan', 'Tidak Pecah'],
-            ['Belt', 'Belt Optional', 'Belt',      'Tidak Getas/Pecah'],
-            ['Belt', 'Belt Oil Pump', 'Sambungan', 'Tidak Pecah'],
-            ['Belt', 'Belt Oil Pump', 'Belt',      'Tidak Getas/Pecah'],
-            ['Belt', 'Belt CAM',      'Sambungan', 'Tidak Pecah'],
-            ['Belt', 'Belt CAM',      'Belt',      'Tidak Getas/Pecah'],
+            ['Belt Cam', 'Belt Spindle',  'Sambungan', 'Lem Tidak Mengelupas'],
+            ['Belt Cam', 'Belt Spindle',  'Belt',      'Tidak Sobek/Berlubang/Terkikis'],
+            ['Belt Cam', 'Belt Gearbox',  'Sambungan', 'Tidak Pecah'],
+            ['Belt Cam', 'Belt Gearbox',  'Belt',      'Tidak Getas/Pecah'],
+            ['Belt Cam', 'Belt Motor',    'Belt',      'Tidak Pecah'],
+            ['Belt Cam', 'Belt Motor',    'Belt',      'Tidak Terbalik'],
+            ['Belt Cam', 'Belt Motor',    'Belt',      'Tidak Sobek'],
+            ['Belt Cam', 'Belt Optional', 'Sambungan', 'Tidak Pecah'],
+            ['Belt Cam', 'Belt Optional', 'Belt',      'Tidak Getas/Pecah'],
+            ['Belt Cam', 'Belt Oil Pump', 'Sambungan', 'Tidak Pecah'],
+            ['Belt Cam', 'Belt Oil Pump', 'Belt',      'Tidak Getas/Pecah'],
+            ['Belt Cam', 'Belt CAM',      'Sambungan', 'Tidak Pecah'],
+            ['Belt Cam', 'Belt CAM',      'Belt',      'Tidak Getas/Pecah'],
         ];
 
         $now  = date('Y-m-d H:i:s');

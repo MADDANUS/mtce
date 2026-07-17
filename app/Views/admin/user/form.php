@@ -2,6 +2,22 @@
 
 <h5 class="mb-3"><?= esc($title) ?></h5>
 
+<?php if (session()->getFlashdata('error')): ?>
+  <div class="alert alert-danger shadow-sm border-0 mb-4"><?= session()->getFlashdata('error') ?></div>
+<?php endif; ?>
+<?php if (session()->getFlashdata('errors')): ?>
+  <div class="alert alert-danger shadow-sm border-0 mb-4">
+    <ul class="mb-0">
+      <?php foreach (session()->getFlashdata('errors') as $error): ?>
+        <li><?= esc($error) ?></li>
+      <?php endforeach; ?>
+    </ul>
+  </div>
+<?php endif; ?>
+<?php if (session()->getFlashdata('success')): ?>
+  <div class="alert alert-success shadow-sm border-0 mb-4"><?= session()->getFlashdata('success') ?></div>
+<?php endif; ?>
+
 <div class="card-stat p-3" style="max-width:600px;">
   <form action="<?= $user ? site_url('admin/user/update/' . $user['id']) : site_url('admin/user/store') ?>" method="post">
     <?= csrf_field() ?>
@@ -24,11 +40,24 @@
     </div>
     <div class="mb-3">
       <label class="form-label">Role</label>
-      <?php $roleVal = old('role', $user['role'] ?? 'staff'); ?>
+      <?php $roleVal = old('role', $user['role'] ?? 'magang'); ?>
       <select name="role" class="form-select" required>
-        <option value="staff" <?= $roleVal === 'staff' ? 'selected' : '' ?>>Staff</option>
-        <option value="leader" <?= $roleVal === 'leader' ? 'selected' : '' ?>>Leader</option>
+        <option value="magang" <?= $roleVal === 'magang' ? 'selected' : '' ?>>PIC (Magang)</option>
+        <option value="member" <?= $roleVal === 'member' ? 'selected' : '' ?>>PIC MTC (Member)</option>
+        <option value="sheadprd" <?= $roleVal === 'sheadprd' ? 'selected' : '' ?>>Section Head Produksi</option>
+        <option value="leader" <?= $roleVal === 'leader' ? 'selected' : '' ?>>Leader Produksi</option>
+        <option value="sheadmtc" <?= $roleVal === 'sheadmtc' ? 'selected' : '' ?>>Section Head MTC</option>
         <option value="admin" <?= $roleVal === 'admin' ? 'selected' : '' ?>>Admin</option>
+      </select>
+    </div>
+    
+    <div class="mb-3">
+      <label class="form-label">Lokasi <span class="text-muted small">(opsional, pilih jika Leader)</span></label>
+      <?php $lokasiVal = old('lokasi', $user['lokasi'] ?? ''); ?>
+      <select name="lokasi" class="form-select">
+        <option value="">-- Tidak Spesifik (Atau Admin) --</option>
+        <option value="MFG 1" <?= $lokasiVal === 'MFG 1' ? 'selected' : '' ?>>MFG 1</option>
+        <option value="MFG 2" <?= $lokasiVal === 'MFG 2' ? 'selected' : '' ?>>MFG 2</option>
       </select>
     </div>
 

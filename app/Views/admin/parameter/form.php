@@ -31,7 +31,7 @@
           $jenisVal = old('jenis_check', $parameter['jenis_check'] ?? ($prefill['jenis_check'] ?? 'Preventive')); 
         ?>
         <select name="jenis_check" class="form-select" id="jenisCheckSelect" required>
-          <option value="Preventive" <?= $jenisVal === 'Preventive' ? 'selected' : '' ?>>Preventive</option>
+          <option value="Preventive" <?= $jenisVal === 'Preventive' ? 'selected' : '' ?>>Checklist Report</option>
           <option value="Overhaul" <?= $jenisVal === 'Overhaul' ? 'selected' : '' ?>>Overhaul</option>
         </select>
       </div>
@@ -59,14 +59,6 @@
              value="<?= esc(old('bagian_check', $parameter['bagian_check'] ?? '')) ?>">
     </div>
 
-    <!-- Sub Item Check (Khusus Overhaul) -->
-    <div class="mb-3" id="subItemCheckWrapper">
-      <label class="form-label text-primary">Sub Item Check (Khusus Overhaul)</label>
-      <input type="text" name="sub_item_check" class="form-control border-primary" placeholder="Contoh: FEED BAR, MOTOR POWER"
-             value="<?= esc(old('sub_item_check', $parameter['sub_item_check'] ?? '')) ?>">
-      <div class="form-text text-muted">Sub bagian/item baris checklist jika bagian check digabung (rowspan).</div>
-    </div>
-
     <!-- Point Check -->
     <div class="mb-3">
       <label class="form-label">Point Check</label>
@@ -91,7 +83,8 @@
 
     <div class="d-flex gap-2">
       <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i> Simpan Parameter</button>
-      <a href="<?= site_url('admin/parameter?lokasi=' . urlencode($lokasiVal) . '&jenis_check=' . urlencode($jenisVal)) ?>" class="btn btn-outline-secondary px-4">Batal</a>
+      <?php $currentKategori = old('kategori', $parameter['kategori'] ?? ($prefill['kategori'] ?? '')); ?>
+      <a href="<?= site_url('admin/parameter?lokasi=' . urlencode($lokasiVal) . '&jenis_check=' . urlencode($jenisVal) . '&kategori=' . urlencode($currentKategori)) ?>" class="btn btn-outline-secondary px-4">Batal</a>
     </div>
   </form>
 </div>
@@ -100,18 +93,14 @@
   document.addEventListener("DOMContentLoaded", function() {
     const jenisSelect = document.getElementById("jenisCheckSelect");
     const sectionWrapper = document.getElementById("sectionCheckWrapper");
-    const subItemWrapper = document.getElementById("subItemCheckWrapper");
 
     function toggleOverhaulFields() {
       if (jenisSelect.value === "Overhaul") {
         sectionWrapper.style.display = "block";
-        subItemWrapper.style.display = "block";
       } else {
         sectionWrapper.style.display = "none";
-        subItemWrapper.style.display = "none";
         // Kosongkan agar tidak ikut terkirim/tersimpan lama
         sectionWrapper.querySelector("input").value = "";
-        subItemWrapper.querySelector("input").value = "";
       }
     }
 

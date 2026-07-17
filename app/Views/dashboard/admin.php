@@ -1,54 +1,87 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
-<h5 class="mb-3">Dashboard Admin</h5>
+<div class="dashboard-header mb-4">
+    <div class="d-flex align-items-center justify-content-between position-relative" style="z-index: 2;">
+        <div>
+            <h2 class="fw-bold mb-1">Halo, <?= esc(ucwords(session('nama'))) ?>! 👋</h2>
+            <p class="mb-0 opacity-75">Berikut adalah ringkasan seluruh data sistem pada platform MTCE saat ini.</p>
+        </div>
+        <div class="d-none d-md-block text-white opacity-50">
+            <i class="bi bi-speedometer2" style="font-size: 4rem;"></i>
+        </div>
+    </div>
+</div>
 
-<div class="row g-3 mb-4">
-  <div class="col-md-3">
-    <div class="card-stat p-3">
-      <div class="text-muted small">Total User</div>
-      <div class="value"><?= (int) $totalUser ?></div>
+<div class="row g-4 mb-5">
+  <!-- Total User -->
+  <div class="col-md-4">
+    <div class="card-stat-premium grad-indigo p-4">
+      <div class="text-white-50 small fw-bold text-uppercase tracking-wider mb-2">Total User</div>
+      <div class="value display-5 fw-bolder mb-0"><?= (int) $totalUser ?></div>
+      <i class="bi bi-people-fill watermark-icon"></i>
     </div>
   </div>
-  <div class="col-md-3">
-    <div class="card-stat p-3">
-      <div class="text-muted small">Total Mesin</div>
-      <div class="value"><?= (int) $totalMesin ?></div>
+  
+  <!-- Total Mesin -->
+  <div class="col-md-4">
+    <div class="card-stat-premium grad-emerald p-4">
+      <div class="text-white-50 small fw-bold text-uppercase tracking-wider mb-2">Total Mesin</div>
+      <div class="value display-5 fw-bolder mb-0"><?= (int) $totalMesin ?></div>
+      <i class="bi bi-hdd-rack-fill watermark-icon"></i>
     </div>
   </div>
-  <div class="col-md-3">
-    <div class="card-stat p-3">
-      <div class="text-muted small">Total Parameter Check</div>
-      <div class="value"><?= (int) $totalParam ?></div>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card-stat p-3">
-      <div class="text-muted small">Total Transaksi</div>
-      <div class="value"><?= (int) $totalTrans ?></div>
+  
+  <!-- Total Pengecekan -->
+  <div class="col-md-4">
+    <div class="card-stat-premium grad-cyan p-4">
+      <div class="text-white-50 small fw-bold text-uppercase tracking-wider mb-2">Total Pengecekan</div>
+      <div class="value display-5 fw-bolder mb-0"><?= (int) $totalTrans ?></div>
+      <i class="bi bi-clipboard2-data-fill watermark-icon"></i>
     </div>
   </div>
 </div>
 
-<div class="row g-3">
+<h5 class="fw-bold mb-3 text-dark"><i class="bi bi-lightning-charge-fill text-warning me-2"></i>Akses Cepat Pengelolaan Master</h5>
+<div class="row g-4">
   <div class="col-md-4">
-    <div class="card-stat p-3">
-      <div class="fw-semibold mb-2">Master Mesin</div>
-      <p class="text-muted small">Kelola daftar mesin di setiap lokasi.</p>
-      <a href="<?= site_url('admin/mesin') ?>" class="btn btn-sm btn-primary">Kelola Mesin</a>
+    <div class="card card-hover h-100 p-4 border-0 shadow-sm rounded-4 position-relative overflow-hidden">
+      <div class="position-absolute top-0 end-0 p-3 opacity-10">
+        <i class="bi bi-hdd-network-fill" style="font-size: 5rem; color: var(--accent);"></i>
+      </div>
+      <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary p-3 rounded-circle mb-3" style="width: 50px; height: 50px;">
+          <i class="bi bi-hdd-network fs-4"></i>
+      </div>
+      <h5 class="fw-bold mb-2 text-dark">Master Mesin</h5>
+      <p class="text-muted small mb-4">Kelola daftar seluruh mesin CNC & Bar Feeder beserta detail serial number di MFG 1 dan MFG 2.</p>
+      <a href="<?= site_url('admin/mesin') ?>" class="btn btn-outline-primary mt-auto align-self-start fw-bold">Kelola Mesin &rarr;</a>
     </div>
   </div>
+
   <div class="col-md-4">
-    <div class="card-stat p-3">
-      <div class="fw-semibold mb-2">Master User</div>
-      <p class="text-muted small">Kelola akun Staff, Leader, dan Admin.</p>
-      <a href="<?= site_url('admin/user') ?>" class="btn btn-sm btn-primary">Kelola User</a>
+    <div class="card card-hover h-100 p-4 border-0 shadow-sm rounded-4 position-relative overflow-hidden">
+      <div class="position-absolute top-0 end-0 p-3 opacity-10">
+        <i class="bi bi-person-badge-fill" style="font-size: 5rem; color: var(--accent);"></i>
+      </div>
+      <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary p-3 rounded-circle mb-3" style="width: 50px; height: 50px;">
+          <i class="bi bi-person-lines-fill fs-4"></i>
+      </div>
+      <h5 class="fw-bold mb-2 text-dark">Master User</h5>
+      <p class="text-muted small mb-4">Manajemen akses dan hak akses (role) untuk seluruh PIC, Leader, dan sesama Administrator.</p>
+      <a href="<?= site_url('admin/user') ?>" class="btn btn-outline-primary mt-auto align-self-start fw-bold">Kelola User &rarr;</a>
     </div>
   </div>
+
   <div class="col-md-4">
-    <div class="card-stat p-3">
-      <div class="fw-semibold mb-2">Master Parameter Check</div>
-      <p class="text-muted small">Kelola baris pertanyaan form pengecekan.</p>
-      <a href="<?= site_url('admin/parameter') ?>" class="btn btn-sm btn-primary">Kelola Parameter</a>
+    <div class="card card-hover h-100 p-4 border-0 shadow-sm rounded-4 position-relative overflow-hidden">
+      <div class="position-absolute top-0 end-0 p-3 opacity-10">
+        <i class="bi bi-list-check" style="font-size: 5rem; color: var(--accent);"></i>
+      </div>
+      <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary p-3 rounded-circle mb-3" style="width: 50px; height: 50px;">
+          <i class="bi bi-card-checklist fs-4"></i>
+      </div>
+      <h5 class="fw-bold mb-2 text-dark">Master Parameter Check</h5>
+      <p class="text-muted small mb-4">Kelola dinamis form poin pengecekan rutin dan standar pemeriksaan operasional mesin.</p>
+      <a href="<?= site_url('admin/parameter') ?>" class="btn btn-outline-primary mt-auto align-self-start fw-bold">Kelola Parameter &rarr;</a>
     </div>
   </div>
 </div>

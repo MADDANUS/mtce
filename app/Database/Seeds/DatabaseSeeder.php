@@ -13,18 +13,18 @@ class DatabaseSeeder extends Seeder
         // Demo users (password untuk semua akun demo: "password123")
         $this->db->table('users')->insertBatch([
             [
-                'nama'       => 'Panji (Staff)',
+                'nama'       => 'Panji (PIC Magang)',
                 'username'   => 'panji',
                 'password'   => password_hash('password123', PASSWORD_DEFAULT),
-                'role'       => 'staff',
+                'role'       => 'magang',
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
             [
-                'nama'       => 'Leader MFG 1',
-                'username'   => 'leader1',
+                'nama'       => 'PIC MTC (Member)',
+                'username'   => 'member1',
                 'password'   => password_hash('password123', PASSWORD_DEFAULT),
-                'role'       => 'leader',
+                'role'       => 'member',
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
@@ -60,5 +60,8 @@ class DatabaseSeeder extends Seeder
 
         // Parameter form MFG 1 Preventive (43 baris, sesuai foto form kertas)
         $this->call(MasterParameterMfg1PreventiveSeeder::class);
+        
+        // Parameter tambahan untuk Bearing, Gearbox, V-Belt (Overhaul / Preventive lainnya)
+        $this->call(MasterParameterMfg1BearingGearboxBeltSeeder::class);
     }
 }

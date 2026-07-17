@@ -29,6 +29,12 @@
         <option value="MFG 2" <?= $lokasiVal === 'MFG 2' ? 'selected' : '' ?>>MFG 2</option>
       </select>
     </div>
+    <div class="mb-4">
+      <label class="form-label text-primary fw-semibold">Bar Feeder Type (Opsional)</label>
+      <input type="text" name="bar_feeder_type" class="form-control border-primary bg-primary bg-opacity-10" placeholder="Contoh: Iemca Boss 332" 
+             value="<?= esc(old('bar_feeder_type', $mesin['bar_feeder_type'] ?? '')) ?>">
+      <div class="form-text small">Diperlukan untuk otomatisasi form Overhaul. Biarkan kosong jika tidak memiliki Bar Feeder.</div>
+    </div>
 
     <button type="submit" class="btn btn-primary">Simpan</button>
     <a href="<?= site_url('admin/mesin') ?>" class="btn btn-outline-secondary">Batal</a>

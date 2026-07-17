@@ -8,7 +8,7 @@ class MesinModel extends Model
 {
     protected $table         = 'master_mesin';
     protected $primaryKey    = 'id_mesin';
-    protected $allowedFields = ['no_mesin', 'type_mesin', 'serial_nomor', 'lokasi'];
+    protected $allowedFields = ['no_mesin', 'type_mesin', 'serial_nomor', 'lokasi', 'bar_feeder_type'];
     protected $useTimestamps = true;
     protected $returnType    = 'array';
 

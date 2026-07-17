@@ -1,65 +1,94 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
-<h5 class="mb-3">Dashboard Staff</h5>
+<div class="dashboard-header mb-4">
+    <div class="d-flex align-items-center justify-content-between position-relative" style="z-index: 2;">
+        <div>
+            <h2 class="fw-bold mb-1">Halo, <?= esc(ucwords(session('nama'))) ?>! 👋</h2>
+            <p class="mb-0 opacity-75">Selamat bekerja, pastikan semua pengecekan berjalan sesuai standar hari ini.</p>
+        </div>
+        <div class="d-none d-md-block text-white opacity-50">
+            <i class="bi bi-tools" style="font-size: 4rem;"></i>
+        </div>
+    </div>
+</div>
 
-<div class="row g-3 mb-4">
+<div class="row g-4 mb-5">
   <div class="col-md-4">
-    <div class="card-stat p-3">
-      <div class="text-muted small">Pengecekan Hari Ini</div>
-      <div class="value"><?= (int) $hariIni ?></div>
+    <div class="card-stat-premium grad-cyan p-4">
+      <div class="text-white-50 small fw-bold text-uppercase tracking-wider mb-2">Pengecekan Hari Ini</div>
+      <div class="value display-5 fw-bolder mb-0"><?= (int) $hariIni ?></div>
+      <i class="bi bi-calendar-check-fill watermark-icon"></i>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card-stat p-3">
-      <div class="text-muted small">Pengecekan 7 Hari Terakhir</div>
-      <div class="value"><?= (int) $minggu ?></div>
+    <div class="card-stat-premium grad-indigo p-4">
+      <div class="text-white-50 small fw-bold text-uppercase tracking-wider mb-2">7 Hari Terakhir</div>
+      <div class="value display-5 fw-bolder mb-0"><?= (int) $minggu ?></div>
+      <i class="bi bi-bar-chart-fill watermark-icon"></i>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card-stat p-3 d-flex flex-column justify-content-center">
-      <a href="<?= site_url('checklist') ?>" class="btn btn-primary">+ Buat Pengecekan Baru</a>
+    <div class="card-stat-premium bg-white border-0 p-4 d-flex flex-column justify-content-center h-100" style="border: 2px dashed var(--accent) !important;">
+      <div class="text-center">
+        <i class="bi bi-plus-circle-dotted text-primary mb-3 d-block" style="font-size: 3rem;"></i>
+        <a href="<?= site_url('checklist') ?>" class="btn btn-primary fw-bold rounded-pill px-4 py-2 shadow-sm">Buat Pengecekan Baru</a>
+      </div>
     </div>
   </div>
 </div>
 
-<div class="card-stat p-3">
-  <div class="fw-semibold mb-3">Riwayat Terbaru</div>
-  <?php if (empty($riwayatTerbaru)): ?>
-    <p class="text-muted mb-0">Belum ada riwayat pengecekan.</p>
-  <?php else: ?>
-    <div class="table-responsive">
-      <table class="table table-sm align-middle">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Mesin</th>
-            <th>Waktu Mulai</th>
-            <th>Waktu Selesai</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($riwayatTerbaru as $r): ?>
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+  <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center">
+    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-journal-text text-primary me-2"></i>Riwayat Pengecekan Saya</h5>
+    <a href="<?= site_url('riwayat') ?>" class="btn btn-sm btn-outline-secondary fw-bold rounded-pill px-3">Lihat Semua Riwayat</a>
+  </div>
+  <div class="card-body px-0 pt-0 pb-2">
+    <?php if (empty($riwayatTerbaru)): ?>
+      <div class="text-center py-5">
+        <i class="bi bi-clipboard-x text-muted" style="font-size: 3rem;"></i>
+        <p class="text-muted mt-3 mb-0">Anda belum melakukan pengecekan apapun.</p>
+      </div>
+    <?php else: ?>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
             <tr>
-              <td><?= (int) $r['id_transaksi'] ?></td>
-              <td><?= esc($r['no_mesin']) ?> - <?= esc($r['type_mesin']) ?></td>
-              <td><?= esc($r['waktu_mulai']) ?></td>
-              <td><?= esc($r['waktu_selesai'] ?? '-') ?></td>
-              <td>
-                <?php if (($r['status'] ?? 'Pending') === 'Approved'): ?>
-                  <span class="badge bg-success">Approved</span>
-                <?php else: ?>
-                  <span class="badge bg-warning text-dark">Pending</span>
-                <?php endif; ?>
-              </td>
-              <td><a href="<?= site_url('riwayat/' . $r['id_transaksi']) ?>" class="btn btn-sm btn-outline-primary">Detail</a></td>
+              <th class="ps-4 text-center">NO</th>
+              <th>Mesin</th>
+              <th>Waktu Mulai</th>
+              <th>Waktu Selesai</th>
+              <th>Status</th>
+              <th class="pe-4 text-end">Aksi</th>
             </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  <?php endif; ?>
+          </thead>
+          <tbody class="border-top-0">
+            <?php $no = 1; ?>
+            <?php foreach ($riwayatTerbaru as $r): ?>
+              <tr>
+                <td class="ps-4 fw-semibold text-secondary text-center"><?= $no++ ?></td>
+                <td>
+                  <div class="fw-bold text-dark"><?= esc($r['no_mesin']) ?></div>
+                  <div class="text-muted small"><?= esc($r['type_mesin']) ?></div>
+                </td>
+                <td class="text-muted small"><?= date('d M Y, H:i', strtotime($r['waktu_mulai'])) ?></td>
+                <td class="text-muted small"><?= $r['waktu_selesai'] ? date('d M Y, H:i', strtotime($r['waktu_selesai'])) : '-' ?></td>
+                <td>
+                  <?php if (($r['status'] ?? 'Pending') === 'Approved'): ?>
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-2">Approved</span>
+                  <?php else: ?>
+                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 py-2">Pending</span>
+                  <?php endif; ?>
+                </td>
+                <td class="pe-4 text-end">
+                  <a href="<?= site_url('riwayat/' . $r['id_transaksi']) ?>" class="btn btn-sm btn-light text-primary border-0 bg-primary bg-opacity-10 fw-bold rounded-pill px-3">Detail</a>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </div>
 </div>
 
 <?= view('layout/footer') ?>

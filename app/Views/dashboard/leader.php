@@ -1,71 +1,99 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
-<h5 class="mb-3">Dashboard Leader</h5>
+<div class="dashboard-header mb-4">
+    <div class="d-flex align-items-center justify-content-between position-relative" style="z-index: 2;">
+        <div>
+            <h2 class="fw-bold mb-1">Halo, <?= esc(ucwords(session('nama'))) ?>! 👋</h2>
+            <p class="mb-0 opacity-75">Pantau kinerja maintenance dan status pengecekan dari seluruh PIC hari ini.</p>
+        </div>
+        <div class="d-none d-md-block text-white opacity-50">
+            <i class="bi bi-graph-up-arrow" style="font-size: 4rem;"></i>
+        </div>
+    </div>
+</div>
 
-<div class="row g-3 mb-4">
+<div class="row g-4 mb-5">
   <div class="col-md-4">
-    <div class="card-stat p-3">
-      <div class="text-muted small">Total Transaksi Pengecekan</div>
-      <div class="value"><?= (int) $totalTransaksi ?></div>
+    <div class="card-stat-premium grad-cyan p-4">
+      <div class="text-white-50 small fw-bold text-uppercase tracking-wider mb-2">Total Pengecekan</div>
+      <div class="value display-5 fw-bolder mb-0"><?= (int) $totalTransaksi ?></div>
+      <i class="bi bi-file-earmark-bar-graph-fill watermark-icon"></i>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card-stat p-3">
-      <div class="text-muted small">Rata-rata Durasi Pengecekan</div>
-      <div class="value"><?= gmdate('i \m\e\n\i\t s \d\e\t\i\k', $rataDetik) ?></div>
+    <div class="card-stat-premium grad-emerald p-4">
+      <div class="text-white-50 small fw-bold text-uppercase tracking-wider mb-2">Rata-rata Durasi</div>
+      <div class="value fs-3 fw-bolder mb-0 mt-2"><?= gmdate('i \m\e\n\i\t s \d\e\t\i\k', $rataDetik) ?></div>
+      <i class="bi bi-stopwatch-fill watermark-icon"></i>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card-stat p-3">
-      <div class="text-muted small">Temuan Perlu Tindakan (Δ / X)</div>
-      <div class="value text-danger"><?= (int) $perluTindakan ?></div>
+    <div class="card-stat-premium grad-rose p-4 border-0">
+      <div class="text-white-50 small fw-bold text-uppercase tracking-wider mb-2">Temuan Perlu Tindakan</div>
+      <div class="value display-5 fw-bolder mb-0"><?= (int) $perluTindakan ?></div>
+      <i class="bi bi-exclamation-triangle-fill watermark-icon"></i>
     </div>
   </div>
 </div>
 
-<div class="card-stat p-3">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div class="fw-semibold">Transaksi Terbaru (Semua Staff)</div>
-    <a href="<?= site_url('laporan/durasi') ?>" class="btn btn-sm btn-outline-primary">Lihat Laporan Durasi Lengkap</a>
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+  <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center">
+    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-history text-primary me-2"></i>Pengecekan Terbaru (Semua PIC)</h5>
+    <a href="<?= site_url('laporan/durasi') ?>" class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3">Lihat Laporan Lengkap</a>
   </div>
-  <?php if (empty($terbaru)): ?>
-    <p class="text-muted mb-0">Belum ada transaksi pengecekan.</p>
-  <?php else: ?>
-    <div class="table-responsive">
-      <table class="table table-sm align-middle">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Staff</th>
-            <th>Mesin</th>
-            <th>Waktu Mulai</th>
-            <th>Durasi</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($terbaru as $t): ?>
+  <div class="card-body px-0 pt-0 pb-2">
+    <?php if (empty($terbaru)): ?>
+      <div class="text-center py-5">
+        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+        <p class="text-muted mt-3 mb-0">Belum ada pengecekan.</p>
+      </div>
+    <?php else: ?>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
             <tr>
-              <td><?= (int) $t['id_transaksi'] ?></td>
-              <td><?= esc($t['nama_staff']) ?></td>
-              <td><?= esc($t['no_mesin']) ?></td>
-              <td><?= esc($t['waktu_mulai']) ?></td>
-              <td><?= $t['durasi_detik'] !== null ? gmdate('i:s', (int) $t['durasi_detik']) : '-' ?></td>
-              <td>
-                <?php if (($t['status'] ?? 'Pending') === 'Approved'): ?>
-                  <span class="badge bg-success">Approved</span>
-                <?php else: ?>
-                  <span class="badge bg-warning text-dark">Pending</span>
-                <?php endif; ?>
-              </td>
-              <td><a href="<?= site_url('riwayat/' . $t['id_transaksi']) ?>" class="btn btn-sm btn-outline-primary">Detail</a></td>
+              <th style="width: 5%;" class="ps-4 text-center">NO</th>
+              <th>PIC</th>
+              <th>MESIN</th>
+              <th>WAKTU MULAI</th>
+              <th>Durasi</th>
+              <th>Status</th>
+              <th class="pe-4 text-end">Aksi</th>
             </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  <?php endif; ?>
+          </thead>
+          <tbody class="border-top-0">
+            <?php $no = 1; ?>
+            <?php foreach ($terbaru as $t): ?>
+              <tr>
+                <td class="ps-4 fw-semibold text-secondary text-center"><?= $no++ ?></td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="avatar-circle me-2 bg-primary bg-opacity-10 text-primary fw-bold" style="width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem;">
+                      <?= strtoupper(substr($t['nama_pic'] ?: $t['nama_staff'], 0, 1)) ?>
+                    </div>
+                    <span class="fw-medium text-dark"><?= esc($t['nama_pic'] ?: $t['nama_staff']) ?></span>
+                  </div>
+                </td>
+                <td><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25"><?= esc($t['no_mesin']) ?></span></td>
+                <td class="text-muted small"><?= date('d M Y, H:i', strtotime($t['waktu_mulai'])) ?></td>
+                <td class="fw-medium"><?= $t['durasi_detik'] !== null ? gmdate('i:s', (int) $t['durasi_detik']) . ' m' : '-' ?></td>
+                <td>
+                  <?php if (($t['status'] ?? 'Pending') === 'Approved'): ?>
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-2">Approved</span>
+                  <?php else: ?>
+                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 py-2">Pending</span>
+                  <?php endif; ?>
+                </td>
+                <td class="pe-4 text-end">
+                  <a href="<?= site_url('riwayat/' . $t['id_transaksi']) ?>" class="btn btn-sm btn-light text-primary border-0 bg-primary bg-opacity-10 fw-bold rounded-pill px-3">Detail</a>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </div>
 </div>
 
 <?= view('layout/footer') ?>

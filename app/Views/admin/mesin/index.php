@@ -3,21 +3,27 @@
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
   <h5 class="mb-0">Master Mesin</h5>
   <div class="d-flex align-items-center gap-2 flex-wrap">
-    <!-- Form Impor CSV -->
-    <form action="<?= site_url('admin/mesin/import') ?>" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-1 border rounded p-1 bg-white shadow-sm" style="max-height: 38px;">
-      <?= csrf_field() ?>
-      <input type="file" name="file_csv" accept=".csv" required class="form-control form-control-sm" style="max-width: 170px; border:none; padding: 2px 4px; font-size: 0.8rem;" title="Pilih file CSV untuk diimpor">
-      <button type="submit" class="btn btn-sm btn-success py-1 px-2 fw-semibold" style="font-size: 0.8rem;">Impor CSV</button>
-    </form>
-    <!-- Link Ekspor CSV -->
-    <a href="<?= site_url('admin/mesin/export') ?>" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1 py-2">
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
-        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-      </svg>
-      Ekspor
-    </a>
-    <a href="<?= site_url('admin/mesin/create') ?>" class="btn btn-primary btn-sm py-2">+ Tambah Mesin</a>
+    <?php if (session()->get('role') === 'admin'): ?>
+      <!-- Form Impor Excel -->
+      <form action="<?= site_url('admin/mesin/import') ?>" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-1 border rounded p-1 bg-white shadow-sm" style="max-height: 38px;">
+        <?= csrf_field() ?>
+        <input type="file" name="file_excel" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" required class="form-control form-control-sm" style="max-width: 170px; border:none; padding: 2px 4px; font-size: 0.8rem;" title="Pilih file Excel untuk diimpor">
+        <button type="submit" class="btn btn-sm btn-success py-1 px-2 fw-semibold" style="font-size: 0.8rem;">Impor</button>
+      </form>
+      <!-- Link Template -->
+      <a href="<?= site_url('admin/mesin/template') ?>" class="btn btn-outline-secondary btn-sm py-2">
+        Unduh Template
+      </a>
+      <!-- Link Ekspor Excel -->
+      <a href="<?= site_url('admin/mesin/export') ?>" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1 py-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+          <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+          <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+        </svg>
+        Ekspor
+      </a>
+      <a href="<?= site_url('admin/mesin/create') ?>" class="btn btn-primary btn-sm py-2">+ Tambah Mesin</a>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -33,7 +39,8 @@
             <th>Type</th>
             <th>Serial Nomor</th>
             <th>Lokasi</th>
-            <th style="width:160px;"></th>
+            <th>Bar Feeder</th>
+            <th class="text-end">Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -43,6 +50,7 @@
               <td><?= esc($m['type_mesin']) ?></td>
               <td><?= esc($m['serial_nomor']) ?></td>
               <td><span class="badge bg-secondary"><?= esc($m['lokasi']) ?></span></td>
+              <td><span class="text-muted small"><?= esc($m['bar_feeder_type'] ?? '-') ?></span></td>
               <td>
                 <div class="d-flex gap-1 flex-wrap">
                   <button type="button" class="btn btn-sm btn-outline-primary show-qr-btn"
@@ -52,9 +60,15 @@
                           data-lokasi="<?= esc($m['lokasi']) ?>">
                     <i class="bi bi-qr-code"></i> QR
                   </button>
-                  <a href="<?= site_url('admin/mesin/edit/' . $m['id_mesin']) ?>" class="btn btn-sm btn-outline-secondary">Edit</a>
-                  <a href="<?= site_url('admin/mesin/delete/' . $m['id_mesin']) ?>" class="btn btn-sm btn-outline-danger"
-                     onclick="return confirm('Hapus mesin <?= esc($m['no_mesin'], 'js') ?>?');">Hapus</a>
+                  <?php if (session()->get('role') === 'admin'): ?>
+                    <a href="<?= site_url('admin/mesin/edit/' . $m['id_mesin']) ?>" class="btn btn-outline-primary btn-sm py-1 px-2" title="Edit Mesin">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <a href="<?= site_url('admin/mesin/delete/' . $m['id_mesin']) ?>" class="btn btn-outline-danger btn-sm py-1 px-2"
+                       onclick="return confirm('Hapus mesin <?= esc($m['no_mesin'], 'js') ?>?');" title="Hapus Mesin">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  <?php endif; ?>
                 </div>
               </td>
             </tr>

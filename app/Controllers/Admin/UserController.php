@@ -45,6 +45,7 @@ class UserController extends BaseController
             'username' => $this->request->getPost('username'),
             'password' => password_hash($this->request->getPost('password'), PASSWORD_DEFAULT),
             'role'     => $this->request->getPost('role'),
+            'lokasi'   => $this->request->getPost('lokasi') ?: null,
         ]);
 
         return redirect()->to('/admin/user')->with('success', 'User berhasil ditambahkan.');
@@ -85,6 +86,7 @@ class UserController extends BaseController
             'nama'     => $this->request->getPost('nama'),
             'username' => $this->request->getPost('username'),
             'role'     => $this->request->getPost('role'),
+            'lokasi'   => $this->request->getPost('lokasi') ?: null,
         ];
 
         if ($this->request->getPost('password') !== '') {
@@ -106,8 +108,12 @@ class UserController extends BaseController
             return redirect()->to('/admin/user')->with('error', 'User tidak ditemukan.');
         }
 
-        $this->model->delete($id);
-        return redirect()->to('/admin/user')->with('success', 'User berhasil dihapus.');
+        try {
+            $this->model->delete($id);
+            return redirect()->to('/admin/user')->with('success', 'User berhasil dihapus.');
+        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+            return redirect()->to('/admin/user')->with('error', 'User ini tidak bisa dihapus karena memiliki data transaksi atau riwayat pengecekan terkait.');
+        }
     }
 
     public function export()
@@ -122,13 +128,14 @@ class UserController extends BaseController
         $output = fopen('php://output', 'w');
         
         // Header CSV
-        fputcsv($output, ['Nama', 'Username', 'Role', 'Password']);
+        fputcsv($output, ['Nama', 'Username', 'Role', 'Lokasi', 'Password']);
         
         foreach ($users as $u) {
             fputcsv($output, [
                 $u['nama'],
                 $u['username'],
                 $u['role'],
+                $u['lokasi'] ?? '',
                 '' // Password dikosongkan saat ekspor demi keamanan
             ]);
         }
@@ -164,15 +171,16 @@ class UserController extends BaseController
                 $nama     = trim($row[0]);
                 $username = trim($row[1]);
                 $role     = strtolower(trim($row[2]));
-                $password = isset($row[3]) ? trim($row[3]) : '';
+                $lokasi   = isset($row[3]) ? trim($row[3]) : '';
+                $password = isset($row[4]) ? trim($row[4]) : '';
                 
                 if (empty($nama) || empty($username) || empty($role)) {
                     $errors[] = "Baris {$rowNum}: Kolom Nama, Username, dan Role tidak boleh kosong.";
                     continue;
                 }
                 
-                if (! in_array($role, ['admin', 'leader', 'staff'], true)) {
-                    $errors[] = "Baris {$rowNum}: Role '{$role}' tidak valid. Harus 'admin', 'leader', atau 'staff'.";
+                if (! in_array($role, ['magang', 'member', 'sheadprd', 'sheadmtc', 'admin', 'leader'], true)) {
+                    $errors[] = "Baris {$rowNum}: Role '{$role}' tidak valid. Harus 'magang', 'member', 'sheadprd', 'sheadmtc', 'admin', atau 'leader'.";
                     continue;
                 }
                 
@@ -180,8 +188,9 @@ class UserController extends BaseController
                 
                 if ($existing) {
                     $updateData = [
-                        'nama' => $nama,
-                        'role' => $role,
+                        'nama'   => $nama,
+                        'role'   => $role,
+                        'lokasi' => empty($lokasi) ? null : $lokasi,
                     ];
                     if (! empty($password)) {
                         $updateData['password'] = password_hash($password, PASSWORD_DEFAULT);
@@ -194,6 +203,7 @@ class UserController extends BaseController
                         'nama'     => $nama,
                         'username' => $username,
                         'role'     => $role,
+                        'lokasi'   => empty($lokasi) ? null : $lokasi,
                         'password' => password_hash($passToSave, PASSWORD_DEFAULT),
                     ]);
                     $successInsert++;
@@ -217,8 +227,9 @@ class UserController extends BaseController
     private function rules(): array
     {
         return [
-            'nama' => 'required|max_length[100]',
-            'role' => 'required|in_list[admin,leader,staff]',
+            'nama'   => 'required|max_length[100]',
+            'role'   => 'required|in_list[magang,member,sheadprd,sheadmtc,admin,leader]',
+            'lokasi' => 'permit_empty|in_list[MFG 1,MFG 2]',
         ];
     }
 }

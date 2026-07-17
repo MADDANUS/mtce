@@ -9,8 +9,9 @@ class TransaksiCheckModel extends Model
     protected $table         = 'transaksi_check';
     protected $primaryKey    = 'id_transaksi';
     protected $allowedFields = [
-        'id_user', 'id_mesin', 'lokasi_check', 'jenis_check', 'kategori',
+        'id_user', 'nama_pic', 'id_mesin', 'lokasi_check', 'jenis_check', 'kategori',
         'waktu_mulai', 'waktu_selesai', 'status', 'approved_by', 'approved_at',
+        'approval_l1_by', 'approval_l1_at', 'approval_l2_by', 'approval_l2_at',
     ];
     protected $useTimestamps = true;
     protected $returnType    = 'array';
@@ -72,6 +73,10 @@ class TransaksiCheckModel extends Model
             $builder->where('transaksi_check.lokasi_check', $filters['lokasi']);
         }
 
+        if (!empty($filters['jenis_check'])) {
+            $builder->where('transaksi_check.jenis_check', $filters['jenis_check']);
+        }
+
         if (!empty($filters['id_mesin'])) {
             $builder->where('transaksi_check.id_mesin', (int)$filters['id_mesin']);
         }
@@ -120,9 +125,11 @@ class TransaksiCheckModel extends Model
      */
     public function getDetailTransaksi(int $idTransaksi): ?array
     {
-        return $this->select('transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.serial_nomor, transaksi_overhaul.bar_feeder_type, transaksi_overhaul.support_pic')
+        return $this->select('transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, approver_l1.nama as approver_l1_nama, approver_l2.nama as approver_l2_nama, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.serial_nomor, transaksi_overhaul.bar_feeder_type, transaksi_overhaul.support_pic')
                     ->join('users', 'users.id = transaksi_check.id_user')
                     ->join('users as approver', 'approver.id = transaksi_check.approved_by', 'left')
+                    ->join('users as approver_l1', 'approver_l1.id = transaksi_check.approval_l1_by', 'left')
+                    ->join('users as approver_l2', 'approver_l2.id = transaksi_check.approval_l2_by', 'left')
                     ->join('master_mesin', 'master_mesin.id_mesin = transaksi_check.id_mesin')
                     ->join('transaksi_overhaul', 'transaksi_overhaul.id_transaksi = transaksi_check.id_transaksi', 'left')
                     ->where('transaksi_check.id_transaksi', $idTransaksi)
@@ -132,14 +139,19 @@ class TransaksiCheckModel extends Model
     /**
      * Laporan durasi pengecekan (analisis efisiensi) untuk Leader/Admin.
      */
-    public function getLaporanDurasi(): array
+    public function getLaporanDurasi(?string $lokasi = null): array
     {
-        return $this->select("transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, master_mesin.no_mesin, master_mesin.type_mesin, TIMESTAMPDIFF(SECOND, transaksi_check.waktu_mulai, transaksi_check.waktu_selesai) as durasi_detik, transaksi_overhaul.bar_feeder_type, transaksi_overhaul.support_pic")
+        $builder = $this->select("transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.lokasi as lokasi_mesin, TIMESTAMPDIFF(SECOND, transaksi_check.waktu_mulai, transaksi_check.waktu_selesai) as durasi_detik, transaksi_overhaul.bar_feeder_type, transaksi_overhaul.support_pic")
                     ->join('users', 'users.id = transaksi_check.id_user')
                     ->join('users as approver', 'approver.id = transaksi_check.approved_by', 'left')
                     ->join('master_mesin', 'master_mesin.id_mesin = transaksi_check.id_mesin')
-                    ->join('transaksi_overhaul', 'transaksi_overhaul.id_transaksi = transaksi_check.id_transaksi', 'left')
-                    ->orderBy('transaksi_check.id_transaksi', 'DESC')
-                    ->findAll();
+                    ->join('transaksi_overhaul', 'transaksi_overhaul.id_transaksi = transaksi_check.id_transaksi', 'left');
+                    
+        if ($lokasi) {
+            $builder->where('master_mesin.lokasi', $lokasi);
+        }
+
+        return $builder->orderBy('transaksi_check.id_transaksi', 'DESC')
+                       ->findAll();
     }
 }

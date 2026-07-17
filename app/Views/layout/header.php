@@ -8,7 +8,7 @@
 <!-- Google Fonts (Inter) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet">
 <!-- Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
@@ -20,32 +20,32 @@
 
     :root {
         --sidebar-w: 240px;
-        --sidebar-bg: #111827;
-        --sidebar-item: #9ca3af;
+        --sidebar-bg: #111827; /* Carbon Black */
+        --sidebar-item: #94a3b8;
         --sidebar-active: #ffffff;
-        --sidebar-active-bg: rgba(255,255,255,0.08);
-        --sidebar-border: rgba(255,255,255,0.06);
-        --accent: #4f46e5;
-        --accent-hover: #4338ca;
-        --accent-light: #eef2ff;
-        --body-bg: #f3f4f6;
+        --sidebar-active-bg: rgba(2, 132, 199, 0.2); /* Electric Blue tint */
+        --sidebar-border: rgba(255,255,255,0.05);
+        --accent: #0284c7; /* Electric Blue */
+        --accent-hover: #0369a1;
+        --accent-light: #e0f2fe;
+        --body-bg: #f8fafc; /* Clean Light Steel */
         --white: #ffffff;
-        --border: #e5e7eb;
-        --border-strong: #d1d5db;
-        --text-primary: #111827;
-        --text-secondary: #6b7280;
-        --text-muted: #9ca3af;
-        --success: #059669;
-        --success-bg: #d1fae5;
-        --warning: #d97706;
-        --warning-bg: #fef3c7;
-        --danger: #dc2626;
+        --border: #e2e8f0;
+        --border-strong: #cbd5e1;
+        --text-primary: #0f172a; /* Gunmetal */
+        --text-secondary: #475569;
+        --text-muted: #94a3b8;
+        --success: #16a34a; 
+        --success-bg: #dcfce7;
+        --warning: #ea580c; /* Safety Orange */
+        --warning-bg: #ffedd5;
+        --danger: #dc2626; 
         --danger-bg: #fee2e2;
-        --radius-sm: 6px;
-        --radius: 10px;
-        --radius-lg: 14px;
-        --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
-        --shadow: 0 4px 12px rgba(0,0,0,0.07);
+        --radius-sm: 2px;
+        --radius: 4px; /* Sharp edges for industrial precision */
+        --radius-lg: 6px;
+        --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+        --shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -1px rgba(15, 23, 42, 0.06);
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -231,6 +231,76 @@
         letter-spacing: -0.02em;
     }
 
+    /* ---- DASHBOARD PREMIUM STYLES ---- */
+    .dashboard-header {
+        background: linear-gradient(135deg, #0f172a 0%, #0284c7 100%);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 10px 25px -5px rgba(13, 148, 136, 0.3);
+    }
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .card-stat-premium {
+        position: relative;
+        overflow: hidden;
+        border-radius: var(--radius-lg) !important;
+        border: none !important;
+        background: var(--white);
+        box-shadow: 0 4px 15px -3px rgba(0,0,0,0.05) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1;
+    }
+    .card-stat-premium:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px -5px rgba(0,0,0,0.1) !important;
+    }
+    .card-stat-premium::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(120deg, rgba(255,255,255,0.4) 0%, transparent 50%);
+        z-index: -1;
+        pointer-events: none;
+    }
+    .card-stat-premium .watermark-icon {
+        position: absolute;
+        bottom: -15px;
+        right: -10px;
+        font-size: 5rem;
+        opacity: 0.07;
+        z-index: -1;
+        transform: rotate(-10deg);
+        transition: transform 0.3s ease;
+    }
+    .card-stat-premium:hover .watermark-icon {
+        transform: rotate(0deg) scale(1.1);
+    }
+    .grad-indigo { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white !important; border-left: 4px solid #0284c7; }
+    .grad-emerald { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white !important; border-left: 4px solid #16a34a; }
+    .grad-amber { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white !important; border-left: 4px solid #ea580c; }
+    .grad-rose { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white !important; border-left: 4px solid #dc2626; }
+    .grad-cyan { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white !important; border-left: 4px solid #06b6d4; }
+    
+    .card-stat-premium.grad-indigo .watermark-icon,
+    .card-stat-premium.grad-emerald .watermark-icon,
+    .card-stat-premium.grad-amber .watermark-icon,
+    .card-stat-premium.grad-rose .watermark-icon,
+    .card-stat-premium.grad-cyan .watermark-icon {
+        opacity: 0.15;
+    }
+
     /* ---- BUTTONS ---- */
     .btn {
         border-radius: var(--radius-sm);
@@ -324,75 +394,93 @@
     .table-responsive {
         border-radius: var(--radius);
         overflow: hidden;
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-strong) !important;
+        box-shadow: var(--shadow-sm);
+        background: var(--white);
     }
     .table {
         margin-bottom: 0;
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: collapse !important;
+        font-family: 'Inter', sans-serif !important;
     }
-    .table th {
-        font-size: 0.72rem !important;
-        font-weight: 700 !important;
+    .table th, .table thead th, .table-light th, .table tr.table-light th, .kontrol-table th {
+        font-family: 'Roboto Mono', monospace;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
         text-transform: uppercase;
-        letter-spacing: 0.09em;
-        color: var(--text-secondary) !important;
-        background: #f9fafb !important;
-        padding: 0.85rem 1rem !important;
-        border-bottom: 1.5px solid var(--border) !important;
-        border-right: none !important;
-        border-left: none !important;
-        border-top: none !important;
+        letter-spacing: 0.08em;
+        color: #e2e8f0 !important;
+        background: #0f172a !important;
+        padding: 0.9rem 1rem !important;
+        border: 1px solid #334155 !important;
+        border-bottom: 2px solid #0284c7 !important;
         white-space: nowrap;
-        vertical-align: middle;
+        vertical-align: middle !important;
     }
-    .table td {
+    .table th a, .table thead th a, .table-light th a, .kontrol-table th a {
+        color: #ffffff !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        text-decoration: none !important;
+    }
+    .table th a:hover, .table thead th a:hover {
+        color: #0284c7 !important;
+    }
+    .table td, .kontrol-table td {
         padding: 0.85rem 1rem !important;
-        border-bottom: 1px solid #f3f4f6 !important;
-        border-right: none !important;
-        border-left: none !important;
-        border-top: none !important;
+        border: 1px solid #e7e5e4 !important;
         font-size: 0.875rem !important;
+        font-weight: 500 !important;
         color: var(--text-primary) !important;
-        vertical-align: middle;
+        vertical-align: middle !important;
+        background-color: #ffffff;
     }
-    .table tbody tr:last-child td { border-bottom: none !important; }
-    .table tbody tr:hover td { background: #fafafa !important; }
+    .table tbody tr:nth-child(even) td { background-color: #faf9f6 !important; }
+    .table tbody tr:hover td, .kontrol-table tbody tr:hover td { background-color: #f0fdf4 !important; transition: background-color 0.15s ease; }
 
     /* Checklist specific table */
-    .checklist-table { border: none !important; }
+    .checklist-table { border: none !important; width: 100%; font-family: 'Inter', sans-serif !important; }
     .checklist-table th {
-        background: #f9fafb !important;
-        font-size: 0.72rem !important;
-        font-weight: 700 !important;
-        color: var(--text-secondary) !important;
+        background: #0f172a !important;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        color: #e2e8f0 !important;
         text-transform: uppercase;
-        letter-spacing: 0.09em;
-        padding: 0.8rem 0.9rem !important;
-        border: 1px solid var(--border) !important;
+        letter-spacing: 0.08em;
+        padding: 0.9rem 1rem !important;
+        border: 1px solid #334155 !important;
+        border-bottom: 2px solid #0284c7 !important;
     }
     .checklist-table td {
-        padding: 0.75rem 0.9rem !important;
-        border: 1px solid #f0f0f0 !important;
-        font-size: 0.83rem !important;
-        vertical-align: middle;
+        padding: 0.85rem 1rem !important;
+        border: 1px solid #e7e5e4 !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        vertical-align: middle !important;
         color: var(--text-primary) !important;
+        background-color: #ffffff;
     }
+    .checklist-table tbody tr:nth-child(even) td { background-color: #faf9f6 !important; }
     .checklist-table td.bagian-cell {
-        font-weight: 700;
+        font-weight: 700 !important;
         color: var(--text-primary) !important;
-        background: #f9fafb !important;
-        border-right: 2px solid var(--border) !important;
-        font-size: 0.82rem !important;
+        background: #f5f5f4 !important;
+        border-right: 2px solid var(--border-strong) !important;
+        font-size: 0.875rem !important;
     }
     .checklist-table tr.section-header td {
         background: #1e293b !important;
-        color: #ffffff !important;
-        font-size: 0.75rem !important;
-        font-weight: 700 !important;
+        color: #0284c7 !important;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        padding: 0.6rem 0.9rem !important;
+        padding: 0.7rem 1rem !important;
+        border: 1px solid #334155 !important;
+        border-left: 4px solid #0284c7 !important;
     }
 
     /* ---- FORMS ---- */
@@ -528,42 +616,98 @@ $seg3 = $uri->getTotalSegments() >= 3 ? $uri->getSegment(3) : '';
         <i class="bi bi-grid-1x2-fill"></i>Dashboard
       </a>
       
-      <?php if (in_array($role, ['staff', 'admin'], true)): ?>
+      <?php if (in_array($role, ['magang', 'member', 'admin'], true)): ?>
         <a href="<?= site_url('checklist') ?>" class="menu-item <?= $seg1 === 'checklist' ? 'active' : '' ?>">
-          <i class="bi bi-check2-square"></i>Buat Pengecekan
+          <i class="bi bi-clipboard-check-fill"></i>Buat Pengecekan
         </a>
-        <a href="<?= site_url('scan') ?>" class="menu-item <?= $seg1 === 'scan' ? 'active' : '' ?>">
-          <i class="bi bi-qr-code-scan"></i>Scan QR Mesin
-        </a>
+      <?php endif; ?>
+
+      <!-- LAPORAN MENU (COLLAPSE) -->
+      <?php 
+        $isLaporanOpen = ($seg1 === 'riwayat' || $seg1 === 'kontrol' || $seg1 === 'abnormal' || $seg1 === 'laporan');
+      ?>
+      <a href="#laporanMenu" data-bs-toggle="collapse" class="menu-item <?= $isLaporanOpen ? 'active' : '' ?>">
+        <i class="bi bi-folder-fill"></i>Laporan
+        <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
+      </a>
+      <div class="collapse <?= $isLaporanOpen ? 'show' : '' ?>" id="laporanMenu">
+        <div style="padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">
+          
+          <?php if ($role !== 'leader'): ?>
+          <div style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.2rem; letter-spacing: 0.05em;">Preventive</div>
+          <a href="<?= site_url('riwayat/lokasi/mfg1?jenis_check=Preventive') ?>" class="menu-item <?= ($seg1 === 'riwayat' && (!isset($_GET['jenis_check']) || $_GET['jenis_check'] === 'Preventive')) ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 2px;">
+            <i class="bi bi-file-earmark-text"></i>Checklist Report
+          </a>
+          <a href="<?= site_url('kontrol') ?>" class="menu-item <?= $seg1 === 'kontrol' ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 2px;">
+            <i class="bi bi-calendar2-check"></i>Ceklis Kontrol
+          </a>
+          <a href="<?= site_url('abnormal') ?>" class="menu-item <?= $seg1 === 'abnormal' ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 10px;">
+            <i class="bi bi-exclamation-triangle"></i>Laporan Abnormal
+          </a>
+          <?php endif; ?>
+
+          <div style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.2rem; letter-spacing: 0.05em;">Overhaul</div>
+          <?php 
+            $overhaulLokasi = 'mfg1';
+            if ($role === 'leader' && session()->get('lokasi')) {
+                $overhaulLokasi = strtolower(str_replace(' ', '', session()->get('lokasi')));
+            }
+          ?>
+          <a href="<?= site_url('riwayat/lokasi/' . $overhaulLokasi . '?jenis_check=Overhaul') ?>" class="menu-item <?= ($seg1 === 'riwayat' && isset($_GET['jenis_check']) && $_GET['jenis_check'] === 'Overhaul') ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 10px;">
+            <i class="bi bi-tools"></i>Inspection Report
+          </a>
+
+          <?php if (in_array($role, ['member', 'sheadprd', 'sheadmtc', 'admin', 'leader'], true)): ?>
+            <a href="<?= site_url('laporan/durasi') ?>" class="menu-item <?= $seg1 === 'laporan' ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 2px;">
+              <i class="bi bi-bar-chart-line"></i>Laporan Durasi
+            </a>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <?php if (in_array($role, ['magang', 'member', 'admin'], true)): ?>
+      <a href="<?= site_url('scan') ?>" class="menu-item <?= $seg1 === 'scan' ? 'active' : '' ?>">
+        <i class="bi bi-qr-code-scan"></i>Scan QR Mesin
+      </a>
       <?php endif; ?>
       
-      <a href="<?= site_url('riwayat') ?>" class="menu-item <?= $seg1 === 'riwayat' ? 'active' : '' ?>">
-        <i class="bi bi-clock-history"></i>Riwayat Pengecekan
-      </a>
-      <a href="<?= site_url('kontrol') ?>" class="menu-item <?= $seg1 === 'kontrol' ? 'active' : '' ?>">
-        <i class="bi bi-calendar-check"></i>Ceklis Kontrol
-      </a>
-      <a href="<?= site_url('abnormal') ?>" class="menu-item <?= $seg1 === 'abnormal' ? 'active' : '' ?>">
-        <i class="bi bi-exclamation-triangle"></i>Laporan Abnormal
+      <a href="<?= site_url('admin/jadwal') ?>" class="menu-item <?= $seg2 === 'jadwal' ? 'active' : '' ?>">
+        <i class="bi bi-calendar-event"></i>Jadwal Preventive
       </a>
 
-      <?php if (in_array($role, ['leader', 'admin'], true)): ?>
-        <a href="<?= site_url('laporan/durasi') ?>" class="menu-item <?= $seg1 === 'laporan' ? 'active' : '' ?>">
-          <i class="bi bi-bar-chart-line"></i>Laporan Durasi
+      <?php 
+        $hasMasterData = in_array($role, ['admin', 'member', 'sheadprd', 'sheadmtc', 'leader'], true);
+        $isMasterDataOpen = ($seg2 === 'mesin' || $seg2 === 'user' || $seg2 === 'pic' || $seg2 === 'parameter');
+      ?>
+      <?php if ($hasMasterData): ?>
+        <a href="#masterDataMenu" data-bs-toggle="collapse" class="menu-item <?= $isMasterDataOpen ? 'active' : '' ?> mt-2">
+          <i class="bi bi-database-fill-gear"></i>Master Data
+          <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
         </a>
-      <?php endif; ?>
+        <div class="collapse <?= $isMasterDataOpen ? 'show' : '' ?>" id="masterDataMenu">
+          <div style="padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">
+            
+            <a href="<?= site_url('admin/mesin') ?>" class="menu-item <?= $seg2 === 'mesin' ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 2px;">
+              <i class="bi bi-gear-wide-connected"></i>Master Mesin
+            </a>
+            
+            <?php if ($role === 'admin'): ?>
+              <a href="<?= site_url('admin/user') ?>" class="menu-item <?= $seg2 === 'user' ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 2px;">
+                <i class="bi bi-people"></i>Master User
+              </a>
+              <a href="<?= site_url('admin/pic') ?>" class="menu-item <?= $seg2 === 'pic' ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 2px;">
+                <i class="bi bi-person-badge"></i>Master PIC
+              </a>
+            <?php endif; ?>
 
-      <?php if ($role === 'admin'): ?>
-        <span class="menu-label">Master Data</span>
-        <a href="<?= site_url('admin/mesin') ?>" class="menu-item <?= $seg2 === 'mesin' ? 'active' : '' ?>">
-          <i class="bi bi-gear-wide-connected"></i>Master Mesin
-        </a>
-        <a href="<?= site_url('admin/user') ?>" class="menu-item <?= $seg2 === 'user' ? 'active' : '' ?>">
-          <i class="bi bi-people"></i>Master User
-        </a>
-        <a href="<?= site_url('admin/parameter') ?>" class="menu-item <?= $seg2 === 'parameter' ? 'active' : '' ?>">
-          <i class="bi bi-sliders"></i>Master Parameter
-        </a>
+            <?php if (in_array($role, ['admin', 'sheadmtc'], true)): ?>
+              <a href="<?= site_url('admin/parameter') ?>" class="menu-item <?= $seg2 === 'parameter' ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 2px;">
+                <i class="bi bi-sliders"></i>Master Parameter
+              </a>
+            <?php endif; ?>
+
+          </div>
+        </div>
       <?php endif; ?>
     </div>
     

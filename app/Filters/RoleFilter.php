@@ -8,11 +8,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class RoleFilter implements FilterInterface
 {
-    /**
-     * Dipakai di routes seperti:
-     *   ['filter' => 'role:admin']
-     *   ['filter' => 'role:leader,admin']
-     */
+   
     public function before(RequestInterface $request, $arguments = null)
     {
         if (! session()->get('logged_in')) {

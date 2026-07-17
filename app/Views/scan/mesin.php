@@ -33,16 +33,16 @@
 
     <!-- Pilihan Aksi (Preventive / Overhaul) -->
     <div class="row g-3">
-      <!-- Opsi 1: Preventive -->
+      <!-- Opsi 1: Checklist Report -->
       <div class="col-12">
-        <a href="<?= site_url("checklist/{$lokasiSlug}/preventive?id_mesin=" . (int)$mesin['id_mesin']) ?>" class="card card-hover text-decoration-none border-0 shadow-sm bg-white">
+        <a href="<?= site_url("checklist/{$lokasiSlug}/checklist-report?id_mesin=" . (int)$mesin['id_mesin']) ?>" class="card card-hover text-decoration-none border-0 shadow-sm bg-white">
           <div class="card-body p-4 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
               <div class="bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center rounded-3" style="width: 44px; height: 44px;">
                 <i class="bi bi-clock-history" style="font-size: 1.25rem;"></i>
               </div>
               <div class="text-start">
-                <h6 class="fw-bold mb-0 text-dark">Pengecekan Preventive</h6>
+                <h6 class="fw-bold mb-0 text-dark">Checklist Report</h6>
                 <small class="text-muted" style="font-size: 0.775rem;">Pengecekan rutin berkala (Penerangan, Kabel, Air, dll.)</small>
               </div>
             </div>

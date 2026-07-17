@@ -10,7 +10,7 @@ class ParameterCheckModel extends Model
     protected $primaryKey    = 'id_parameter';
     protected $allowedFields = [
         'lokasi', 'jenis_check', 'kategori', 'section_check',
-        'bagian_check', 'sub_item_check', 'point_check', 'standard_check', 'urutan',
+        'bagian_check', 'point_check', 'standard_check', 'urutan',
     ];
     protected $useTimestamps = true;
     protected $returnType    = 'array';
@@ -27,12 +27,29 @@ class ParameterCheckModel extends Model
                         ->where('jenis_check', $jenisCheck);
 
         if ($kategori !== null) {
-            $builder->where('kategori', $kategori);
+            if (strtolower($kategori) === 'mesin cnc & bar feeder') {
+                $builder->whereIn('kategori', ['Mesin CNC', 'Bar Feeder CNC', 'Mesin CNC & Bar Feeder', 'MESIN CNC & BAR FEEDER']);
+            } else {
+                $builder->where('kategori', $kategori);
+            }
         }
 
-        $rows = $builder->orderBy('urutan', 'ASC')
+        $rows = $builder->orderBy('kategori', 'DESC')
+                        ->orderBy('urutan', 'ASC')
                         ->orderBy('id_parameter', 'ASC')
                         ->findAll();
+
+        // Pisahkan teks yang memiliki '|' menjadi bagian_check dan sub_item_check
+        foreach ($rows as &$row) {
+            if (strpos($row['bagian_check'], '|') !== false) {
+                $parts = explode('|', $row['bagian_check'], 2);
+                $row['bagian_check']   = trim($parts[0]);
+                $row['sub_item_check'] = trim($parts[1]);
+            } else {
+                $row['sub_item_check'] = null;
+            }
+        }
+        unset($row);
 
         if (strtolower($jenisCheck) !== 'overhaul') {
             // Existing logic for Preventive
@@ -87,6 +104,17 @@ class ParameterCheckModel extends Model
         // Logic for Overhaul
         $total = count($rows);
 
+        // Inject virtual categories for 'Mesin CNC & Bar Feeder' so the view can paginate them
+        for ($i = 0; $i < $total; $i++) {
+            if (strtolower($rows[$i]['kategori'] ?? '') === 'mesin cnc & bar feeder') {
+                if ($i >= 52) { // 52 parameters are Mesin CNC, the rest are Bar Feeder
+                    $rows[$i]['kategori'] = 'Bar Feeder CNC';
+                } else {
+                    $rows[$i]['kategori'] = 'Mesin CNC';
+                }
+            }
+        }
+
         $sectionCounter = 0;
         $currentSection = null;
         $itemLetterSuffixIndex = 0;
@@ -125,9 +153,9 @@ class ParameterCheckModel extends Model
                     }
                 }
                 
-                // Convert index to letter (0 -> 'a', 1 -> 'b'...)
-                $letter = chr(97 + $itemLetterSuffixIndex);
-                $rows[$i]['dynamic_no'] = $letter;
+                // Convert index to letter (0 -> 'A', 1 -> 'B'...)
+                $letter = chr(65 + $itemLetterSuffixIndex);
+                $rows[$i]['dynamic_no'] = "{$sectionCounter}{$letter}";
             } else {
                 $rows[$i]['is_section_start'] = false;
                 $rows[$i]['dynamic_section_header'] = null;

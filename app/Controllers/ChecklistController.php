@@ -28,12 +28,24 @@ class ChecklistController extends BaseController
         'penerangan'     => 'Penerangan',
         'kabel-dan-pipa' => 'Kabel dan Pipa',
         'angin-bocor'    => 'Angin Bocor',
-        'bearing'        => 'Bearing',
+        'bearing-cam'    => 'Bearing Cam',
         'gearbox'        => 'Gearbox',
-        'belt'           => 'Belt',
+        'belt-cam'       => 'Belt Cam',
         // Overhaul
-        'bar-feeder-cnc' => 'Bar Feeder CNC',
-        'mesin-cnc'      => 'Mesin CNC',
+        'mesin-cnc-bar-feeder' => 'Mesin CNC & Bar Feeder',
+        'kasahara-milling'     => 'KASAHARA MILLING',
+        'kasahara-slothing'    => 'KASAHARA SLOTHING',
+        'thread'               => 'THREAD',
+        'kasahara-tapping'     => 'KASAHARA TAPPING',
+        'double-milling'       => 'DOUBLE MILLING',
+        'milling'              => 'MILLING',
+        'double-center-drill'  => 'DOUBLE CENTER DRILL',
+        'osl'                  => 'OSL',
+        'knurling'             => 'KNURLING',
+        'brother'              => 'BROTHER',
+        'burnishing'           => 'BURNISHING',
+        'buffing'              => 'BUFFING',
+        'centering-grinding'   => 'CENTERING GRINDING',
     ];
 
     private function resolveLokasi(string $slug): string
@@ -47,9 +59,15 @@ class ChecklistController extends BaseController
     private function resolveJenis(string $slug): string
     {
         return match (strtolower($slug)) {
-            'overhaul' => 'Overhaul',
-            default    => 'Preventive',
+            'overhaul'         => 'Overhaul',
+            'checklist-report' => 'Preventive',
+            default            => 'Preventive',
         };
+    }
+
+    private function resolveJenisDisplay(string $jenisName): string
+    {
+        return $jenisName === 'Preventive' ? 'Checklist Report' : $jenisName;
     }
 
     /**
@@ -59,7 +77,7 @@ class ChecklistController extends BaseController
     public function pilihLokasi()
     {
         return view('checklist/pilih_lokasi', [
-            'title' => 'Pilih Lokasi Pengecekan',
+            'title' => 'Pilih Jenis Pengecekan',
         ]);
     }
 
@@ -82,33 +100,59 @@ class ChecklistController extends BaseController
      */
     public function indexKategori(string $lokasiSlug, string $jenisSlug)
     {
-        $lokasiName = $this->resolveLokasi($lokasiSlug);
-        $jenisName  = $this->resolveJenis($jenisSlug);
-        $idMesin    = $this->request->getGet('id_mesin') ?: null;
+        $lokasiName       = $this->resolveLokasi($lokasiSlug);
+        $jenisDbName      = $this->resolveJenis($jenisSlug);
+        $jenisDisplayName = $this->resolveJenisDisplay($jenisDbName);
+        $idMesin          = $this->request->getGet('id_mesin') ?: null;
 
-        // Pisahkan kategori berdasarkan jenis_check
-        if (strtolower($jenisSlug) === 'overhaul') {
+        // Jika Overhaul MFG 1, langsung arahkan ke form Mesin CNC & Bar Feeder
+        if (strtolower($jenisSlug) === 'overhaul' && $lokasiName === 'MFG 1') {
+            $redirectUrl = "/checklist/{$lokasiSlug}/{$jenisSlug}/create/mesin-cnc-bar-feeder";
+            if ($idMesin) {
+                $redirectUrl .= "?id_mesin=" . $idMesin;
+            }
+            return redirect()->to($redirectUrl);
+        } else if (strtolower($jenisSlug) === 'overhaul' && $lokasiName === 'MFG 2') {
             $categories = [
-                'bar-feeder-cnc' => 'Bar Feeder CNC',
-                'mesin-cnc'      => 'Mesin CNC',
+                'kasahara-milling'     => 'KASAHARA MILLING',
+                'kasahara-slothing'    => 'KASAHARA SLOTHING',
+                'thread'               => 'THREAD',
+                'kasahara-tapping'     => 'KASAHARA TAPPING',
+                'double-milling'       => 'DOUBLE MILLING',
+                'milling'              => 'MILLING',
+                'double-center-drill'  => 'DOUBLE CENTER DRILL',
+                'osl'                  => 'OSL',
+                'knurling'             => 'KNURLING',
+                'brother'              => 'BROTHER',
+                'burnishing'           => 'BURNISHING',
+                'buffing'              => 'BUFFING',
+                'centering-grinding'   => 'CENTERING GRINDING',
             ];
         } else {
-            $categories = [
-                'penerangan'     => 'Penerangan',
-                'kabel-dan-pipa' => 'Kabel dan Pipa',
-                'angin-bocor'    => 'Angin Bocor',
-                'bearing'        => 'Bearing',
-                'gearbox'        => 'Gearbox',
-                'belt'           => 'Belt',
-            ];
+            if ($lokasiName === 'MFG 2') {
+                $categories = [
+                    'penerangan'     => 'Penerangan',
+                    'kabel-dan-pipa' => 'Kabel dan Pipa',
+                    'angin-bocor'    => 'Angin Bocor',
+                ];
+            } else {
+                $categories = [
+                    'penerangan'     => 'Penerangan',
+                    'kabel-dan-pipa' => 'Kabel dan Pipa',
+                    'angin-bocor'    => 'Angin Bocor',
+                    'bearing-cam'    => 'Bearing Cam',
+                    'gearbox'        => 'Gearbox',
+                    'belt-cam'       => 'Belt Cam',
+                ];
+            }
         }
 
         return view('checklist/index', [
-            'title'      => "Pilih Kategori - {$jenisName} {$lokasiName}",
+            'title'      => "Pilih Kategori - {$jenisDisplayName} {$lokasiName}",
             'lokasiSlug' => $lokasiSlug,
             'lokasiName' => $lokasiName,
             'jenisSlug'  => $jenisSlug,
-            'jenisName'  => $jenisName,
+            'jenisName'  => $jenisDisplayName,
             'categories' => $categories,
             'idMesin'    => $idMesin,
         ]);
@@ -124,22 +168,24 @@ class ChecklistController extends BaseController
             return redirect()->to("/checklist/{$lokasiSlug}/{$jenisSlug}")->with('error', 'Kategori tidak valid.');
         }
 
-        $lokasiName   = $this->resolveLokasi($lokasiSlug);
-        $jenisName    = $this->resolveJenis($jenisSlug);
-        $categoryName = $this->categoryMap[$categorySlug];
-        $waktuMulai   = Time::now();
-        $idMesin      = $this->request->getGet('id_mesin') ?: null;
+        $lokasiName       = $this->resolveLokasi($lokasiSlug);
+        $jenisDbName      = $this->resolveJenis($jenisSlug);
+        $jenisDisplayName = $this->resolveJenisDisplay($jenisDbName);
+        $categoryName     = $this->categoryMap[$categorySlug];
+        $waktuMulai       = Time::now();
+        $idMesin          = $this->request->getGet('id_mesin') ?: null;
 
         $data = [
-            'title'             => "Form Pengecekan {$jenisName} - {$categoryName}",
+            'title'             => "Form Pengecekan {$jenisDisplayName} - {$categoryName}",
             'lokasiSlug'        => $lokasiSlug,
             'lokasiName'        => $lokasiName,
             'jenisSlug'         => $jenisSlug,
-            'jenisName'         => $jenisName,
+            'jenisName'         => $jenisDisplayName,
             'categorySlug'      => $categorySlug,
             'categoryName'      => $categoryName,
             'daftarMesin'       => $this->mesinModel->getByLokasi($lokasiName),
-            'rows'              => $this->parameterModel->getFormRows($lokasiName, $jenisName, $categoryName),
+            'rows'              => $this->parameterModel->getFormRows($lokasiName, $jenisDbName, $categoryName),
+            'masterPic'         => (new \App\Models\PicModel())->findAll(),
             'namaStaff'         => session()->get('nama'),
             'waktuMulai'        => $waktuMulai->toDateTimeString(),
             'waktuMulaiDisplay' => $waktuMulai->toLocalizedString('dd MMMM yyyy, HH:mm:ss'),
@@ -178,6 +224,7 @@ class ChecklistController extends BaseController
 
         $hasilCheck = $this->request->getPost('hasil_check') ?? [];
         $ulasan     = $this->request->getPost('ulasan') ?? [];
+        $inputPic   = $this->request->getPost('nama_pic') ?: (session()->get('nama') ?: 'Staff');
 
         $categorySlug = array_search($kategoriName, $this->categoryMap, true) ?: 'penerangan';
 
@@ -186,6 +233,7 @@ class ChecklistController extends BaseController
 
         $idTransaksi = $this->transaksiModel->insert([
             'id_user'       => session()->get('user_id'),
+            'nama_pic'      => $inputPic,
             'id_mesin'      => $idMesin,
             'lokasi_check'  => $lokasiName,
             'jenis_check'   => $jenisName,
@@ -194,6 +242,11 @@ class ChecklistController extends BaseController
             'waktu_selesai' => $waktuSelesai,
             'status'        => 'Pending',
         ]);
+        if (!$idTransaksi) {
+            log_message('error', 'Failed to insert transaksi_check: ' . json_encode($this->transaksiModel->errors()));
+            $db->transRollback();
+            return redirect()->back()->withInput()->with('error', 'Gagal membuat header transaksi pengecekan.');
+        }
 
         $detailData = [];
         foreach ($hasilCheck as $idParameter => $hasil) {
@@ -203,96 +256,10 @@ class ChecklistController extends BaseController
                 'hasil_check'  => $hasil !== '' ? $hasil : null,
                 'ulasan'       => $ulasan[$idParameter] ?? null,
             ]);
-
-            // Save to laporan_abnormal if status is Δ or X
-            if (in_array($hasil, ['Δ', 'X'], true)) {
-                $paramInfo = $this->parameterModel->find((int)$idParameter);
-                $pointCheckName = $paramInfo ? $paramInfo['point_check'] : 'Parameter #' . $idParameter;
-                
-                $abnormalDesc = $ulasan[$idParameter] ?? '';
-                if (empty($abnormalDesc)) {
-                    $abnormalDesc = 'Ditemukan kondisi abnormal (' . $hasil . ')';
-                }
-
-                $picNama = $this->request->getPost('pic_nama') ?: 'Staff';
-
-                $db->table('laporan_abnormal')->insert([
-                    'id_transaksi'       => $idTransaksi,
-                    'id_detail'          => $idDetail,
-                    'id_mesin'           => $idMesin,
-                    'point_check'        => $pointCheckName,
-                    'abnormal_condition' => $abnormalDesc,
-                    'pengecekan_tanggal' => date('Y-m-d', strtotime($waktuSelesai)),
-                    'pengecekan_pic'     => $picNama,
-                    'created_at'         => $waktuSelesai,
-                    'updated_at'         => $waktuSelesai,
-                ]);
-            }
+            // (Logika laporan_abnormal dipindah ke proses Approval)
         }
 
-        // Simpan atau update Ceklis Kontrol jika jenisnya adalah Preventive
-        if (strtolower($jenisSlug) === 'preventive') {
-            $picNama       = $this->request->getPost('pic_nama') ?: 'Staff';
-            $isOutOfPlan   = $this->request->getPost('is_out_of_plan') === '1';
-            $outOfPlanDate = $isOutOfPlan ? ($this->request->getPost('out_of_plan_date') ?: date('Y-m-d')) : null;
-            $ulasanKontrol = $this->request->getPost('ulasan_kontrol') ?: null;
-
-            // Hitung status akumulatif (X > Δ > V)
-            $overallStatus = 'V';
-            $hasTriangle   = false;
-            foreach ($hasilCheck as $hasil) {
-                if ($hasil === 'X') {
-                    $overallStatus = 'X';
-                    break;
-                }
-                if ($hasil === 'Δ') {
-                    $hasTriangle = true;
-                }
-            }
-            if ($overallStatus !== 'X' && $hasTriangle) {
-                $overallStatus = 'Δ';
-            }
-
-            // Hitung periode ke (1 s.d 5)
-            $day = (int) date('d', strtotime($waktuSelesai));
-            $periodeKe = intval(($day - 1) / 7) + 1;
-            if ($periodeKe > 5) {
-                $periodeKe = 5;
-            }
-
-            $bulanTahun = date('Y-m', strtotime($waktuSelesai));
-
-            $kontrolData = [
-                'id_mesin'      => $idMesin,
-                'kategori'      => $kategoriName,
-                'bulan_tahun'   => $bulanTahun,
-                'periode_ke'    => $periodeKe,
-                'status_check'  => $overallStatus,
-                'pic_nama'      => $picNama,
-                'out_of_plan'   => $outOfPlanDate,
-                'ulasan'        => $ulasanKontrol,
-                'tanggal_check' => date('Y-m-d', strtotime($waktuSelesai)),
-                'updated_at'    => $waktuSelesai,
-            ];
-
-            // Cek apakah sudah terisi di database untuk periode ini
-            $exist = $db->table('ceklis_kontrol')
-                        ->where('id_mesin', $idMesin)
-                        ->where('kategori', $kategoriName)
-                        ->where('bulan_tahun', $bulanTahun)
-                        ->where('periode_ke', $periodeKe)
-                        ->get()
-                        ->getRowArray();
-
-            if ($exist) {
-                $db->table('ceklis_kontrol')
-                   ->where('id_kontrol', $exist['id_kontrol'])
-                   ->update($kontrolData);
-            } else {
-                $kontrolData['created_at'] = $waktuSelesai;
-                $db->table('ceklis_kontrol')->insert($kontrolData);
-            }
-        }
+        // (Logika ceklis_kontrol dipindah ke proses Approval)
 
         // Simpan metadata khusus Overhaul (Opsi C: Tabel transaksi_overhaul)
         if (strtolower($jenisSlug) === 'overhaul') {
@@ -309,19 +276,8 @@ class ChecklistController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data pengecekan.');
         }
 
-        if (strtolower($jenisSlug) === 'preventive') {
-            $redirectParams = [
-                'lokasi'   => $lokasiName,
-                'kategori' => $kategoriName,
-                'bulan'    => $bulanTahun,
-                'auto'     => 1
-            ];
-            $redirectUrl = site_url('kontrol') . '?' . http_build_query($redirectParams);
-            return redirect()->to($redirectUrl)->with('success', 'Pengecekan berhasil disimpan. Mengalihkan ke Ceklis Kontrol...');
-        }
-
-        return redirect()->to("/checklist/{$lokasiSlug}/{$jenisSlug}/create/{$categorySlug}")
-                          ->with('success', 'Pengecekan berhasil disimpan. Durasi: '
+        return redirect()->to("/riwayat/lokasi/{$lokasiSlug}?kategori=" . urlencode($kategoriName))
+                          ->with('success', 'Pengecekan berhasil disimpan. Durasi pengerjaan: '
                               . $this->formatDurasi($waktuMulai, $waktuSelesai));
     }
 
@@ -331,7 +287,6 @@ class ChecklistController extends BaseController
      */
     public function overhaulPlaceholder(string $lokasiSlug)
     {
-        // Sejak Overhaul sudah aktif, kita redirect ke indexKategori
         return redirect()->to("/checklist/{$lokasiSlug}/overhaul");
     }
 

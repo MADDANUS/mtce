@@ -1,8 +1,13 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
-<div class="row justify-content-center my-5">
-  <div class="col-md-8 text-center mb-4">
-    <a href="<?= site_url('checklist') ?>" class="btn btn-sm btn-outline-secondary mb-3">&laquo; Kembali ke Pilih Lokasi</a>
+<div class="mb-3">
+  <a href="<?= site_url('checklist') ?>" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Kembali ke Pilih Lokasi
+  </a>
+</div>
+
+<div class="row justify-content-center mb-5">
+  <div class="col-md-8 text-center">
     <h2 class="fw-bold text-dark mb-2">Pengecekan di <?= esc($lokasiName) ?></h2>
     <p class="text-muted">Pilih jenis pemeriksaan mesin yang ingin Anda lakukan di <?= esc($lokasiName) ?>.</p>
   </div>
@@ -20,7 +25,7 @@
         </div>
         <h3 class="card-title fw-bold text-dark mb-3">Preventive Maintenance</h3>
         <p class="card-text text-muted mb-4">Pengecekan rutin terencana (harian/mingguan) untuk mencegah kerusakan mesin.</p>
-        <a href="<?= site_url("checklist/{$lokasiSlug}/preventive") ?>" class="btn btn-primary w-100 py-3 fw-bold rounded-3 mt-auto">Mulai Preventive &raquo;</a>
+        <a href="<?= site_url("checklist/{$lokasiSlug}/checklist-report") ?>" class="btn btn-primary w-100 py-3 fw-bold rounded-3 mt-auto">Mulai Preventive &raquo;</a>
       </div>
     </div>
   </div>

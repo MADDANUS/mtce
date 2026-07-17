@@ -20,13 +20,15 @@ $routes->get('logout', 'Auth::logout');
 // Dashboard (semua role login, konten beda per role di dalam controller)
 $routes->get('dashboard', 'DashboardController::index', ['filter' => 'auth']);
 
-// Checklist Dinamis (semua role login, dipraktikkan oleh Staff/Admin)
-$routes->group('checklist', ['filter' => 'auth'], static function ($routes) {
+// Checklist Dinamis (magang, member, admin bisa buat pengecekan)
+$routes->group('checklist', ['filter' => 'role:admin,magang,member'], static function ($routes) {
     // 1. Pilih Lokasi (mfg1 / mfg2)
     $routes->get('/', 'ChecklistController::pilihLokasi');
     
-    // 2. Pilih Jenis Pengecekan (preventive / overhaul)
-    $routes->get('(:segment)', 'ChecklistController::pilihJenis/$1');
+    // 2. Route obsolete (dulu untuk Pilih Jenis), sekarang langsung redirect ke root checklist
+    $routes->get('(:segment)', static function() {
+        return redirect()->to('/checklist');
+    });
     
     // 3. Pilih Kategori untuk tipe Preventive / Overhaul
     $routes->get('(:segment)/(:segment)', 'ChecklistController::indexKategori/$1/$2');
@@ -44,11 +46,16 @@ $routes->group('riwayat', ['filter' => 'auth'], static function ($routes) {
     $routes->get('lokasi/(:segment)', 'RiwayatController::lokasi/$1');
     $routes->get('kategori/(:segment)', 'RiwayatController::kategori/$1');
     $routes->get('(:num)', 'RiwayatController::detail/$1');
-    $routes->post('approve/(:num)', 'RiwayatController::approve/$1', ['filter' => 'role:leader,admin']);
+    $routes->post('approve/(:num)', 'RiwayatController::approve/$1', ['filter' => 'role:member,sheadprd,sheadmtc,admin,leader']);
+    
+    // Khusus Admin: Edit & Hapus Riwayat
+    $routes->get('edit/(:num)', 'RiwayatController::edit/$1', ['filter' => 'role:admin']);
+    $routes->post('update/(:num)', 'RiwayatController::update/$1', ['filter' => 'role:admin']);
+    $routes->post('delete/(:num)', 'RiwayatController::delete/$1', ['filter' => 'role:admin']);
 });
 
-// Scan QR Code (semua role login)
-$routes->group('scan', ['filter' => 'auth'], static function ($routes) {
+// Scan QR Code (magang, member, admin)
+$routes->group('scan', ['filter' => 'role:magang,member,admin'], static function ($routes) {
     $routes->get('/', 'ScanController::index');
     $routes->get('mesin/(:num)', 'ScanController::mesin/$1');
 });
@@ -57,19 +64,21 @@ $routes->group('scan', ['filter' => 'auth'], static function ($routes) {
 $routes->group('kontrol', ['filter' => 'auth'], static function ($routes) {
     $routes->get('/', 'KontrolController::index');
     $routes->post('update-cell', 'KontrolController::updateCell');
+    $routes->post('approve', 'KontrolController::approveBulanan');
 });
 
 // Laporan Abnormal Condition (semua role login)
 $routes->group('abnormal', ['filter' => 'auth'], static function ($routes) {
     $routes->get('/', 'AbnormalController::index');
     $routes->post('update', 'AbnormalController::update');
+    $routes->post('approve', 'AbnormalController::approveBulanan');
 });
 
-// Laporan Durasi (khusus Leader & Admin)
-$routes->get('laporan/durasi', 'LaporanController::durasi', ['filter' => 'role:leader,admin']);
+// Laporan Durasi (member, sheadprd, sheadmtc, admin)
+$routes->get('laporan/durasi', 'LaporanController::durasi', ['filter' => 'role:member,sheadprd,sheadmtc,admin,leader']);
 
-// Admin - Master Mesin
-$routes->group('admin/mesin', ['filter' => 'role:admin', 'namespace' => 'App\Controllers\Admin'], static function ($routes) {
+// Admin - Master Mesin (admin = full CRUD, member/sheadprd/sheadmtc = view-only)
+$routes->group('admin/mesin', ['filter' => 'role:admin,member,sheadprd,sheadmtc,leader', 'namespace' => 'App\Controllers\Admin'], static function ($routes) {
     $routes->get('/', 'MesinController::index');
     $routes->get('create', 'MesinController::create');
     $routes->post('store', 'MesinController::store');
@@ -77,10 +86,11 @@ $routes->group('admin/mesin', ['filter' => 'role:admin', 'namespace' => 'App\Con
     $routes->post('update/(:num)', 'MesinController::update/$1');
     $routes->get('delete/(:num)', 'MesinController::delete/$1');
     $routes->get('export', 'MesinController::export');
+    $routes->get('template', 'MesinController::template');
     $routes->post('import', 'MesinController::import');
 });
 
-// Admin - Master User
+// Admin - Master User (admin only)
 $routes->group('admin/user', ['filter' => 'role:admin', 'namespace' => 'App\Controllers\Admin'], static function ($routes) {
     $routes->get('/', 'UserController::index');
     $routes->get('create', 'UserController::create');
@@ -92,8 +102,8 @@ $routes->group('admin/user', ['filter' => 'role:admin', 'namespace' => 'App\Cont
     $routes->post('import', 'UserController::import');
 });
 
-// Admin - Master Parameter Check
-$routes->group('admin/parameter', ['filter' => 'role:admin', 'namespace' => 'App\Controllers\Admin'], static function ($routes) {
+// Admin - Master Parameter Check (admin = full CRUD, sheadmtc = view-only)
+$routes->group('admin/parameter', ['filter' => 'role:admin,sheadmtc', 'namespace' => 'App\Controllers\Admin'], static function ($routes) {
     $routes->get('/', 'ParameterController::index');
     $routes->get('fixUrutan', 'ParameterController::fixUrutan');
     $routes->get('create', 'ParameterController::create');
@@ -101,6 +111,30 @@ $routes->group('admin/parameter', ['filter' => 'role:admin', 'namespace' => 'App
     $routes->get('edit/(:num)', 'ParameterController::edit/$1');
     $routes->post('update/(:num)', 'ParameterController::update/$1');
     $routes->get('delete/(:num)', 'ParameterController::delete/$1');
+    $routes->get('export', 'ParameterController::export');
+    $routes->get('template', 'ParameterController::template');
+    $routes->post('import', 'ParameterController::import');
+});
+
+// Admin - Master PIC (admin only)
+$routes->group('admin/pic', ['filter' => 'role:admin', 'namespace' => 'App\Controllers\Admin'], static function ($routes) {
+    $routes->get('/', 'PicController::index');
+    $routes->get('create', 'PicController::create');
+    $routes->post('store', 'PicController::store');
+    $routes->get('edit/(:segment)', 'PicController::edit/$1');
+    $routes->post('update/(:segment)', 'PicController::update/$1');
+    $routes->get('delete/(:segment)', 'PicController::delete/$1');
+    $routes->get('export', 'PicController::export');
+    $routes->get('template', 'PicController::template');
+    $routes->post('import', 'PicController::import');
+});
+
+// Jadwal Preventive (semua role login, CRUD di controller dibatasi per role)
+$routes->group('admin/jadwal', ['filter' => 'auth', 'namespace' => 'App\Controllers\Admin'], static function ($routes) {
+    $routes->get('/', 'JadwalController::index');
+    $routes->get('events', 'JadwalController::events');
+    $routes->post('store', 'JadwalController::store');
+    $routes->post('delete/(:num)', 'JadwalController::delete/$1');
 });
 
 /**

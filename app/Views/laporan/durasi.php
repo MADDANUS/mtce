@@ -15,8 +15,8 @@
       <table class="table table-sm align-middle table-hover">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Staff</th>
+            <th class="text-center">NO</th>
+            <th>PIC</th>
             <th>Mesin</th>
             <th>Waktu Mulai</th>
             <th>Waktu Selesai</th>
@@ -25,10 +25,11 @@
           </tr>
         </thead>
         <tbody>
+          <?php $no = 1; ?>
           <?php foreach ($laporan as $l): ?>
             <tr>
-              <td><?= (int) $l['id_transaksi'] ?></td>
-              <td><?= esc($l['nama_staff']) ?></td>
+              <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>
+              <td><?= esc($l['nama_pic'] ?: $l['nama_staff']) ?></td>
               <td><?= esc($l['no_mesin']) ?> - <?= esc($l['type_mesin']) ?></td>
               <td><?= esc($l['waktu_mulai']) ?></td>
               <td><?= esc($l['waktu_selesai'] ?? '-') ?></td>

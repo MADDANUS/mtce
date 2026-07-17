@@ -6,20 +6,28 @@
   .keterangan-box table td { padding:.25rem .5rem; }
 </style>
 
-<div class="page-header">
-  <h5><i class="bi bi-clipboard-check me-2" style="color:var(--accent);"></i>Pengecekan <?= esc($jenisName) ?> — <strong><?= esc($categoryName) ?></strong> <span class="badge bg-secondary ms-1" style="font-size:0.7rem;"><?= esc($lokasiName) ?></span></h5>
-  <div class="d-flex gap-2">
-    <a href="<?= site_url("checklist/{$lokasiSlug}/{$jenisSlug}") ?>" class="btn btn-sm btn-outline-secondary">
-      <i class="bi bi-arrow-left"></i> Pilih Kategori
+<div class="page-header d-flex align-items-center">
+  <div class="d-flex align-items-center gap-3">
+    <?php
+      $backUrl = strtolower($jenisSlug) === 'overhaul' 
+          ? site_url("checklist") 
+          : site_url("checklist/{$lokasiSlug}/{$jenisSlug}");
+    ?>
+    <a href="<?= $backUrl ?>" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Kembali
     </a>
-    <a href="<?= site_url("riwayat/lokasi/{$lokasiSlug}?kategori=" . urlencode($categoryName)) ?>" class="btn btn-sm btn-outline-primary">
-      <i class="bi bi-clock-history"></i> Lihat Riwayat
-    </a>
+    <h5 class="mb-0">
+      <i class="bi bi-clipboard-check me-2" style="color:var(--accent);"></i>Pengecekan <?= esc($jenisName) ?> — <strong><?= esc($categoryName) ?></strong> <span class="badge bg-secondary ms-1" style="font-size:0.7rem;"><?= esc($lokasiName) ?></span>
+    </h5>
   </div>
 </div>
 
+<?php
+$isEdit = $isEdit ?? false;
+$editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("checklist/{$lokasiSlug}/{$jenisSlug}/store");
+?>
 
-<form action="<?= site_url("checklist/{$lokasiSlug}/{$jenisSlug}/store") ?>" method="post">
+<form action="<?= $editUrl ?>" method="post">
   <?= csrf_field() ?>
 
   <!-- HEADER FORM: Mesin, Staff, Waktu Mulai -->
@@ -27,10 +35,10 @@
     <div class="row g-3">
       <div class="col-md-6">
         <label class="form-label fw-semibold">Pilih Mesin (<?= esc($lokasiName) ?>)</label>
-        <select name="id_mesin" class="form-select" required <?= !empty($idMesin) ? 'disabled' : '' ?>>
+        <select name="id_mesin" id="id_mesin" class="form-select" required <?= !empty($idMesin) ? 'disabled' : '' ?>>
           <option value="">-- Pilih Mesin --</option>
           <?php foreach ($daftarMesin as $m): ?>
-            <option value="<?= esc($m['id_mesin']) ?>" <?= (!empty($idMesin) && (int)$idMesin === (int)$m['id_mesin']) ? 'selected' : '' ?>>
+            <option value="<?= esc($m['id_mesin']) ?>" data-bar-feeder="<?= esc($m['bar_feeder_type'] ?? '') ?>" <?= (!empty($idMesin) && (int)$idMesin === (int)$m['id_mesin']) ? 'selected' : '' ?>>
               <?= esc($m['no_mesin']) ?> - <?= esc($m['type_mesin']) ?> - <?= esc($m['serial_nomor']) ?>
             </option>
           <?php endforeach; ?>
@@ -40,8 +48,16 @@
         <?php endif; ?>
       </div>
       <div class="col-md-3">
-        <label class="form-label fw-semibold">Nama Staff</label>
-        <input type="text" class="form-control" value="<?= esc($namaStaff) ?>" readonly>
+        <label class="form-label fw-semibold">PIC</label>
+        <select name="nama_pic" class="form-select" required>
+          <option value="">-- Pilih PIC --</option>
+          <?php if (isset($masterPic) && !empty($masterPic)): ?>
+            <?php foreach ($masterPic as $pic): ?>
+              <?php $picVal = esc($pic['id_pic'] . ' - ' . $pic['nama_pic']); ?>
+              <option value="<?= $picVal ?>" <?= (isset($namaPic) && $namaPic === $picVal) ? 'selected' : '' ?>><?= $picVal ?></option>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </select>
       </div>
       <div class="col-md-3">
         <label class="form-label fw-semibold">Waktu Mulai</label>
@@ -52,14 +68,41 @@
       </div>
       
       <?php if (strtolower($jenisSlug) === 'overhaul'): ?>
-        <div class="col-md-6">
-          <label class="form-label fw-semibold text-primary">Bar Feeder Type</label>
-          <input type="text" name="bar_feeder_type" class="form-control border-primary bg-primary bg-opacity-10" placeholder="Masukkan tipe Bar Feeder...">
-        </div>
-        <div class="col-md-6">
+        <?php if (strtolower($lokasiSlug) === 'mfg1'): ?>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold text-primary">Bar Feeder Type</label>
+            <input type="text" name="bar_feeder_type" id="barFeederInput" class="form-control border-primary bg-primary bg-opacity-10" placeholder="Otomatis terisi dari master mesin..." value="<?= esc($barFeederType ?? '') ?>" readonly>
+          </div>
+        <?php endif; ?>
+        <div class="col-md-<?= strtolower($lokasiSlug) === 'mfg1' ? '6' : '12' ?>">
           <label class="form-label fw-semibold text-primary">Support PIC</label>
-          <input type="text" name="support_pic" class="form-control border-primary bg-primary bg-opacity-10" placeholder="Masukkan rekan kerja pendukung...">
+          <input type="text" name="support_pic" class="form-control border-primary bg-primary bg-opacity-10" placeholder="Masukkan rekan kerja pendukung..." value="<?= esc($supportPic ?? '') ?>">
         </div>
+
+        <?php if (strtolower($lokasiSlug) === 'mfg1'): ?>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectMesin = document.getElementById('id_mesin');
+            const inputBarFeeder = document.getElementById('barFeederInput');
+            
+            function updateBarFeeder() {
+                if (selectMesin.selectedIndex > 0) {
+                    const selectedOption = selectMesin.options[selectMesin.selectedIndex];
+                    const barFeeder = selectedOption.getAttribute('data-bar-feeder');
+                    inputBarFeeder.value = barFeeder || '';
+                } else {
+                    inputBarFeeder.value = '';
+                }
+            }
+
+            selectMesin.addEventListener('change', updateBarFeeder);
+            
+            if (selectMesin.value) {
+                updateBarFeeder();
+            }
+        });
+        </script>
+        <?php endif; ?>
       <?php endif; ?>
     </div>
   </div>
@@ -78,24 +121,53 @@
                 <th style="width:5%;">NO</th>
                 <th colspan="2" style="width:30%;">ITEM CHECK</th>
                 <th style="width:20%;">POINT CHECK</th>
-                <th style="width:15%;">STANDAR ITEM</th>
+                <?php if (strtolower($lokasiSlug) !== 'mfg2'): ?>
+                  <th style="width:15%;">STANDAR ITEM</th>
+                <?php endif; ?>
                 <th style="width:12%;">CHECK LIST</th>
-                <th style="width:18%;">REMARK</th>
+                <th style="<?= strtolower($lokasiSlug) === 'mfg2' ? 'width:33%;' : 'width:18%;' ?>">REMARK</th>
               </tr>
             </thead>
             <tbody>
+              <?php 
+                $itemIndex = 0;
+                $perPage = 49;
+              ?>
               <?php foreach ($rows as $r): ?>
+                <?php 
+                  $itemIndex++;
+                  if (strtolower($categorySlug) === 'kasahara-tapping') {
+                      if ($itemIndex <= 32) $pageNo = 1;
+                      elseif ($itemIndex <= 68) $pageNo = 2;
+                      else $pageNo = 3;
+                  } elseif (strtolower($categorySlug) === 'double-milling') {
+                      if ($itemIndex <= 36) $pageNo = 1;
+                      else $pageNo = 2;
+                  } elseif (strtolower($categorySlug) === 'double-center-drill') {
+                      if ($itemIndex <= 40) $pageNo = 1;
+                      else $pageNo = 2;
+                  } elseif (strtolower($categorySlug) === 'centering-grinding') {
+                      if ($itemIndex <= 32) $pageNo = 1;
+                      elseif ($itemIndex <= 72) $pageNo = 2;
+                      else $pageNo = 3;
+                  } else {
+                      $pageNo = ceil($itemIndex / $perPage);
+                  }
+                  $rowCategory = $r['kategori'] ?? ''; 
+                ?>
                 <?php if ($r['is_section_start']): ?>
-                  <tr class="section-header">
-                    <td colspan="7"><?= esc($r['dynamic_section_header']) ?></td>
+                  <tr class="section-header page-row-mfg2" data-page="<?= $pageNo ?>" data-kategori="<?= esc($rowCategory) ?>" style="background-color: #f8fafc; font-weight: 700; border-left: 4px solid var(--accent);">
+                    <td colspan="7" class="text-primary py-2 px-3" style="font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase;">
+                      <?= esc($r['dynamic_section_header']) ?>
+                    </td>
                   </tr>
                 <?php endif; ?>
-                <tr>
+                <tr class="page-row-mfg2" data-page="<?= $pageNo ?>" data-kategori="<?= esc($rowCategory) ?>">
                   <?php if ($r['show_no']): ?>
                     <td class="text-center fw-semibold text-muted" rowspan="<?= (int) $r['no_rowspan'] ?>"><?= esc($r['dynamic_no']) ?></td>
                   <?php endif; ?>
 
-                  <?php if ($r['sub_item_check'] !== null && $r['sub_item_check'] !== ''): ?>
+                  <?php if ($r['sub_item_check']): ?>
                     <?php if ($r['show_bagian']): ?>
                       <td class="bagian-cell" rowspan="<?= (int) $r['bagian_rowspan'] ?>"><?= esc($r['bagian_check']) ?></td>
                     <?php endif; ?>
@@ -108,28 +180,34 @@
                     <td rowspan="<?= (int) $r['point_rowspan'] ?>"><?= esc($r['point_check']) ?></td>
                   <?php endif; ?>
 
-                  <?php if ($r['show_standard']): ?>
-                    <td rowspan="<?= (int) $r['standard_rowspan'] ?>"><?= nl2br(esc($r['standard_check'])) ?></td>
+                  <?php if (strtolower($lokasiSlug) !== 'mfg2'): ?>
+                    <?php if ($r['show_standard']): ?>
+                      <td rowspan="<?= (int) $r['standard_rowspan'] ?>"><?= nl2br(esc($r['standard_check'])) ?></td>
+                    <?php endif; ?>
                   <?php endif; ?>
 
                   <td>
+                    <?php
+                    $h = $detailsMap[$r['id_parameter']]['hasil_check'] ?? '';
+                    $u = $detailsMap[$r['id_parameter']]['ulasan'] ?? '';
+                    ?>
                     <div class="d-flex">
                       <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio"
                                name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
-                               id="v_<?= (int) $r['id_parameter'] ?>" value="V" required>
+                               id="v_<?= (int) $r['id_parameter'] ?>" value="V" <?= $h === 'V' ? 'checked' : '' ?> required>
                         <label class="form-check-label text-success fw-bold" for="v_<?= (int) $r['id_parameter'] ?>">V</label>
                       </div>
                       <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio"
                                name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
-                               id="d_<?= (int) $r['id_parameter'] ?>" value="Δ" required>
+                               id="d_<?= (int) $r['id_parameter'] ?>" value="Δ" <?= $h === 'Δ' ? 'checked' : '' ?> required>
                         <label class="form-check-label text-warning fw-bold" for="d_<?= (int) $r['id_parameter'] ?>">Δ</label>
                       </div>
                       <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio"
                                name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
-                               id="x_<?= (int) $r['id_parameter'] ?>" value="X" required>
+                               id="x_<?= (int) $r['id_parameter'] ?>" value="X" <?= $h === 'X' ? 'checked' : '' ?> required>
                         <label class="form-check-label text-danger fw-bold" for="x_<?= (int) $r['id_parameter'] ?>">X</label>
                       </div>
                     </div>
@@ -140,7 +218,7 @@
                               name="ulasan[<?= (int) $r['id_parameter'] ?>]"
                               placeholder="Tulis ulasan/keterangan..."
                               rows="1"
-                              style="min-height: 38px; resize: vertical; font-size: 0.85rem;"></textarea>
+                              style="min-height: 38px; resize: vertical; font-size: 0.85rem;"><?= esc($u) ?></textarea>
                   </td>
                 </tr>
               <?php endforeach; ?>
@@ -172,23 +250,27 @@
                   <td><?= esc($r['standard_check']) ?></td>
 
                   <td>
+                    <?php
+                    $h = $detailsMap[$r['id_parameter']]['hasil_check'] ?? '';
+                    $u = $detailsMap[$r['id_parameter']]['ulasan'] ?? '';
+                    ?>
                     <div class="d-flex">
                       <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio"
                                name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
-                               id="v_<?= (int) $r['id_parameter'] ?>" value="V" required>
+                               id="v_<?= (int) $r['id_parameter'] ?>" value="V" <?= $h === 'V' ? 'checked' : '' ?> required>
                         <label class="form-check-label text-success fw-bold" for="v_<?= (int) $r['id_parameter'] ?>">V</label>
                       </div>
                       <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio"
                                name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
-                               id="d_<?= (int) $r['id_parameter'] ?>" value="Δ" required>
+                               id="d_<?= (int) $r['id_parameter'] ?>" value="Δ" <?= $h === 'Δ' ? 'checked' : '' ?> required>
                         <label class="form-check-label text-warning fw-bold" for="d_<?= (int) $r['id_parameter'] ?>">Δ</label>
                       </div>
                       <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio"
                                name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
-                               id="x_<?= (int) $r['id_parameter'] ?>" value="X" required>
+                               id="x_<?= (int) $r['id_parameter'] ?>" value="X" <?= $h === 'X' ? 'checked' : '' ?> required>
                         <label class="form-check-label text-danger fw-bold" for="x_<?= (int) $r['id_parameter'] ?>">X</label>
                       </div>
                     </div>
@@ -199,7 +281,7 @@
                               name="ulasan[<?= (int) $r['id_parameter'] ?>]"
                               placeholder="Tulis ulasan/keterangan..."
                               rows="1"
-                              style="min-height: 38px; resize: vertical; font-size: 0.85rem;"></textarea>
+                              style="min-height: 38px; resize: vertical; font-size: 0.85rem;"><?= esc($u) ?></textarea>
                   </td>
                 </tr>
               <?php endforeach; ?>
@@ -211,7 +293,7 @@
 
     <!-- KETERANGAN CHECK LIST -->
     <div class="col-lg-3">
-      <div class="keterangan-box p-3 shadow-sm">
+      <div class="keterangan-box p-3 shadow-sm mb-3">
         <div class="fw-semibold mb-2 text-dark border-bottom pb-2">KETERANGAN CHECK LIST</div>
         <table class="table table-sm mb-0">
           <tr><td class="fw-bold text-success">V</td><td>:</td><td>OK</td></tr>
@@ -219,72 +301,199 @@
           <tr><td class="fw-bold text-danger">X</td><td>:</td><td>TIDAK ADA</td></tr>
         </table>
       </div>
+      
+      <?php if (strtolower($jenisSlug) === 'overhaul' && strtolower($lokasiSlug) === 'mfg1'): ?>
+        <div class="card bg-light border-0 shadow-sm mt-3">
+            <div class="card-body">
+                <h6 class="fw-bold text-primary mb-3">Navigasi Form</h6>
+                <div class="d-grid gap-2">
+                    <button type="button" id="btnMesinCnc" class="btn btn-outline-primary active">1. Mesin CNC</button>
+                    <button type="button" id="btnBarFeeder" class="btn btn-outline-primary">2. Bar Feeder CNC</button>
+                </div>
+            </div>
+        </div>
+
+      <?php elseif (strtolower($jenisSlug) === 'overhaul' && strtolower($lokasiSlug) === 'mfg2' && $itemIndex > $perPage): ?>
+        <?php 
+          if (strtolower($categorySlug) === 'kasahara-tapping') {
+              $totalPages = 3;
+          } elseif (strtolower($categorySlug) === 'double-milling') {
+              $totalPages = 2;
+          } elseif (strtolower($categorySlug) === 'double-center-drill') {
+              $totalPages = 2;
+          } elseif (strtolower($categorySlug) === 'centering-grinding') {
+              $totalPages = 3;
+          } else {
+              $totalPages = ceil($itemIndex / $perPage); 
+          }
+        ?>
+        <div class="card bg-light border-0 shadow-sm mt-3">
+            <div class="card-body">
+                <h6 class="fw-bold text-primary mb-3">Navigasi Halaman</h6>
+                <div class="d-grid gap-2" id="navPageContainer">
+                    <?php for ($p = 1; $p <= $totalPages; $p++): ?>
+                        <button type="button" class="btn btn-outline-primary btn-nav-page <?= $p === 1 ? 'active' : '' ?>" data-target="<?= $p ?>">Halaman <?= $p ?></button>
+                    <?php endfor; ?>
+                </div>
+            </div>
+        </div>
+      <?php endif; ?>
     </div>
   </div>
 
-  <?php if (strtolower($jenisSlug) === 'preventive' && !empty($rows)): ?>
-    <div class="card border-0 shadow-sm bg-white p-4 mt-4 mb-3">
-      <h6 class="fw-bold mb-3 text-primary d-flex align-items-center gap-2">
-        <i class="bi bi-file-earmark-check"></i> Data Ceklis Kontrol Bulanan
-      </h6>
-      <div class="row g-3">
-        <!-- PIC Nama -->
-        <div class="col-md-4">
-          <label class="form-label fw-semibold">Nama PIC <span class="text-danger">*</span></label>
-          <input type="text" name="pic_nama" class="form-control" placeholder="Ketik nama PIC fisik penanggung jawab" required>
-          <div class="form-text">Nama orang fisik (bukan nama akun staff).</div>
-        </div>
-
-        <!-- Out of Plan Checkbox & Date -->
-        <div class="col-md-4">
-          <div class="mb-2">
-            <label class="form-label fw-semibold d-block">Pengecekan Out of Plan?</label>
-            <div class="form-check form-switch mt-2">
-              <input class="form-check-input" type="checkbox" name="is_out_of_plan" id="isOutOfPlanCheck" value="1">
-              <label class="form-check-label text-muted" for="isOutOfPlanCheck">Ya, di luar rencana</label>
-            </div>
-          </div>
-          <div id="outOfPlanDateWrapper" style="display: none;">
-            <label class="form-label fw-semibold text-danger">Tanggal Realita <span class="text-danger">*</span></label>
-            <input type="date" name="out_of_plan_date" id="outOfPlanDateInput" class="form-control border-danger" value="<?= date('Y-m-d') ?>">
-            <div class="form-text text-danger">Masukkan tanggal aktual pengecekan.</div>
-          </div>
-        </div>
-
-        <!-- Ulasan Kontrol -->
-        <div class="col-md-4">
-          <label class="form-label fw-semibold">Ulasan Kontrol (Opsional)</label>
-          <input type="text" name="ulasan_kontrol" class="form-control" placeholder="Ketik ulasan ringkas kontrol">
-          <div class="form-text">Keterangan tambahan untuk baris bulan ini.</div>
-        </div>
-      </div>
-    </div>
-
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        const isOutOfPlanCheck = document.getElementById("isOutOfPlanCheck");
-        const outOfPlanDateWrapper = document.getElementById("outOfPlanDateWrapper");
-        const outOfPlanDateInput = document.getElementById("outOfPlanDateInput");
-
-        function toggleOutOfPlan() {
-          if (isOutOfPlanCheck.checked) {
-            outOfPlanDateWrapper.style.display = "block";
-            outOfPlanDateInput.setAttribute("required", "required");
-          } else {
-            outOfPlanDateWrapper.style.display = "none";
-            outOfPlanDateInput.removeAttribute("required");
-            outOfPlanDateInput.value = "<?= date('Y-m-d') ?>";
-          }
-        }
-
-        isOutOfPlanCheck.addEventListener("change", toggleOutOfPlan);
-      });
-    </script>
-  <?php endif; ?>
+  <!-- Ceklis Kontrol is automatically populated in the background upon submission -->
 
   <?php if (!empty($rows)): ?>
-    <div class="d-flex justify-content-end mt-3 mb-5">
-      <button type="submit" class="btn btn-primary px-5 py-2 fw-semibold shadow-sm">Submit Pengecekan</button>
+    <div class="d-flex justify-content-end mt-4 mb-5 gap-3">
+      <?php if (strtolower($jenisSlug) === 'overhaul' && strtolower($lokasiSlug) === 'mfg1'): ?>
+        <button type="button" id="btnNext" class="btn btn-primary px-5 py-2 fw-semibold shadow-sm">Lanjut ke Bar Feeder <i class="bi bi-arrow-right ms-2"></i></button>
+        <button type="button" id="btnPrev" class="btn btn-secondary px-4 py-2 fw-semibold shadow-sm" style="display:none;"><i class="bi bi-arrow-left me-2"></i> Kembali</button>
+        <button type="submit" id="btnSubmit" class="btn btn-success px-5 py-2 fw-semibold shadow-sm" style="display:none;">Submit Pengecekan</button>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const rows = document.querySelectorAll('tr[data-kategori]');
+            const btnNext = document.getElementById('btnNext');
+            const btnPrev = document.getElementById('btnPrev');
+            const btnSubmit = document.getElementById('btnSubmit');
+            const navMesin = document.getElementById('btnMesinCnc');
+            const navBarFeeder = document.getElementById('btnBarFeeder');
+
+            let currentView = 'Mesin CNC';
+
+            function updateView() {
+                rows.forEach(row => {
+                    if (row.getAttribute('data-kategori') === currentView || row.getAttribute('data-kategori') === '') {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                if (currentView === 'Mesin CNC') {
+                    btnNext.style.display = '';
+                    btnPrev.style.display = 'none';
+                    btnSubmit.style.display = 'none';
+                    if(navMesin) navMesin.classList.add('active');
+                    if(navBarFeeder) navBarFeeder.classList.remove('active');
+                } else {
+                    btnNext.style.display = 'none';
+                    btnPrev.style.display = '';
+                    btnSubmit.style.display = '';
+                    if(navMesin) navMesin.classList.remove('active');
+                    if(navBarFeeder) navBarFeeder.classList.add('active');
+                }
+            }
+
+            if (rows.length > 0) {
+                updateView();
+
+                btnNext.addEventListener('click', () => {
+                    currentView = 'Bar Feeder CNC';
+                    updateView();
+                    window.scrollTo(0, 0);
+                });
+
+                btnPrev.addEventListener('click', () => {
+                    currentView = 'Mesin CNC';
+                    updateView();
+                    window.scrollTo(0, 0);
+                });
+                
+                if(navMesin) navMesin.addEventListener('click', () => {
+                    currentView = 'Mesin CNC';
+                    updateView();
+                });
+                
+                if(navBarFeeder) navBarFeeder.addEventListener('click', () => {
+                    currentView = 'Bar Feeder CNC';
+                    updateView();
+                });
+            } else {
+                btnSubmit.style.display = '';
+                btnNext.style.display = 'none';
+            }
+        });
+        </script>
+      <?php elseif (strtolower($jenisSlug) === 'overhaul' && strtolower($lokasiSlug) === 'mfg2' && $itemIndex > $perPage): ?>
+        <button type="button" id="btnPrevPage" class="btn btn-secondary px-4 py-2 fw-semibold shadow-sm" style="display:none;"><i class="bi bi-arrow-left me-2"></i> Halaman Sebelumnya</button>
+        <button type="button" id="btnNextPage" class="btn btn-primary px-5 py-2 fw-semibold shadow-sm">Halaman Selanjutnya <i class="bi bi-arrow-right ms-2"></i></button>
+        <button type="submit" id="btnSubmitPage" class="btn btn-success px-5 py-2 fw-semibold shadow-sm" style="display:none;">Submit Pengecekan</button>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mfg2Rows = document.querySelectorAll('.page-row-mfg2');
+            if (mfg2Rows.length === 0) return;
+
+            const btnNext = document.getElementById('btnNextPage');
+            const btnPrev = document.getElementById('btnPrevPage');
+            const btnSubmit = document.getElementById('btnSubmitPage');
+            const navButtons = document.querySelectorAll('.btn-nav-page');
+            const totalPages = <?= $totalPages ?>;
+            let currentPage = 1;
+
+            function updatePageView() {
+                mfg2Rows.forEach(row => {
+                    if (parseInt(row.getAttribute('data-page')) === currentPage) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                navButtons.forEach(btn => {
+                    if (parseInt(btn.getAttribute('data-target')) === currentPage) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                if (currentPage === 1) {
+                    btnPrev.style.display = 'none';
+                    btnNext.style.display = '';
+                    btnSubmit.style.display = 'none';
+                } else if (currentPage === totalPages) {
+                    btnPrev.style.display = '';
+                    btnNext.style.display = 'none';
+                    btnSubmit.style.display = '';
+                } else {
+                    btnPrev.style.display = '';
+                    btnNext.style.display = '';
+                    btnSubmit.style.display = 'none';
+                }
+            }
+
+            updatePageView();
+
+            btnNext.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updatePageView();
+                    window.scrollTo(0, 0);
+                }
+            });
+
+            btnPrev.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updatePageView();
+                    window.scrollTo(0, 0);
+                }
+            });
+
+            navButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentPage = parseInt(btn.getAttribute('data-target'));
+                    updatePageView();
+                    window.scrollTo(0, 0);
+                });
+            });
+        });
+        </script>
+      <?php else: ?>
+        <button type="submit" class="btn btn-primary px-5 py-2 fw-semibold shadow-sm">Submit Pengecekan</button>
+      <?php endif; ?>
     </div>
   <?php endif; ?>
 </form>

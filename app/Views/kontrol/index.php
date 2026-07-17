@@ -3,7 +3,7 @@
 <div class="page-header">
   <div>
     <h5 class="mb-0"><i class="bi bi-calendar-check me-2 text-primary"></i>Ceklis Kontrol Bulanan</h5>
-    <p class="text-muted small mb-0">Pantau ringkasan hasil pemeriksaan preventive bulanan per mesin dan per kategori.</p>
+    <p class="text-muted small mb-0">Pantau ringkasan hasil pemeriksaan checklist report bulanan per mesin dan per kategori.</p>
   </div>
 </div>
 
@@ -34,7 +34,7 @@
 
       <!-- Kategori Select -->
       <div class="col-md-4">
-        <label class="form-label small fw-semibold text-muted mb-1.5">Kategori Preventive</label>
+        <label class="form-label small fw-semibold text-muted mb-1.5">Kategori Checklist Report</label>
         <select name="kategori" class="form-select form-select-sm rounded-3 py-1.5" onchange="document.getElementById('filterForm').submit()">
           <?php foreach ($categories as $kKey => $kVal): ?>
             <option value="<?= esc($kKey) ?>" <?= $kategori === $kKey ? 'selected' : '' ?>><?= esc($kVal) ?></option>
@@ -55,6 +55,66 @@
   </form>
 </div>
 
+<!-- APPROVAL PANEL -->
+<div class="card border-0 shadow-sm bg-white mb-4">
+  <div class="card-body p-3 d-flex align-items-center justify-content-between">
+    <div>
+      <h6 class="mb-1 fw-bold text-dark"><i class="bi bi-shield-check text-primary me-2"></i>Status Persetujuan (<?= esc($lokasi) ?> - <?= esc($kategori) ?> - <?= esc($bulan) ?>)</h6>
+      <p class="mb-0 small text-muted">
+        Status: 
+        <?php if ($approvalStatus === 'Pending'): ?>
+          <span class="badge bg-secondary">Pending</span>
+        <?php elseif ($approvalStatus === 'Approved L1'): ?>
+          <span class="badge bg-info">Approved L1</span>
+        <?php elseif ($approvalStatus === 'Approved L2'): ?>
+          <span class="badge bg-primary">Approved L2</span>
+        <?php elseif ($approvalStatus === 'Approved Final'): ?>
+          <span class="badge bg-success">Approved Final</span>
+        <?php endif; ?>
+      </p>
+    </div>
+    
+    <div>
+      <?php 
+        $role = session()->get('role');
+        $canApprove = false;
+        if ($role === 'admin' && $approvalStatus !== 'Approved Final') {
+            $canApprove = true;
+        } elseif ($role === 'member' && $approvalStatus === 'Pending') {
+            $canApprove = true;
+        } elseif ($role === 'sheadprd' && $approvalStatus === 'Approved L1') {
+            $canApprove = true;
+        } elseif ($role === 'sheadmtc' && $approvalStatus === 'Approved L2') {
+            $canApprove = true;
+        }
+      ?>
+      
+      <?php if (!$allChecked): ?>
+        <button type="button" class="btn btn-secondary btn-sm" disabled>
+          <i class="bi bi-x-circle me-1"></i>Belum bisa di-Approve (Ada mesin belum dicek)
+        </button>
+      <?php elseif ($approvalStatus === 'Approved Final'): ?>
+        <button type="button" class="btn btn-success btn-sm" disabled>
+          <i class="bi bi-check-all me-1"></i>Selesai (Approved Final)
+        </button>
+      <?php elseif ($canApprove): ?>
+        <form action="<?= site_url('kontrol/approve') ?>" method="post" class="m-0 p-0 d-inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui laporan bulan ini?');">
+          <input type="hidden" name="lokasi" value="<?= esc($lokasi) ?>">
+          <input type="hidden" name="kategori" value="<?= esc($kategori) ?>">
+          <input type="hidden" name="bulan_tahun" value="<?= esc($bulan) ?>">
+          <button type="submit" class="btn btn-primary btn-sm shadow-sm">
+            <i class="bi bi-check-circle me-1"></i>Approve (<?= esc($role) ?>)
+          </button>
+        </form>
+      <?php else: ?>
+        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+          Menunggu Giliran Approve
+        </button>
+      <?php endif; ?>
+    </div>
+  </div>
+</div>
+
 <!-- GRID TABEL KONTROL -->
 <div class="card border-0 shadow-sm bg-white overflow-hidden mb-4">
   <div class="card-header bg-white py-3 px-4 border-0 d-flex justify-content-between align-items-center">
@@ -67,27 +127,31 @@
   </div>
 
   <div class="card-body p-0">
-    <div class="table-responsive" style="border: 2px solid #cbd5e1 !important; border-radius: 8px;">
-      <table class="table align-middle text-center mb-0 kontrol-table" style="font-size: 0.8rem; border-collapse: collapse;">
+    <div class="table-responsive" style="border: 1px solid var(--border-strong) !important; border-radius: var(--radius);">
+      <table class="table align-middle text-center mb-0 kontrol-table" style="font-size: 0.85rem; border-collapse: collapse !important;">
         <thead>
-          <tr class="table-light">
-            <th rowspan="3" style="width: 5%; font-weight:800; vertical-align: middle; border-bottom: 2px solid #cbd5e1 !important;">NO</th>
-            <th rowspan="3" style="width: 25%; font-weight:800; vertical-align: middle; text-align: left; border-bottom: 2px solid #cbd5e1 !important;" class="ps-4">MESIN</th>
-            <th colspan="5" style="width: 35%; font-weight:800; border-bottom: 2px solid #cbd5e1 !important;">WAKTU</th>
-            <th rowspan="3" style="width: 15%; font-weight:800; vertical-align: middle; border-bottom: 2px solid #cbd5e1 !important;">OUT OF PLAN</th>
-            <th rowspan="3" style="width: 20%; font-weight:800; vertical-align: middle; text-align: left; border-bottom: 2px solid #cbd5e1 !important;" class="ps-4">ULASAN</th>
+          <tr>
+            <th rowspan="3" style="width: 5%; font-weight:700; vertical-align: middle;">NO</th>
+            <th rowspan="3" style="width: 25%; font-weight:700; vertical-align: middle; text-align: left;" class="ps-4">MESIN</th>
+            <th colspan="5" style="width: 35%; font-weight:700;">WAKTU</th>
+            <th rowspan="3" style="width: 15%; font-weight:700; vertical-align: middle;">OUT OF PLAN</th>
+            <th rowspan="3" style="width: 20%; font-weight:700; vertical-align: middle; text-align: left;" class="ps-4">ULASAN</th>
           </tr>
-          <tr class="table-light">
-            <th colspan="5" style="font-weight:800; border-bottom: 2px solid #cbd5e1 !important; text-transform: uppercase;">
+          <tr>
+            <th colspan="5" style="font-weight:700; text-transform: uppercase;">
               <?= isset($bulanList[$bulan]) ? strtoupper($bulanList[$bulan]) : strtoupper($bulan) ?>
             </th>
           </tr>
-          <tr class="table-light">
-            <th style="width: 7%; font-weight:800; border-bottom: 2px solid #cbd5e1 !important;">1</th>
-            <th style="width: 7%; font-weight:800; border-bottom: 2px solid #cbd5e1 !important;">2</th>
-            <th style="width: 7%; font-weight:800; border-bottom: 2px solid #cbd5e1 !important;">3</th>
-            <th style="width: 7%; font-weight:800; border-bottom: 2px solid #cbd5e1 !important;">4</th>
-            <th style="width: 7%; font-weight:800; border-bottom: 2px solid #cbd5e1 !important;">5</th>
+          <tr>
+          <?php for ($col = 1; $col <= 5; $col++): ?>
+            <th style="width: 7%; font-weight:700; font-size: 0.8rem; vertical-align: middle;">
+              <?php if ($hasSchedule && !empty($columnDates[$col])): ?>
+                <span class="d-block fw-bolder" style="color: #fef08a !important; font-size: 0.95rem;"><?= date('d', strtotime($columnDates[$col])) ?></span>
+              <?php else: ?>
+                P<?= $col ?>
+              <?php endif; ?>
+            </th>
+          <?php endfor; ?>
           </tr>
         </thead>
         <tbody>
@@ -106,8 +170,8 @@
               ?>
               <!-- BARIS NAMA MESIN & STATUS PERIODE -->
               <tr>
-                <td rowspan="2" class="fw-bold font-monospace text-secondary" style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1 !important; vertical-align: middle !important;"><?= $no++ ?></td>
-                <td class="text-start fw-bold text-dark ps-4 py-2" style="border-bottom: 1px solid #e2e8f0 !important; background-color: #fff;">
+                <td rowspan="2" class="fw-bold font-monospace text-secondary" style="background-color: #faf9f6; border-bottom: 2px solid #d6d3d1 !important; vertical-align: middle !important;"><?= $no++ ?></td>
+                <td class="text-start fw-bold text-dark ps-4 py-2" style="border-bottom: 1px solid #e7e5e4 !important; background-color: #fff;">
                   <?= esc($m['no_mesin']) ?> - <?= esc($m['type_mesin']) ?>
                 </td>
                 
@@ -116,14 +180,13 @@
                   <?php 
                     $cell = $row['periodes'][$p]; 
                     $status = $cell ? $cell['status_check'] : '';
-                    $cellClass = 'cell-editable';
                     $badgeClass = '';
                     
                     if ($status === 'V') $badgeClass = 'bg-success';
                     elseif ($status === 'Δ') $badgeClass = 'bg-warning text-dark';
                     elseif ($status === 'X') $badgeClass = 'bg-danger';
                   ?>
-                  <td class="<?= $cellClass ?> p-1" style="cursor: pointer; transition: background-color 0.15s; border-bottom: 1px solid #e2e8f0 !important;"
+                  <td class="p-1" style="transition: background-color 0.15s; border-bottom: 1px solid #e7e5e4 !important;"
                       data-id-kontrol="<?= $cell ? $cell['id_kontrol'] : '0' ?>"
                       data-id-mesin="<?= $idMesin ?>"
                       data-no-mesin="<?= esc($m['no_mesin']) ?>"
@@ -143,7 +206,7 @@
                 <?php endfor; ?>
 
                 <!-- Out of Plan (Top cell) -->
-                <td class="font-monospace text-center py-2" style="font-size: 0.75rem; border-bottom: 1px solid #e2e8f0 !important; background-color: #fff;">
+                <td class="font-monospace text-center py-2" style="font-size: 0.75rem; border-bottom: 1px solid #e7e5e4 !important; background-color: #fff;">
                   <?php if (!empty($row['out_of_plan'])): ?>
                     <span class="text-danger fw-bold d-block" style="font-size: 0.7rem;">Out of Plan</span>
                     <span class="text-secondary fw-semibold" style="font-size: 0.65rem;"><?= date('d-m-Y', strtotime($row['out_of_plan'])) ?></span>
@@ -153,14 +216,14 @@
                 </td>
 
                 <!-- Ulasan (Top cell) -->
-                <td class="text-start ps-4 py-2 text-muted text-truncate" style="max-width: 150px; border-bottom: 1px solid #e2e8f0 !important; background-color: #fff;" title="<?= esc($row['ulasan']) ?>">
+                <td class="text-start ps-4 py-2 text-muted text-truncate" style="max-width: 150px; border-bottom: 1px solid #e7e5e4 !important; background-color: #fff;" title="<?= esc($row['ulasan']) ?>">
                   <?= esc($row['ulasan']) ?: '-' ?>
                 </td>
               </tr>
 
               <!-- BARIS PIC -->
               <tr>
-                <td class="text-start text-secondary ps-4 py-1.5" style="font-size: 0.75rem; background-color: #f8fafc; border-bottom: 2px solid #cbd5e1 !important; border-top: 0 !important;">
+                <td class="text-start text-secondary ps-4 py-1.5" style="font-size: 0.75rem; background-color: #faf9f6; border-bottom: 2px solid #d6d3d1 !important; border-top: 0 !important;">
                   <span class="fw-bold text-muted text-uppercase me-1.5" style="font-size:0.625rem; letter-spacing: 0.05em;">PIC</span>
                 </td>
                 
@@ -170,9 +233,8 @@
                     $cell = $row['periodes'][$p]; 
                     $status = $cell ? $cell['status_check'] : '';
                     $pic = $cell ? $cell['pic_nama'] : '';
-                    $cellClass = 'cell-editable';
                   ?>
-                  <td class="<?= $cellClass ?> py-1.5 px-1 font-monospace" style="font-size: 0.68rem; cursor: pointer; transition: background-color 0.15s; border-bottom: 2px solid #cbd5e1 !important; background-color: #f8fafc;"
+                  <td class="py-1.5 px-1 font-monospace" style="font-size: 0.68rem; transition: background-color 0.15s; border-bottom: 2px solid #d6d3d1 !important; background-color: #faf9f6;"
                       data-id-kontrol="<?= $cell ? $cell['id_kontrol'] : '0' ?>"
                       data-id-mesin="<?= $idMesin ?>"
                       data-no-mesin="<?= esc($m['no_mesin']) ?>"
@@ -186,10 +248,10 @@
                 <?php endfor; ?>
 
                 <!-- Out of Plan (Bottom Cell - Empty) -->
-                <td style="border-bottom: 2px solid #cbd5e1 !important; background-color: #f8fafc;"></td>
+                <td style="border-bottom: 2px solid #d6d3d1 !important; background-color: #faf9f6;"></td>
 
                 <!-- Ulasan (Bottom Cell - Empty) -->
-                <td style="border-bottom: 2px solid #cbd5e1 !important; background-color: #f8fafc;"></td>
+                <td style="border-bottom: 2px solid #d6d3d1 !important; background-color: #faf9f6;"></td>
               </tr>
             <?php endforeach; ?>
           <?php endif; ?>
@@ -199,191 +261,103 @@
   </div>
 </div>
 
+<!-- KOTAK TANDA TANGAN (SIGNATURE BLOCK) -->
+<div class="card border-0 shadow-sm bg-white mb-4">
+  <div class="card-body p-4">
+    <div class="row text-center align-items-end" style="min-height: 120px;">
+      
+      <!-- Dibuat Oleh (Member) -->
+      <div class="col-4 border-end">
+        <p class="mb-2 fw-semibold text-muted small">Dibuat Oleh</p>
+        <div class="mb-2" style="height: 50px; display: flex; align-items: center; justify-content: center;">
+          <?php if (isset($approvalData['approved_l1_by'])): ?>
+            <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 rounded-pill">
+              <i class="bi bi-check-circle-fill me-1"></i> Disetujui
+            </span>
+          <?php else: ?>
+            <span class="text-muted opacity-50"><i class="bi bi-dash-lg"></i></span>
+          <?php endif; ?>
+        </div>
+        <h6 class="mb-0 fw-bold text-dark text-decoration-underline"><?= esc($approvalData['l1_name'] ?? 'MEMBER') ?></h6>
+        <span class="small text-muted">Tanggal: <?= isset($approvalData['approved_l1_at']) ? date('d-m-Y H:i', strtotime($approvalData['approved_l1_at'])) : '-' ?></span>
+      </div>
+
+      <!-- Diperiksa Oleh (Leader/SHead Produksi) -->
+      <div class="col-4 border-end">
+        <p class="mb-2 fw-semibold text-muted small">Diperiksa Oleh</p>
+        <div class="mb-2" style="height: 50px; display: flex; align-items: center; justify-content: center;">
+          <?php if (isset($approvalData['approved_l2_by'])): ?>
+            <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 rounded-pill">
+              <i class="bi bi-check-circle-fill me-1"></i> Disetujui
+            </span>
+          <?php else: ?>
+            <span class="text-muted opacity-50"><i class="bi bi-dash-lg"></i></span>
+          <?php endif; ?>
+        </div>
+        <h6 class="mb-0 fw-bold text-dark text-decoration-underline"><?= esc($approvalData['l2_name'] ?? 'S. HEAD PRODUKSI') ?></h6>
+        <span class="small text-muted">Tanggal: <?= isset($approvalData['approved_l2_at']) ? date('d-m-Y H:i', strtotime($approvalData['approved_l2_at'])) : '-' ?></span>
+      </div>
+
+      <!-- Disetujui Oleh (SHead MTC) -->
+      <div class="col-4">
+        <p class="mb-2 fw-semibold text-muted small">Disetujui Oleh</p>
+        <div class="mb-2" style="height: 50px; display: flex; align-items: center; justify-content: center;">
+          <?php if (isset($approvalData['approved_final_by'])): ?>
+            <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 rounded-pill">
+              <i class="bi bi-check-circle-fill me-1"></i> Disetujui
+            </span>
+          <?php else: ?>
+            <span class="text-muted opacity-50"><i class="bi bi-dash-lg"></i></span>
+          <?php endif; ?>
+        </div>
+        <h6 class="mb-0 fw-bold text-dark text-decoration-underline"><?= esc($approvalData['final_name'] ?? 'S. HEAD MTC') ?></h6>
+        <span class="small text-muted">Tanggal: <?= isset($approvalData['approved_final_at']) ? date('d-m-Y H:i', strtotime($approvalData['approved_final_at'])) : '-' ?></span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- CSS Hover Effects & Strict Borders -->
 <style>
   .kontrol-table {
     border-collapse: collapse !important;
     width: 100% !important;
+    font-family: 'Inter', sans-serif !important;
   }
   .kontrol-table th, .kontrol-table td {
-    border: 1px solid #cbd5e1 !important; /* Slate-300 borders */
+    border: 1px solid #e7e5e4 !important;
     vertical-align: middle !important;
   }
   .kontrol-table th {
-    background-color: #f1f5f9 !important; /* Slate-100 headers */
-    color: #1e293b !important;
+    background: linear-gradient(135deg, #0f766e 0%, #115e59 100%) !important;
+    color: #ffffff !important;
     padding: 0.85rem 1rem !important;
-    border-bottom: 2px solid #cbd5e1 !important;
+    border: 1px solid #134e4a !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
   }
   .kontrol-table td {
-    padding: 0.65rem 0.85rem !important;
-  }
-  .cell-editable:hover {
-    background-color: #f1f5f9 !important;
+    padding: 0.85rem 1rem !important;
+    font-size: 0.875rem !important;
   }
   .bg-success {
-    background-color: #10b981 !important;
+    background-color: #0d9488 !important;
     color: #ffffff !important;
   }
   .bg-warning {
     background-color: #f59e0b !important;
-    color: #1e293b !important;
+    color: #ffffff !important;
   }
   .bg-danger {
-    background-color: #ef4444 !important;
+    background-color: #dc2626 !important;
     color: #ffffff !important;
   }
 </style>
 
-<!-- MODAL QUICK EDIT -->
-<div class="modal fade" id="quickEditModal" tabindex="-1" aria-labelledby="quickEditModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
-    <div class="modal-content border-0 shadow-lg rounded-4">
-      <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
-        <h6 class="modal-title fw-bold" id="quickEditModalLabel"><i class="bi bi-pencil-square text-primary me-1.5"></i>Edit Sel Ceklis Kontrol</h6>
-        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <form action="<?= site_url('kontrol/update-cell') ?>" method="post">
-        <?= csrf_field() ?>
-        <input type="hidden" name="id_kontrol" id="modalIdKontrol" value="0">
-        <input type="hidden" name="id_mesin" id="modalIdMesin" value="0">
-        <input type="hidden" name="kategori" value="<?= esc($kategori) ?>">
-        <input type="hidden" name="bulan_tahun" value="<?= esc($bulan) ?>">
-        <input type="hidden" name="periode_ke" id="modalPeriode" value="0">
 
-        <div class="modal-body px-4 pt-3">
-          <div class="mb-3 bg-light p-2.5 rounded-3 border">
-            <div class="row text-center font-monospace small">
-              <div class="col-6 border-end">
-                <span class="text-muted d-block" style="font-size: 0.65rem; text-transform: uppercase;">Mesin</span>
-                <strong class="text-dark" id="modalNoMesinLabel">MC-001</strong>
-              </div>
-              <div class="col-6">
-                <span class="text-muted d-block" style="font-size: 0.65rem; text-transform: uppercase;">Periode Ke</span>
-                <strong class="text-primary" id="modalPeriodeLabel">1</strong>
-              </div>
-            </div>
-          </div>
-
-          <!-- Status Check -->
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Status Pengecekan</label>
-            <select name="status_check" id="modalStatusSelect" class="form-select" required>
-              <option value="">-- Pilih Status --</option>
-              <option value="V">V (OK)</option>
-              <option value="Δ">Δ (Perlu Tindakan)</option>
-              <option value="X">X (Tidak Ada)</option>
-            </select>
-          </div>
-
-          <!-- PIC Nama -->
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Nama PIC</label>
-            <input type="text" name="pic_nama" id="modalPicInput" class="form-control" placeholder="Ketik nama PIC" required>
-          </div>
-
-          <!-- Out of Plan Checkbox & Date -->
-          <div class="mb-3">
-            <label class="form-label fw-semibold d-block">Pengecekan Out of Plan?</label>
-            <div class="form-check form-switch mt-1.5">
-              <input class="form-check-input" type="checkbox" id="modalIsOutOfPlan" value="1">
-              <label class="form-check-label text-muted small" for="modalIsOutOfPlan">Ya, isi tanggal realita pengecekan</label>
-            </div>
-            <div id="modalOutOfPlanDateWrapper" class="mt-2" style="display: none;">
-              <label class="form-label small fw-semibold text-danger">Tanggal Realita</label>
-              <input type="date" name="out_of_plan" id="modalOutOfPlanDateInput" class="form-control border-danger form-control-sm" value="<?= date('Y-m-d') ?>">
-            </div>
-          </div>
-
-          <!-- Ulasan -->
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Ulasan</label>
-            <textarea name="ulasan" id="modalUlasanInput" class="form-control" rows="2" placeholder="Ketik keterangan tambahan jika diperlukan..."></textarea>
-          </div>
-        </div>
-
-        <div class="modal-footer border-top-0 pt-0 pb-4 px-4">
-          <button type="button" class="btn btn-outline-secondary btn-sm px-3 rounded-3" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-primary btn-sm px-4 rounded-3"><i class="bi bi-save me-1"></i> Simpan</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Javascript Modal Populate -->
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const cells = document.querySelectorAll(".cell-editable");
-    const editModal = new bootstrap.Modal(document.getElementById("quickEditModal"));
-
-    // Modal Form Elements
-    const mIdKontrol     = document.getElementById("modalIdKontrol");
-    const mIdMesin       = document.getElementById("modalIdMesin");
-    const mPeriode       = document.getElementById("modalPeriode");
-    const mNoMesinLabel  = document.getElementById("modalNoMesinLabel");
-    const mPeriodeLabel  = document.getElementById("modalPeriodeLabel");
-    
-    const mStatusSelect  = document.getElementById("modalStatusSelect");
-    const mPicInput      = document.getElementById("modalPicInput");
-    const mIsOutOfPlan   = document.getElementById("modalIsOutOfPlan");
-    const mDateWrapper   = document.getElementById("modalOutOfPlanDateWrapper");
-    const mDateInput     = document.getElementById("modalOutOfPlanDateInput");
-    const mUlasanInput   = document.getElementById("modalUlasanInput");
-
-    // Click handler for table cells
-    cells.forEach(cell => {
-      cell.addEventListener("click", function() {
-        const idKontrol   = this.getAttribute("data-id-kontrol");
-        const idMesin     = this.getAttribute("data-id-mesin");
-        const noMesin     = this.getAttribute("data-no-mesin");
-        const periode     = this.getAttribute("data-periode");
-        const status      = this.getAttribute("data-status");
-        const pic         = this.getAttribute("data-pic");
-        const outOfPlan   = this.getAttribute("data-out-of-plan");
-        const ulasan      = this.getAttribute("data-ulasan");
-
-        // Populate Modal Fields
-        mIdKontrol.value    = idKontrol;
-        mIdMesin.value      = idMesin;
-        mPeriode.value      = periode;
-        mNoMesinLabel.innerText = noMesin;
-        mPeriodeLabel.innerText = "Periode ke-" + periode;
-
-        mStatusSelect.value = status;
-        mPicInput.value     = pic || "Staff";
-        mUlasanInput.value  = ulasan || "";
-
-        // Check if out of plan is set (reality date)
-        if (outOfPlan && outOfPlan !== "") {
-          mIsOutOfPlan.checked = true;
-          mDateWrapper.style.display = "block";
-          mDateInput.value = outOfPlan;
-          mDateInput.setAttribute("required", "required");
-        } else {
-          mIsOutOfPlan.checked = false;
-          mDateWrapper.style.display = "none";
-          mDateInput.removeAttribute("required");
-          mDateInput.value = "<?= date('Y-m-d') ?>";
-        }
-
-        editModal.show();
-      });
-    });
-
-    // Toggle out of plan date picker inside modal
-    mIsOutOfPlan.addEventListener("change", function() {
-      if (this.checked) {
-        mDateWrapper.style.display = "block";
-        mDateInput.setAttribute("required", "required");
-      } else {
-        mDateWrapper.style.display = "none";
-        mDateInput.removeAttribute("required");
-        mDateInput.value = ""; // clear reality date if unchecked
-      }
-    });
-  });
-</script>
 
 <?php if (service('request')->getGet('auto') == 1): ?>
 <script>

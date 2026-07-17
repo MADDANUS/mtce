@@ -16,9 +16,17 @@ class MesinController extends BaseController
 
     public function index()
     {
+        $role = session()->get('role');
+        $lokasi = session()->get('lokasi');
+        $builder = $this->model->orderBy('lokasi', 'ASC')->orderBy('no_mesin', 'ASC');
+        
+        if ($role === 'leader' && $lokasi) {
+            $builder->where('lokasi', $lokasi);
+        }
+
         return view('admin/mesin/index', [
             'title'  => 'Master Mesin',
-            'daftar' => $this->model->orderBy('lokasi', 'ASC')->orderBy('no_mesin', 'ASC')->findAll(),
+            'daftar' => $builder->findAll(),
         ]);
     }
 
@@ -37,10 +45,11 @@ class MesinController extends BaseController
         }
 
         $this->model->insert([
-            'no_mesin'     => $this->request->getPost('no_mesin'),
-            'type_mesin'   => $this->request->getPost('type_mesin'),
-            'serial_nomor' => $this->request->getPost('serial_nomor'),
-            'lokasi'       => $this->request->getPost('lokasi'),
+            'no_mesin'        => $this->request->getPost('no_mesin'),
+            'type_mesin'      => $this->request->getPost('type_mesin'),
+            'serial_nomor'    => $this->request->getPost('serial_nomor'),
+            'lokasi'          => $this->request->getPost('lokasi'),
+            'bar_feeder_type' => $this->request->getPost('bar_feeder_type'),
         ]);
 
         return redirect()->to('/admin/mesin')->with('success', 'Mesin berhasil ditambahkan.');
@@ -70,10 +79,11 @@ class MesinController extends BaseController
         }
 
         $this->model->update($id, [
-            'no_mesin'     => $this->request->getPost('no_mesin'),
-            'type_mesin'   => $this->request->getPost('type_mesin'),
-            'serial_nomor' => $this->request->getPost('serial_nomor'),
-            'lokasi'       => $this->request->getPost('lokasi'),
+            'no_mesin'        => $this->request->getPost('no_mesin'),
+            'type_mesin'      => $this->request->getPost('type_mesin'),
+            'serial_nomor'    => $this->request->getPost('serial_nomor'),
+            'lokasi'          => $this->request->getPost('lokasi'),
+            'bar_feeder_type' => $this->request->getPost('bar_feeder_type'),
         ]);
 
         return redirect()->to('/admin/mesin')->with('success', 'Mesin berhasil diperbarui.');
@@ -93,65 +103,101 @@ class MesinController extends BaseController
     {
         $mesin = $this->model->orderBy('lokasi', 'ASC')->orderBy('no_mesin', 'ASC')->findAll();
         
-        $filename = 'mesin_export_' . date('Ymd_His') . '.csv';
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
         
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename=' . $filename);
+        // Header
+        $sheet->setCellValue('A1', 'No Mesin');
+        $sheet->setCellValue('B1', 'Type Mesin');
+        $sheet->setCellValue('C1', 'Serial Nomor');
+        $sheet->setCellValue('D1', 'Lokasi');
+        $sheet->setCellValue('E1', 'Bar Feeder Type');
         
-        $output = fopen('php://output', 'w');
-        
-        // CSV Header
-        fputcsv($output, ['No Mesin', 'Type Mesin', 'Serial Nomor', 'Lokasi']);
-        
+        // Data
+        $row = 2;
         foreach ($mesin as $m) {
-            fputcsv($output, [
-                $m['no_mesin'],
-                $m['type_mesin'],
-                $m['serial_nomor'],
-                $m['lokasi']
-            ]);
+            $sheet->setCellValue('A' . $row, $m['no_mesin']);
+            $sheet->setCellValue('B' . $row, $m['type_mesin']);
+            $sheet->setCellValue('C' . $row, $m['serial_nomor']);
+            $sheet->setCellValue('D' . $row, $m['lokasi']);
+            $sheet->setCellValue('E' . $row, $m['bar_feeder_type']);
+            $row++;
         }
         
-        fclose($output);
+        $filename = 'mesin_export_' . date('Ymd_His') . '.xlsx';
+        
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    public function template()
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Header
+        $sheet->setCellValue('A1', 'No Mesin');
+        $sheet->setCellValue('B1', 'Type Mesin');
+        $sheet->setCellValue('C1', 'Serial Nomor');
+        $sheet->setCellValue('D1', 'Lokasi');
+        $sheet->setCellValue('E1', 'Bar Feeder Type');
+        
+        $filename = 'template_mesin.xlsx';
+        
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
         exit;
     }
 
     public function import()
     {
-        $file = $this->request->getFile('file_csv');
-        if (! $file || ! $file->isValid() || $file->getExtension() !== 'csv') {
-            return redirect()->to('/admin/mesin')->with('error', 'Silakan pilih file CSV yang valid.');
+        $file = $this->request->getFile('file_excel');
+        if (! $file || ! $file->isValid()) {
+            return redirect()->to('/admin/mesin')->with('error', 'Silakan pilih file Excel yang valid.');
         }
         
-        $filePath = $file->getTempName();
-        if (($handle = fopen($filePath, 'r')) !== false) {
-            // Lewati header
-            fgetcsv($handle);
+        $extension = $file->getExtension();
+        if (! in_array($extension, ['xlsx', 'xls', 'csv'], true)) {
+            return redirect()->to('/admin/mesin')->with('error', 'Format file tidak didukung. Gunakan .xlsx, .xls, atau .csv');
+        }
+        
+        try {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getTempName());
+            $sheet = $spreadsheet->getActiveSheet();
+            $highestRow = $sheet->getHighestDataRow();
             
             $successInsert = 0;
             $successUpdate = 0;
             $errors = [];
-            $rowNum = 1;
             
-            while (($row = fgetcsv($handle)) !== false) {
-                $rowNum++;
-                if (count($row) < 4) {
-                    $errors[] = "Baris {$rowNum}: Kolom kurang lengkap. Harus memuat No Mesin, Type Mesin, Serial Nomor, dan Lokasi.";
+            for ($row = 2; $row <= $highestRow; $row++) {
+                $noMesin       = trim($sheet->getCell('A' . $row)->getValue() ?? '');
+                $typeMesin     = trim($sheet->getCell('B' . $row)->getValue() ?? '');
+                $serialNomor   = trim($sheet->getCell('C' . $row)->getValue() ?? '');
+                $lokasi        = trim($sheet->getCell('D' . $row)->getValue() ?? '');
+                $barFeederType = trim($sheet->getCell('E' . $row)->getValue() ?? '');
+                
+                // Lewati baris kosong
+                if (empty($noMesin) && empty($typeMesin) && empty($serialNomor) && empty($lokasi)) {
                     continue;
                 }
                 
-                $noMesin     = trim($row[0]);
-                $typeMesin   = trim($row[1]);
-                $serialNomor = trim($row[2]);
-                $lokasi      = trim($row[3]);
-                
                 if (empty($noMesin) || empty($typeMesin) || empty($serialNomor) || empty($lokasi)) {
-                    $errors[] = "Baris {$rowNum}: Seluruh kolom wajib diisi.";
+                    $errors[] = "Baris {$row}: Seluruh kolom wajib diisi kecuali Bar Feeder Type.";
                     continue;
                 }
                 
                 if (! in_array($lokasi, ['MFG 1', 'MFG 2'], true)) {
-                    $errors[] = "Baris {$rowNum}: Lokasi '{$lokasi}' tidak valid. Harus 'MFG 1' atau 'MFG 2'.";
+                    $errors[] = "Baris {$row}: Lokasi '{$lokasi}' tidak valid. Harus 'MFG 1' atau 'MFG 2'.";
                     continue;
                 }
                 
@@ -159,23 +205,23 @@ class MesinController extends BaseController
                 
                 if ($existing) {
                     $this->model->update($existing['id_mesin'], [
-                        'type_mesin'   => $typeMesin,
-                        'serial_nomor' => $serialNomor,
-                        'lokasi'       => $lokasi,
+                        'type_mesin'      => $typeMesin,
+                        'serial_nomor'    => $serialNomor,
+                        'lokasi'          => $lokasi,
+                        'bar_feeder_type' => empty($barFeederType) ? null : $barFeederType,
                     ]);
                     $successUpdate++;
                 } else {
                     $this->model->insert([
-                        'no_mesin'     => $noMesin,
-                        'type_mesin'   => $typeMesin,
-                        'serial_nomor' => $serialNomor,
-                        'lokasi'       => $lokasi,
+                        'no_mesin'        => $noMesin,
+                        'type_mesin'      => $typeMesin,
+                        'serial_nomor'    => $serialNomor,
+                        'lokasi'          => $lokasi,
+                        'bar_feeder_type' => empty($barFeederType) ? null : $barFeederType,
                     ]);
                     $successInsert++;
                 }
             }
-            
-            fclose($handle);
             
             $msg = "Impor selesai. Ditambahkan: {$successInsert}, Diperbarui: {$successUpdate}.";
             if (! empty($errors)) {
@@ -184,18 +230,20 @@ class MesinController extends BaseController
             }
             
             return redirect()->to('/admin/mesin')->with('success', $msg);
+            
+        } catch (\Exception $e) {
+            return redirect()->to('/admin/mesin')->with('error', 'Gagal membaca file Excel: ' . $e->getMessage());
         }
-        
-        return redirect()->to('/admin/mesin')->with('error', 'Gagal membuka file CSV.');
     }
 
     private function rules(): array
     {
         return [
-            'no_mesin'     => 'required|max_length[50]',
-            'type_mesin'   => 'required|max_length[100]',
-            'serial_nomor' => 'required|max_length[100]',
-            'lokasi'       => 'required|in_list[MFG 1,MFG 2]',
+            'no_mesin'        => 'required|max_length[50]',
+            'type_mesin'      => 'required|max_length[100]',
+            'serial_nomor'    => 'required|max_length[100]',
+            'lokasi'          => 'required|in_list[MFG 1,MFG 2]',
+            'bar_feeder_type' => 'permit_empty|string|max_length[100]',
         ];
     }
 }

@@ -21,6 +21,13 @@
   </div>
 </div>
 
+<?php if (session()->getFlashdata('success')): ?>
+  <div class="alert alert-success shadow-sm border-0 mb-4"><?= session()->getFlashdata('success') ?></div>
+<?php endif; ?>
+<?php if (session()->getFlashdata('error')): ?>
+  <div class="alert alert-danger shadow-sm border-0 mb-4"><?= session()->getFlashdata('error') ?></div>
+<?php endif; ?>
+
 <div class="card-stat p-3">
   <?php if (empty($daftar)): ?>
     <p class="text-muted mb-0">Belum ada data user.</p>

@@ -5,8 +5,26 @@
     <h5 class="mb-0"><i class="bi bi-sliders me-2 text-primary"></i>Master Parameter Pengecekan</h5>
     <p class="text-muted small mb-0">Kelola baris parameter checklist yang digunakan staff untuk melakukan pemeriksaan mesin.</p>
   </div>
-  <div>
-    <a href="<?= site_url('admin/parameter/create?lokasi=' . urlencode($lokasi) . '&jenis_check=' . urlencode($jenisCheck)) ?>" class="btn btn-sm btn-primary">
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <!-- Form Impor Excel -->
+    <form action="<?= site_url('admin/parameter/import') ?>" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-1 border rounded p-1 bg-white shadow-sm" style="max-height: 38px;">
+        <?= csrf_field() ?>
+        <input type="file" name="file_excel" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" required class="form-control form-control-sm" style="max-width: 170px; border:none; padding: 2px 4px; font-size: 0.8rem;" title="Pilih file Excel untuk diimpor">
+        <button type="submit" class="btn btn-sm btn-success py-1 px-2 fw-semibold" style="font-size: 0.8rem;">Impor</button>
+    </form>
+    <!-- Link Template -->
+    <a href="<?= site_url('admin/parameter/template') ?>" class="btn btn-outline-secondary btn-sm py-2">
+        Unduh Template
+    </a>
+    <!-- Link Ekspor Excel -->
+    <a href="<?= site_url('admin/parameter/export') ?>" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1 py-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+        </svg>
+        Ekspor
+    </a>
+    <a href="<?= site_url('admin/parameter/create?lokasi=' . urlencode($lokasi) . '&jenis_check=' . urlencode($jenisCheck)) ?>" class="btn btn-sm btn-primary py-2">
       <i class="bi bi-plus-lg"></i> Tambah Parameter
     </a>
   </div>
@@ -16,9 +34,9 @@
 <div class="d-flex flex-wrap gap-2 mb-4">
   <?php
     $tabs = [
-      ['MFG 1', 'Preventive', 'MFG 1 - Preventive', 'bi-shield-check'],
+      ['MFG 1', 'Preventive', 'MFG 1 - Checklist Report', 'bi-shield-check'],
       ['MFG 1', 'Overhaul', 'MFG 1 - Overhaul', 'bi-tools'],
-      ['MFG 2', 'Preventive', 'MFG 2 - Preventive', 'bi-shield-check'],
+      ['MFG 2', 'Preventive', 'MFG 2 - Checklist Report', 'bi-shield-check'],
       ['MFG 2', 'Overhaul', 'MFG 2 - Overhaul', 'bi-tools'],
     ];
   ?>
@@ -82,8 +100,7 @@
                 <tr class="table-light">
                   <th style="width: 5%;" class="ps-4 fw-bold text-uppercase text-secondary text-center">NO</th>
                   <th style="width: 15%;" class="fw-bold text-uppercase text-secondary">Section</th>
-                  <th style="width: 20%;" class="fw-bold text-uppercase text-secondary">Bagian Check</th>
-                  <th style="width: 18%;" class="fw-bold text-uppercase text-secondary">Sub Item</th>
+                  <th colspan="2" style="width: 38%;" class="fw-bold text-uppercase text-secondary">Item Check</th>
                   <th style="width: 17%;" class="fw-bold text-uppercase text-secondary">Point Check</th>
                   <th style="width: 12%;" class="fw-bold text-uppercase text-secondary">Standar Item</th>
                   <th style="width: 5%;" class="fw-bold text-uppercase text-secondary text-center">Urut</th>
@@ -108,13 +125,18 @@
 
                     <td class="text-muted"><?= esc($p['section_check'] ?: '-') ?></td>
 
-                    <?php if ($p['show_bagian']): ?>
-                      <td class="fw-semibold text-dark" rowspan="<?= (int) $p['bagian_rowspan'] ?>">
+                    <?php if ($p['sub_item_check']): ?>
+                      <?php if ($p['show_bagian']): ?>
+                        <td class="fw-semibold text-dark" rowspan="<?= (int) $p['bagian_rowspan'] ?>">
+                          <?= esc($p['bagian_check']) ?>
+                        </td>
+                      <?php endif; ?>
+                      <td><?= esc($p['sub_item_check']) ?></td>
+                    <?php else: ?>
+                      <td class="fw-semibold text-dark" colspan="2">
                         <?= esc($p['bagian_check']) ?>
                       </td>
                     <?php endif; ?>
-
-                    <td><?= esc($p['sub_item_check'] ?: '-') ?></td>
 
                     <?php if ($p['show_point']): ?>
                       <td rowspan="<?= (int) $p['point_rowspan'] ?>"><?= esc($p['point_check']) ?></td>
