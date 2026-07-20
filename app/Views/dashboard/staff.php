@@ -27,6 +27,7 @@
       <i class="bi bi-bar-chart-fill watermark-icon"></i>
     </div>
   </div>
+  <?php if (session()->get('role') !== 'leader'): ?>
   <div class="col-md-4">
     <div class="card-stat-premium bg-white border-0 p-4 d-flex flex-column justify-content-center h-100" style="border: 2px dashed var(--accent) !important;">
       <div class="text-center">
@@ -35,6 +36,7 @@
       </div>
     </div>
   </div>
+  <?php endif; ?>
 </div>
 
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">

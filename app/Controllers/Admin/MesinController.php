@@ -49,6 +49,7 @@ class MesinController extends BaseController
             'type_mesin'      => $this->request->getPost('type_mesin'),
             'serial_nomor'    => $this->request->getPost('serial_nomor'),
             'lokasi'          => $this->request->getPost('lokasi'),
+            'line'            => $this->request->getPost('line') ?: null,
             'bar_feeder_type' => $this->request->getPost('bar_feeder_type'),
         ]);
 
@@ -83,6 +84,7 @@ class MesinController extends BaseController
             'type_mesin'      => $this->request->getPost('type_mesin'),
             'serial_nomor'    => $this->request->getPost('serial_nomor'),
             'lokasi'          => $this->request->getPost('lokasi'),
+            'line'            => $this->request->getPost('line') ?: null,
             'bar_feeder_type' => $this->request->getPost('bar_feeder_type'),
         ]);
 
@@ -111,7 +113,8 @@ class MesinController extends BaseController
         $sheet->setCellValue('B1', 'Type Mesin');
         $sheet->setCellValue('C1', 'Serial Nomor');
         $sheet->setCellValue('D1', 'Lokasi');
-        $sheet->setCellValue('E1', 'Bar Feeder Type');
+        $sheet->setCellValue('E1', 'Line');
+        $sheet->setCellValue('F1', 'Bar Feeder Type');
         
         // Data
         $row = 2;
@@ -120,7 +123,8 @@ class MesinController extends BaseController
             $sheet->setCellValue('B' . $row, $m['type_mesin']);
             $sheet->setCellValue('C' . $row, $m['serial_nomor']);
             $sheet->setCellValue('D' . $row, $m['lokasi']);
-            $sheet->setCellValue('E' . $row, $m['bar_feeder_type']);
+            $sheet->setCellValue('E' . $row, $m['line']);
+            $sheet->setCellValue('F' . $row, $m['bar_feeder_type']);
             $row++;
         }
         
@@ -145,7 +149,8 @@ class MesinController extends BaseController
         $sheet->setCellValue('B1', 'Type Mesin');
         $sheet->setCellValue('C1', 'Serial Nomor');
         $sheet->setCellValue('D1', 'Lokasi');
-        $sheet->setCellValue('E1', 'Bar Feeder Type');
+        $sheet->setCellValue('E1', 'Line');
+        $sheet->setCellValue('F1', 'Bar Feeder Type');
         
         $filename = 'template_mesin.xlsx';
         
@@ -184,7 +189,8 @@ class MesinController extends BaseController
                 $typeMesin     = trim($sheet->getCell('B' . $row)->getValue() ?? '');
                 $serialNomor   = trim($sheet->getCell('C' . $row)->getValue() ?? '');
                 $lokasi        = trim($sheet->getCell('D' . $row)->getValue() ?? '');
-                $barFeederType = trim($sheet->getCell('E' . $row)->getValue() ?? '');
+                $line          = trim($sheet->getCell('E' . $row)->getValue() ?? '');
+                $barFeederType = trim($sheet->getCell('F' . $row)->getValue() ?? '');
                 
                 // Lewati baris kosong
                 if (empty($noMesin) && empty($typeMesin) && empty($serialNomor) && empty($lokasi)) {
@@ -208,6 +214,7 @@ class MesinController extends BaseController
                         'type_mesin'      => $typeMesin,
                         'serial_nomor'    => $serialNomor,
                         'lokasi'          => $lokasi,
+                        'line'            => empty($line) ? null : $line,
                         'bar_feeder_type' => empty($barFeederType) ? null : $barFeederType,
                     ]);
                     $successUpdate++;
@@ -217,6 +224,7 @@ class MesinController extends BaseController
                         'type_mesin'      => $typeMesin,
                         'serial_nomor'    => $serialNomor,
                         'lokasi'          => $lokasi,
+                        'line'            => empty($line) ? null : $line,
                         'bar_feeder_type' => empty($barFeederType) ? null : $barFeederType,
                     ]);
                     $successInsert++;
@@ -243,6 +251,7 @@ class MesinController extends BaseController
             'type_mesin'      => 'required|max_length[100]',
             'serial_nomor'    => 'required|max_length[100]',
             'lokasi'          => 'required|in_list[MFG 1,MFG 2]',
+            'line'            => 'permit_empty|string|max_length[50]',
             'bar_feeder_type' => 'permit_empty|string|max_length[100]',
         ];
     }

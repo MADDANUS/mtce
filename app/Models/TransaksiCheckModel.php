@@ -10,8 +10,8 @@ class TransaksiCheckModel extends Model
     protected $primaryKey    = 'id_transaksi';
     protected $allowedFields = [
         'id_user', 'nama_pic', 'id_mesin', 'lokasi_check', 'jenis_check', 'kategori',
-        'waktu_mulai', 'waktu_selesai', 'status', 'approved_by', 'approved_at',
-        'approval_l1_by', 'approval_l1_at', 'approval_l2_by', 'approval_l2_at',
+        'waktu_mulai', 'waktu_selesai', 'status', 'approved_by', 'pic_line_nama', 'approved_at',
+        'approval_l1_by', 'leader_nama', 'approval_l1_at', 'approval_l2_by', 'approval_l2_at',
     ];
     protected $useTimestamps = true;
     protected $returnType    = 'array';
@@ -79,6 +79,10 @@ class TransaksiCheckModel extends Model
 
         if (!empty($filters['id_mesin'])) {
             $builder->where('transaksi_check.id_mesin', (int)$filters['id_mesin']);
+        }
+
+        if (!empty($filters['line'])) {
+            $builder->where('master_mesin.line', $filters['line']);
         }
 
         if (!empty($filters['kategori'])) {

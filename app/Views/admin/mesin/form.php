@@ -29,6 +29,19 @@
         <option value="MFG 2" <?= $lokasiVal === 'MFG 2' ? 'selected' : '' ?>>MFG 2</option>
       </select>
     </div>
+    <div class="mb-3">
+      <label class="form-label">Line (Opsional)</label>
+      <?php $lineVal = old('line', $mesin['line'] ?? ''); ?>
+      <select name="line" class="form-select">
+        <option value="">-- Pilih Line --</option>
+        <option value="Line 1" <?= $lineVal === 'Line 1' ? 'selected' : '' ?>>Line 1</option>
+        <option value="Line 2" <?= $lineVal === 'Line 2' ? 'selected' : '' ?>>Line 2</option>
+        <option value="Line 3" <?= $lineVal === 'Line 3' ? 'selected' : '' ?>>Line 3</option>
+        <option value="CG" <?= $lineVal === 'CG' ? 'selected' : '' ?>>CG</option>
+        <option value="Second" <?= $lineVal === 'Second' ? 'selected' : '' ?>>Second</option>
+      </select>
+      <div class="form-text small">Pilih line tempat mesin ini berada (untuk akses approval Leader).</div>
+    </div>
     <div class="mb-4">
       <label class="form-label text-primary fw-semibold">Bar Feeder Type (Opsional)</label>
       <input type="text" name="bar_feeder_type" class="form-control border-primary bg-primary bg-opacity-10" placeholder="Contoh: Iemca Boss 332" 

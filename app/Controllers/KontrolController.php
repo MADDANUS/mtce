@@ -76,6 +76,7 @@ class KontrolController extends BaseController
         $lokasi   = $this->request->getGet('lokasi') ?: 'MFG 1';
         $kategori = $this->request->getGet('kategori') ?: 'Penerangan';
         $bulan    = $this->request->getGet('bulan') ?: date('Y-m');
+        $line     = $this->request->getGet('line') ?: null;
 
         // Daftar kategori khusus Preventive
         if ($lokasi === 'MFG 2') {
@@ -109,7 +110,18 @@ class KontrolController extends BaseController
             $bulanList[$val] = $label;
         }
 
-        $grid = $this->kontrolModel->getGridData($lokasi, $kategori, $bulan);
+        $availableLines = [];
+        if ($lokasi === 'MFG 1') {
+            $availableLines = ['Line 1', 'Line 2', 'Line 3'];
+        } elseif ($lokasi === 'MFG 2') {
+            $availableLines = ['CG', 'Second'];
+        }
+
+        if (empty($line) && !empty($availableLines)) {
+            $line = $availableLines[0];
+        }
+
+        $grid = $this->kontrolModel->getGridData($lokasi, $kategori, $bulan, $line);
 
         // Ambil jadwal rencana untuk lokasi, kategori, dan bulan berjalan (maks 1 per bulan)
         $db = \Config\Database::connect();
@@ -144,7 +156,7 @@ class KontrolController extends BaseController
         }
 
         // Ambil status approval beserta nama approver
-        $approval = $db->table('approval_bulanan a')
+        $approvalQuery = $db->table('approval_bulanan a')
                        ->select('a.*, u1.nama as l1_name, u2.nama as l2_name, u3.nama as final_name')
                        ->join('users u1', 'u1.id = a.approved_l1_by', 'left')
                        ->join('users u2', 'u2.id = a.approved_l2_by', 'left')
@@ -152,18 +164,27 @@ class KontrolController extends BaseController
                        ->where('a.type', 'kontrol')
                        ->where('a.lokasi', $lokasi)
                        ->where('a.kategori', $kategori)
-                       ->where('a.bulan_tahun', $bulan)
-                       ->get()
-                       ->getRowArray();
+                       ->where('a.bulan_tahun', $bulan);
+
+        if ($line) {
+            $approvalQuery->where('a.line', $line);
+        } else {
+            // Jika tidak ada line yang dipilih, paksakan tidak menemukan approval (atau bisa juga buat kondisi 'IS NULL')
+            $approvalQuery->where('a.line', 'NONE');
+        }
+        
+        $approval = $approvalQuery->get()->getRowArray();
 
         $approvalStatus = $approval ? $approval['status'] : 'Pending';
 
         return view('kontrol/index', [
             'title'          => 'Ceklis Kontrol Bulanan',
             'lokasi'         => $lokasi,
+            'line'           => $line,
             'kategori'       => $kategori,
             'bulan'          => $bulan,
             'categories'     => $categories,
+            'availableLines' => $availableLines,
             'bulanList'      => $bulanList,
             'grid'           => $grid,
             'hasSchedule'    => $hasSchedule,
@@ -185,13 +206,19 @@ class KontrolController extends BaseController
         }
 
         $lokasi   = $this->request->getPost('lokasi');
+        $line     = $this->request->getPost('line');
         $kategori = $this->request->getPost('kategori');
         $bulan    = $this->request->getPost('bulan_tahun');
+
+        if (empty($line)) {
+            return redirect()->back()->with('error', 'Silakan pilih Line terlebih dahulu untuk melakukan persetujuan.');
+        }
 
         $db = \Config\Database::connect();
         $approval = $db->table('approval_bulanan')
                        ->where('type', 'kontrol')
                        ->where('lokasi', $lokasi)
+                       ->where('line', $line)
                        ->where('kategori', $kategori)
                        ->where('bulan_tahun', $bulan)
                        ->get()
@@ -204,6 +231,7 @@ class KontrolController extends BaseController
         $data = [
             'type'        => 'kontrol',
             'lokasi'      => $lokasi,
+            'line'        => $line,
             'kategori'    => $kategori,
             'bulan_tahun' => $bulan,
             'updated_at'  => $now,
@@ -216,8 +244,15 @@ class KontrolController extends BaseController
             $data['approved_final_at'] = $now;
         } elseif ($role === 'member') {
             if ($currentStatus !== 'Pending') return redirect()->back()->with('error', 'Sudah diproses L1.');
+            
+            $picLineNama = $this->request->getPost('pic_line_nama');
+            if (empty(trim($picLineNama))) {
+                return redirect()->back()->with('error', 'Nama PIC Line wajib diisi.');
+            }
+            
             $data['status'] = 'Approved L1';
             $data['approved_l1_by'] = $userId;
+            $data['pic_line_nama']  = trim($picLineNama);
             $data['approved_l1_at'] = $now;
         } elseif ($role === 'sheadprd') {
             if ($currentStatus !== 'Approved L1') return redirect()->back()->with('error', 'Belum disetujui L1.');

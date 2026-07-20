@@ -276,7 +276,7 @@ class ChecklistController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data pengecekan.');
         }
 
-        return redirect()->to("/riwayat/lokasi/{$lokasiSlug}?kategori=" . urlencode($kategoriName))
+        return redirect()->to("/riwayat/lokasi/{$lokasiSlug}?jenis_check=" . urlencode($jenisName) . "&kategori=" . urlencode($kategoriName))
                           ->with('success', 'Pengecekan berhasil disimpan. Durasi pengerjaan: '
                               . $this->formatDurasi($waktuMulai, $waktuSelesai));
     }

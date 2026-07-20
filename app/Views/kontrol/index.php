@@ -32,6 +32,16 @@
         <input type="hidden" name="lokasi" value="<?= esc($lokasi) ?>">
       </div>
 
+      <!-- Line Select -->
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold text-muted mb-1.5">Pilih Line</label>
+        <select name="line" class="form-select form-select-sm rounded-3 py-1.5" onchange="document.getElementById('filterForm').submit()">
+          <?php foreach ($availableLines as $l): ?>
+            <option value="<?= esc($l) ?>" <?= (isset($line) && $line === $l) ? 'selected' : '' ?>><?= esc($l) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
       <!-- Kategori Select -->
       <div class="col-md-4">
         <label class="form-label small fw-semibold text-muted mb-1.5">Kategori Checklist Report</label>
@@ -43,7 +53,7 @@
       </div>
 
       <!-- Bulan & Tahun Select -->
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label class="form-label small fw-semibold text-muted mb-1.5">Pilih Bulan & Tahun</label>
         <select name="bulan" class="form-select form-select-sm rounded-3 py-1.5" onchange="document.getElementById('filterForm').submit()">
           <?php foreach ($bulanList as $bVal => $bLabel): ?>
@@ -59,10 +69,12 @@
 <div class="card border-0 shadow-sm bg-white mb-4">
   <div class="card-body p-3 d-flex align-items-center justify-content-between">
     <div>
-      <h6 class="mb-1 fw-bold text-dark"><i class="bi bi-shield-check text-primary me-2"></i>Status Persetujuan (<?= esc($lokasi) ?> - <?= esc($kategori) ?> - <?= esc($bulan) ?>)</h6>
+      <h6 class="mb-1 fw-bold text-dark"><i class="bi bi-shield-check text-primary me-2"></i>Status Persetujuan (<?= esc($lokasi) ?><?= $line ? ' - ' . esc($line) : '' ?> - <?= esc($kategori) ?> - <?= esc($bulan) ?>)</h6>
       <p class="mb-0 small text-muted">
         Status: 
-        <?php if ($approvalStatus === 'Pending'): ?>
+        <?php if (empty($line)): ?>
+          <span class="badge bg-secondary">Pilih Line</span>
+        <?php elseif ($approvalStatus === 'Pending'): ?>
           <span class="badge bg-secondary">Pending</span>
         <?php elseif ($approvalStatus === 'Approved L1'): ?>
           <span class="badge bg-info">Approved L1</span>
@@ -89,7 +101,11 @@
         }
       ?>
       
-      <?php if (!$allChecked): ?>
+      <?php if (empty($line)): ?>
+        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+          <i class="bi bi-info-circle me-1"></i>Pilih Line untuk Approval
+        </button>
+      <?php elseif (!$allChecked): ?>
         <button type="button" class="btn btn-secondary btn-sm" disabled>
           <i class="bi bi-x-circle me-1"></i>Belum bisa di-Approve (Ada mesin belum dicek)
         </button>
@@ -98,10 +114,16 @@
           <i class="bi bi-check-all me-1"></i>Selesai (Approved Final)
         </button>
       <?php elseif ($canApprove): ?>
-        <form action="<?= site_url('kontrol/approve') ?>" method="post" class="m-0 p-0 d-inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui laporan bulan ini?');">
+        <form action="<?= site_url('kontrol/approve') ?>" method="post" class="m-0 p-0 d-inline-block d-flex gap-2" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui laporan bulan ini?');">
           <input type="hidden" name="lokasi" value="<?= esc($lokasi) ?>">
+          <input type="hidden" name="line" value="<?= esc($line) ?>">
           <input type="hidden" name="kategori" value="<?= esc($kategori) ?>">
           <input type="hidden" name="bulan_tahun" value="<?= esc($bulan) ?>">
+          
+          <?php if ($role === 'member'): ?>
+            <input type="text" name="pic_line_nama" class="form-control form-control-sm" placeholder="Nama PIC Line" required style="min-width: 200px;">
+          <?php endif; ?>
+          
           <button type="submit" class="btn btn-primary btn-sm shadow-sm">
             <i class="bi bi-check-circle me-1"></i>Approve (<?= esc($role) ?>)
           </button>
@@ -243,7 +265,11 @@
                       data-pic="<?= esc($pic) ?>"
                       data-out-of-plan="<?= $cell ? esc($cell['out_of_plan']) : '' ?>"
                       data-ulasan="<?= $cell ? esc($cell['ulasan']) : '' ?>">
-                    <span class="fw-semibold text-dark"><?= esc($pic) ?: '-' ?></span>
+                    <?php
+                      $picParts = explode(' - ', $pic);
+                      $picOnly = end($picParts);
+                    ?>
+                    <span class="fw-semibold text-dark"><?= esc($picOnly) ?: '-' ?></span>
                   </td>
                 <?php endfor; ?>
 
@@ -266,9 +292,10 @@
   <div class="card-body p-4">
     <div class="row text-center align-items-end" style="min-height: 120px;">
       
-      <!-- Dibuat Oleh (Member) -->
+      <!-- Dibuat Oleh (PIC LINE) -->
       <div class="col-4 border-end">
-        <p class="mb-2 fw-semibold text-muted small">Dibuat Oleh</p>
+        <p class="mb-0 fw-semibold text-muted small">Dibuat Oleh</p>
+        <p class="mb-2 fw-bold text-dark small">PIC LINE</p>
         <div class="mb-2" style="height: 50px; display: flex; align-items: center; justify-content: center;">
           <?php if (isset($approvalData['approved_l1_by'])): ?>
             <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 rounded-pill">
@@ -278,13 +305,26 @@
             <span class="text-muted opacity-50"><i class="bi bi-dash-lg"></i></span>
           <?php endif; ?>
         </div>
-        <h6 class="mb-0 fw-bold text-dark text-decoration-underline"><?= esc($approvalData['l1_name'] ?? 'MEMBER') ?></h6>
-        <span class="small text-muted">Tanggal: <?= isset($approvalData['approved_l1_at']) ? date('d-m-Y H:i', strtotime($approvalData['approved_l1_at'])) : '-' ?></span>
+        <h6 class="mb-0 fw-bold text-dark">
+          <?php if (isset($approvalData['approved_l1_by'])): ?>
+            <span class="text-decoration-underline"><?= esc($approvalData['pic_line_nama'] ?? $approvalData['l1_name']) ?></span>
+          <?php else: ?>
+            <span class="text-muted">( ........................................ )</span>
+          <?php endif; ?>
+        </h6>
+        <span class="small text-muted">
+          <?php if (isset($approvalData['approved_l1_at'])): ?>
+            Tanggal: <?= date('d-m-Y H:i', strtotime($approvalData['approved_l1_at'])) ?>
+          <?php else: ?>
+            Tanggal: ( ......................... )
+          <?php endif; ?>
+        </span>
       </div>
 
-      <!-- Diperiksa Oleh (Leader/SHead Produksi) -->
+      <!-- Disetujui Oleh (Leader/SHead Produksi) -->
       <div class="col-4 border-end">
-        <p class="mb-2 fw-semibold text-muted small">Diperiksa Oleh</p>
+        <p class="mb-0 fw-semibold text-muted small">Disetujui Oleh</p>
+        <p class="mb-2 fw-bold text-dark small">SECTION HEAD PRODUKSI</p>
         <div class="mb-2" style="height: 50px; display: flex; align-items: center; justify-content: center;">
           <?php if (isset($approvalData['approved_l2_by'])): ?>
             <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 rounded-pill">
@@ -294,13 +334,26 @@
             <span class="text-muted opacity-50"><i class="bi bi-dash-lg"></i></span>
           <?php endif; ?>
         </div>
-        <h6 class="mb-0 fw-bold text-dark text-decoration-underline"><?= esc($approvalData['l2_name'] ?? 'S. HEAD PRODUKSI') ?></h6>
-        <span class="small text-muted">Tanggal: <?= isset($approvalData['approved_l2_at']) ? date('d-m-Y H:i', strtotime($approvalData['approved_l2_at'])) : '-' ?></span>
+        <h6 class="mb-0 fw-bold text-dark">
+          <?php if (isset($approvalData['approved_l2_by'])): ?>
+            <span class="text-decoration-underline">Mr. Rohmad</span>
+          <?php else: ?>
+            <span class="text-muted">( Mr. Rohmad )</span>
+          <?php endif; ?>
+        </h6>
+        <span class="small text-muted">
+          <?php if (isset($approvalData['approved_l2_at'])): ?>
+            Tanggal: <?= date('d-m-Y H:i', strtotime($approvalData['approved_l2_at'])) ?>
+          <?php else: ?>
+            Tanggal: ( ......................... )
+          <?php endif; ?>
+        </span>
       </div>
 
       <!-- Disetujui Oleh (SHead MTC) -->
       <div class="col-4">
-        <p class="mb-2 fw-semibold text-muted small">Disetujui Oleh</p>
+        <p class="mb-0 fw-semibold text-muted small">Disetujui Oleh</p>
+        <p class="mb-2 fw-bold text-dark small">SECTION HEAD MTC</p>
         <div class="mb-2" style="height: 50px; display: flex; align-items: center; justify-content: center;">
           <?php if (isset($approvalData['approved_final_by'])): ?>
             <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 rounded-pill">
@@ -310,8 +363,20 @@
             <span class="text-muted opacity-50"><i class="bi bi-dash-lg"></i></span>
           <?php endif; ?>
         </div>
-        <h6 class="mb-0 fw-bold text-dark text-decoration-underline"><?= esc($approvalData['final_name'] ?? 'S. HEAD MTC') ?></h6>
-        <span class="small text-muted">Tanggal: <?= isset($approvalData['approved_final_at']) ? date('d-m-Y H:i', strtotime($approvalData['approved_final_at'])) : '-' ?></span>
+        <h6 class="mb-0 fw-bold text-dark">
+          <?php if (isset($approvalData['approved_final_by'])): ?>
+            <span class="text-decoration-underline">Mr. Royadi</span>
+          <?php else: ?>
+            <span class="text-muted">( Mr. Royadi )</span>
+          <?php endif; ?>
+        </h6>
+        <span class="small text-muted">
+          <?php if (isset($approvalData['approved_final_at'])): ?>
+            Tanggal: <?= date('d-m-Y H:i', strtotime($approvalData['approved_final_at'])) ?>
+          <?php else: ?>
+            Tanggal: ( ......................... )
+          <?php endif; ?>
+        </span>
       </div>
 
     </div>

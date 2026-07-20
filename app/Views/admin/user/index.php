@@ -39,6 +39,7 @@
             <th>Nama</th>
             <th>Username</th>
             <th>Role</th>
+            <th>Line</th>
             <th style="width:160px;"></th>
           </tr>
         </thead>
@@ -48,6 +49,7 @@
               <td><?= esc($u['nama']) ?></td>
               <td><?= esc($u['username']) ?></td>
               <td><span class="badge bg-secondary text-uppercase"><?= esc($u['role']) ?></span></td>
+              <td><?= esc($u['line'] ?? '-') ?></td>
               <td>
                 <a href="<?= site_url('admin/user/edit/' . $u['id']) ?>" class="btn btn-sm btn-outline-secondary">Edit</a>
                 <?php if ((int) $u['id'] !== (int) session()->get('user_id')): ?>

@@ -49,15 +49,16 @@
         <option value="sheadmtc" <?= $roleVal === 'sheadmtc' ? 'selected' : '' ?>>Section Head MTC</option>
         <option value="admin" <?= $roleVal === 'admin' ? 'selected' : '' ?>>Admin</option>
       </select>
-    </div>
-    
-    <div class="mb-3">
-      <label class="form-label">Lokasi <span class="text-muted small">(opsional, pilih jika Leader)</span></label>
-      <?php $lokasiVal = old('lokasi', $user['lokasi'] ?? ''); ?>
-      <select name="lokasi" class="form-select">
-        <option value="">-- Tidak Spesifik (Atau Admin) --</option>
-        <option value="MFG 1" <?= $lokasiVal === 'MFG 1' ? 'selected' : '' ?>>MFG 1</option>
-        <option value="MFG 2" <?= $lokasiVal === 'MFG 2' ? 'selected' : '' ?>>MFG 2</option>
+    <div class="mb-4">
+      <label class="form-label">Line <span class="text-muted small">(khusus Leader)</span></label>
+      <?php $lineVal = old('line', $user['line'] ?? ''); ?>
+      <select name="line" class="form-select">
+        <option value="">-- Semua Line --</option>
+        <option value="Line 1" <?= $lineVal === 'Line 1' ? 'selected' : '' ?>>Line 1</option>
+        <option value="Line 2" <?= $lineVal === 'Line 2' ? 'selected' : '' ?>>Line 2</option>
+        <option value="Line 3" <?= $lineVal === 'Line 3' ? 'selected' : '' ?>>Line 3</option>
+        <option value="CG" <?= $lineVal === 'CG' ? 'selected' : '' ?>>CG</option>
+        <option value="Second" <?= $lineVal === 'Second' ? 'selected' : '' ?>>Second</option>
       </select>
     </div>
 

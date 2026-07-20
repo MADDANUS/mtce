@@ -26,13 +26,15 @@ class CeklisKontrolModel extends Model
      * Mengambil data ceklis kontrol untuk lokasi, kategori, dan bulan tertentu.
      * Mengembalikan data yang distrukturkan per mesin lengkap dengan data periode 1-5.
      */
-    public function getGridData(string $lokasi, string $kategori, string $bulanTahun): array
+    public function getGridData(string $lokasi, string $kategori, string $bulanTahun, ?string $line = null): array
     {
         // 1. Ambil semua mesin untuk lokasi ini
         $mesinModel = new MesinModel();
-        $daftarMesin = $mesinModel->where('lokasi', $lokasi)
-                                  ->orderBy('no_mesin', 'ASC')
-                                  ->findAll();
+        $builder = $mesinModel->where('lokasi', $lokasi);
+        if ($line) {
+            $builder->where('line', $line);
+        }
+        $daftarMesin = $builder->orderBy('no_mesin', 'ASC')->findAll();
 
         // 2. Ambil semua catatan ceklis kontrol untuk kategori & bulan ini
         $records = $this->where('kategori', $kategori)

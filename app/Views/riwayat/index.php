@@ -65,8 +65,26 @@ $getSortIcon = function(string $column) use ($selectedFilters) {
     </div>
 
     <div class="row g-3 align-items-end border-top pt-3">
+      <!-- Filter Line -->
+      <div class="col-md-2">
+        <label class="form-label" style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">Line</label>
+        <?php if (!empty($userLine)): ?>
+          <input type="text" class="form-control form-control-sm bg-light" value="<?= esc($userLine) ?>" readonly disabled>
+          <input type="hidden" name="line" value="<?= esc($userLine) ?>">
+        <?php else: ?>
+          <select name="line" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">-- Semua Line --</option>
+            <?php foreach ($availableLines as $l): ?>
+              <option value="<?= esc($l) ?>" <?= isset($selectedFilters['line']) && $selectedFilters['line'] === $l ? 'selected' : '' ?>>
+                <?= esc($l) ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        <?php endif; ?>
+      </div>
+
       <!-- Filter Mesin -->
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label class="form-label" style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">Mesin</label>
         <select name="id_mesin" class="form-select form-select-sm" onchange="this.form.submit()">
           <option value="">-- Semua Mesin --</option>
@@ -79,7 +97,7 @@ $getSortIcon = function(string $column) use ($selectedFilters) {
       </div>
 
       <!-- Filter Kategori -->
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label class="form-label" style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">Kategori</label>
         <select name="kategori" class="form-select form-select-sm" onchange="this.form.submit()">
           <option value="">-- Semua Kategori --</option>

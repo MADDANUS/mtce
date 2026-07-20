@@ -1,7 +1,7 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
 <div class="page-header">
-  <h5><i class="bi bi-clipboard-check me-2 text-primary"></i>Detail Pengecekan <span class="badge bg-primary ms-1">#<?= (int) $header['id_transaksi'] ?></span></h5>
+  <h5><i class="bi bi-clipboard-check me-2 text-primary"></i>Detail Pengecekan</h5>
   <a href="<?= site_url('riwayat') ?>" class="btn btn-sm btn-outline-secondary">
     <i class="bi bi-arrow-left"></i> Kembali
   </a>
@@ -11,7 +11,12 @@
   <div class="row g-3 align-items-center">
     <div class="col-md-2">
       <div class="text-muted small">Staff / PIC</div>
-      <div class="fw-semibold"><?= esc($header['nama_pic'] ?: $header['nama_staff']) ?></div>
+      <?php 
+        $rawNamaTop = $header['nama_pic'] ?: $header['nama_staff'];
+        $namaTopParts = explode(' - ', $rawNamaTop);
+        $namaTopOnly = end($namaTopParts);
+      ?>
+      <div class="fw-semibold"><?= esc($namaTopOnly) ?></div>
     </div>
     <div class="col-md-3">
       <div class="text-muted small">Mesin</div>
@@ -186,7 +191,8 @@
     <div class="row text-center align-items-end" style="min-height: 120px;">
       <!-- 1. Dibuat Oleh (Member) -->
       <div class="col-3 border-end">
-        <p class="mb-2 fw-semibold text-muted small">Dibuat Oleh</p>
+        <p class="mb-0 fw-semibold text-muted small">Prepared</p>
+        <p class="mb-2 fw-bold text-dark small">INSPECTOR</p>
         <div class="mb-2" style="height: 50px; display: flex; align-items: center; justify-content: center;">
           <?php if (!empty($header['waktu_selesai'])): ?>
             <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 rounded-pill"><i class="bi bi-check-circle-fill me-1"></i> Selesai</span>
@@ -194,13 +200,23 @@
             <span class="text-muted opacity-50"><i class="bi bi-dash-lg"></i></span>
           <?php endif; ?>
         </div>
-        <h6 class="mb-0 fw-bold text-dark text-decoration-underline" style="font-size:0.9rem;"><?= esc($header['nama_staff'] ?? 'MEMBER') ?></h6>
-        <span class="small text-muted" style="font-size:0.75rem;">Tgl: <?= !empty($header['waktu_selesai']) ? date('d-m-Y H:i', strtotime($header['waktu_selesai'])) : '-' ?></span>
+        <?php
+          $rawNamaOv = $header['nama_pic'] ?: ($header['nama_staff'] ?? 'MEMBER');
+          $namaOvParts = explode(' - ', $rawNamaOv);
+          $namaOvOnly = end($namaOvParts);
+        ?>
+        <h6 class="mb-0 fw-bold text-dark">
+          <span class="text-decoration-underline" style="font-size:0.9rem;"><?= esc($namaOvOnly) ?></span>
+        </h6>
+        <span class="small text-muted" style="font-size:0.75rem;">
+          Tgl: <?= !empty($header['waktu_selesai']) ? date('d-m-Y H:i', strtotime($header['waktu_selesai'])) : '-' ?>
+        </span>
       </div>
 
       <!-- 2. Diperiksa Oleh (Leader) -->
       <div class="col-3 border-end">
-        <p class="mb-2 fw-semibold text-muted small">Diperiksa Oleh</p>
+        <p class="mb-0 fw-semibold text-muted small">Checked</p>
+        <p class="mb-2 fw-bold text-dark small">LEADER PRODUKSI</p>
         <div class="mb-2" style="height: 50px; display: flex; align-items: center; justify-content: center;">
           <?php if (!empty($header['approval_l1_by'])): ?>
             <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 rounded-pill"><i class="bi bi-check-circle-fill me-1"></i> Diperiksa</span>
@@ -208,13 +224,26 @@
             <span class="text-muted opacity-50"><i class="bi bi-dash-lg"></i></span>
           <?php endif; ?>
         </div>
-        <h6 class="mb-0 fw-bold text-dark text-decoration-underline" style="font-size:0.9rem;"><?= esc($header['approver_l1_nama'] ?? 'LEADER PRODUKSI') ?></h6>
-        <span class="small text-muted" style="font-size:0.75rem;">Tgl: <?= !empty($header['approval_l1_at']) ? date('d-m-Y H:i', strtotime($header['approval_l1_at'])) : '-' ?></span>
+        <h6 class="mb-0 fw-bold text-dark">
+          <?php if (!empty($header['approval_l1_by'])): ?>
+            <span class="text-decoration-underline" style="font-size:0.9rem;"><?= esc($header['leader_nama'] ?? $header['approver_l1_nama']) ?></span>
+          <?php else: ?>
+            <span class="text-muted">( ........................................ )</span>
+          <?php endif; ?>
+        </h6>
+        <span class="small text-muted" style="font-size:0.75rem;">
+          <?php if (!empty($header['approval_l1_at'])): ?>
+            Tgl: <?= date('d-m-Y H:i', strtotime($header['approval_l1_at'])) ?>
+          <?php else: ?>
+            Tgl: ( ......................... )
+          <?php endif; ?>
+        </span>
       </div>
 
       <!-- 3. Disetujui Oleh (SHead Produksi) -->
       <div class="col-3 border-end">
-        <p class="mb-2 fw-semibold text-muted small">Disetujui Oleh</p>
+        <p class="mb-0 fw-semibold text-muted small">Approved</p>
+        <p class="mb-2 fw-bold text-dark small">SECTION HEAD PRODUKSI</p>
         <div class="mb-2" style="height: 50px; display: flex; align-items: center; justify-content: center;">
           <?php if (!empty($header['approval_l2_by'])): ?>
             <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 rounded-pill"><i class="bi bi-check-circle-fill me-1"></i> Disetujui</span>
@@ -222,13 +251,26 @@
             <span class="text-muted opacity-50"><i class="bi bi-dash-lg"></i></span>
           <?php endif; ?>
         </div>
-        <h6 class="mb-0 fw-bold text-dark text-decoration-underline" style="font-size:0.9rem;"><?= esc($header['approver_l2_nama'] ?? 'S. HEAD PRODUKSI') ?></h6>
-        <span class="small text-muted" style="font-size:0.75rem;">Tgl: <?= !empty($header['approval_l2_at']) ? date('d-m-Y H:i', strtotime($header['approval_l2_at'])) : '-' ?></span>
+        <h6 class="mb-0 fw-bold text-dark">
+          <?php if (!empty($header['approval_l2_by'])): ?>
+            <span class="text-decoration-underline" style="font-size:0.9rem;"><?= esc($header['approver_l2_nama']) ?></span>
+          <?php else: ?>
+            <span class="text-muted">( Mr. Rohmad )</span>
+          <?php endif; ?>
+        </h6>
+        <span class="small text-muted" style="font-size:0.75rem;">
+          <?php if (!empty($header['approval_l2_at'])): ?>
+            Tgl: <?= date('d-m-Y H:i', strtotime($header['approval_l2_at'])) ?>
+          <?php else: ?>
+            Tgl: ( ......................... )
+          <?php endif; ?>
+        </span>
       </div>
 
       <!-- 4. Disetujui Oleh (SHead MTC) -->
       <div class="col-3">
-        <p class="mb-2 fw-semibold text-muted small">Disetujui Oleh</p>
+        <p class="mb-0 fw-semibold text-muted small">Approved</p>
+        <p class="mb-2 fw-bold text-dark small">SECTION HEAD MTC</p>
         <div class="mb-2" style="height: 50px; display: flex; align-items: center; justify-content: center;">
           <?php if ($header['status'] === 'Approved'): ?>
             <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 rounded-pill"><i class="bi bi-check-circle-fill me-1"></i> Disetujui</span>
@@ -236,18 +278,31 @@
             <span class="text-muted opacity-50"><i class="bi bi-dash-lg"></i></span>
           <?php endif; ?>
         </div>
-        <h6 class="mb-0 fw-bold text-dark text-decoration-underline" style="font-size:0.9rem;"><?= esc($header['approver_nama'] ?? 'S. HEAD MTC') ?></h6>
-        <span class="small text-muted" style="font-size:0.75rem;">Tgl: <?= !empty($header['approved_at']) ? date('d-m-Y H:i', strtotime($header['approved_at'])) : '-' ?></span>
+        <h6 class="mb-0 fw-bold text-dark">
+          <?php if ($header['status'] === 'Approved'): ?>
+            <span class="text-decoration-underline" style="font-size:0.9rem;"><?= esc($header['approver_nama']) ?></span>
+          <?php else: ?>
+            <span class="text-muted">( Mr. Royadi )</span>
+          <?php endif; ?>
+        </h6>
+        <span class="small text-muted" style="font-size:0.75rem;">
+          <?php if ($header['status'] === 'Approved'): ?>
+            Tgl: <?= date('d-m-Y H:i', strtotime($header['approved_at'])) ?>
+          <?php else: ?>
+            Tgl: ( ......................... )
+          <?php endif; ?>
+        </span>
       </div>
     </div>
     
     <?php else: ?>
     <!-- SIGNATURE BLOCK PREVENTIVE (SINGLE-LEVEL) -->
-    <div class="row text-center align-items-end" style="min-height: 120px;">
+    <div class="row text-center align-items-end" style="min-height: 130px;">
       <!-- Dibuat Oleh (Creator) -->
       <div class="col-6 border-end">
-        <p class="mb-2 fw-semibold text-muted small">Dibuat Oleh</p>
-        <div class="mb-2" style="height: 50px; display: flex; align-items: center; justify-content: center;">
+        <p class="mb-0 fw-semibold text-muted small">Dibuat Oleh</p>
+        <p class="mb-2 fw-bold text-dark small">PIC</p>
+        <div class="mb-2" style="height: 60px; display: flex; align-items: center; justify-content: center;">
           <?php if (!empty($header['waktu_selesai'])): ?>
             <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 rounded-pill">
               <i class="bi bi-check-circle-fill me-1"></i> Selesai
@@ -256,14 +311,20 @@
             <span class="text-muted opacity-50"><i class="bi bi-dash-lg"></i></span>
           <?php endif; ?>
         </div>
-        <h6 class="mb-0 fw-bold text-dark text-decoration-underline"><?= esc($header['nama_staff'] ?? 'MEMBER') ?></h6>
+        <?php 
+          $rawNamaPic = $header['nama_pic'] ?: ($header['nama_staff'] ?? 'MEMBER');
+          $namaPicParts = explode(' - ', $rawNamaPic);
+          $namaPicOnly = end($namaPicParts);
+        ?>
+        <h6 class="mb-0 fw-bold text-dark text-decoration-underline"><?= esc($namaPicOnly) ?></h6>
         <span class="small text-muted">Tanggal: <?= !empty($header['waktu_selesai']) ? date('d-m-Y H:i', strtotime($header['waktu_selesai'])) : '-' ?></span>
       </div>
 
       <!-- Disetujui Oleh (Approver) -->
       <div class="col-6">
-        <p class="mb-2 fw-semibold text-muted small">Disetujui Oleh</p>
-        <div class="mb-2" style="height: 50px; display: flex; align-items: center; justify-content: center;">
+        <p class="mb-0 fw-semibold text-muted small">Disetujui Oleh</p>
+        <p class="mb-2 fw-bold text-dark small">PIC LINE</p>
+        <div class="mb-2" style="height: 60px; display: flex; align-items: center; justify-content: center;">
           <?php if ($header['status'] === 'Approved'): ?>
             <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 rounded-pill">
               <i class="bi bi-check-circle-fill me-1"></i> Disetujui
@@ -272,8 +333,20 @@
             <span class="text-muted opacity-50"><i class="bi bi-dash-lg"></i></span>
           <?php endif; ?>
         </div>
-        <h6 class="mb-0 fw-bold text-dark text-decoration-underline"><?= esc($header['approver_nama'] ?? 'LEADER / ADMIN') ?></h6>
-        <span class="small text-muted">Tanggal: <?= !empty($header['approved_at']) ? date('d-m-Y H:i', strtotime($header['approved_at'])) : '-' ?></span>
+        <h6 class="mb-0 fw-bold text-dark">
+          <?php if ($header['status'] === 'Approved'): ?>
+            <span class="text-decoration-underline"><?= esc($header['pic_line_nama'] ?? $header['approver_nama']) ?></span>
+          <?php else: ?>
+            <span class="text-muted">( ........................................ )</span>
+          <?php endif; ?>
+        </h6>
+        <span class="small text-muted">
+          <?php if ($header['status'] === 'Approved'): ?>
+            Tanggal: <?= date('d-m-Y H:i', strtotime($header['approved_at'])) ?>
+          <?php else: ?>
+            Tanggal: ( ......................... )
+          <?php endif; ?>
+        </span>
       </div>
     </div>
     <?php endif; ?>
@@ -290,7 +363,7 @@
       elseif ($role === 'sheadprd' && $statusLaporan === 'Approved L1') $canApprove = true;
       elseif ($role === 'sheadmtc' && $statusLaporan === 'Approved L2') $canApprove = true;
   } else {
-      if (in_array($role, ['leader', 'admin']) && $statusLaporan === 'Pending') {
+      if (in_array($role, ['member', 'admin']) && $statusLaporan === 'Pending') {
           $canApprove = true;
       }
   }
@@ -305,9 +378,18 @@
     </div>
     <form action="<?= site_url('riwayat/approve/' . (int) $header['id_transaksi']) ?>" method="post" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui laporan ini?');">
       <?= csrf_field() ?>
-      <button type="submit" class="btn btn-success px-4 py-2 fw-semibold shadow-sm">
-        <i class="bi bi-check-circle-fill me-2"></i> Approve (<?= esc($role) ?>)
-      </button>
+      <div class="d-flex align-items-center gap-2">
+        <?php if (!$isOverhaul): ?>
+          <input type="text" name="pic_line_nama" class="form-control form-control-sm" placeholder="Nama PIC Line" required style="min-width: 200px;">
+        <?php else: ?>
+          <?php if ($role === 'leader'): ?>
+            <input type="text" name="leader_nama" class="form-control form-control-sm" placeholder="Nama Leader" required style="min-width: 200px;">
+          <?php endif; ?>
+        <?php endif; ?>
+        <button type="submit" class="btn btn-success px-4 py-2 fw-semibold shadow-sm">
+          <i class="bi bi-check-circle-fill me-2"></i> Approve (<?= esc($role) ?>)
+        </button>
+      </div>
     </form>
   </div>
 </div>

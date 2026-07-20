@@ -633,17 +633,43 @@ $seg3 = $uri->getTotalSegments() >= 3 ? $uri->getSegment(3) : '';
       <div class="collapse <?= $isLaporanOpen ? 'show' : '' ?>" id="laporanMenu">
         <div style="padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">
           
+          <?php 
+            $isPreventiveMenu = false;
+            $isOverhaulMenu = false;
+            if ($seg1 === 'riwayat') {
+                if ($seg2 === 'lokasi' || $seg2 === 'index') {
+                    if (!isset($_GET['jenis_check']) || strcasecmp($_GET['jenis_check'], 'Preventive') === 0) {
+                        $isPreventiveMenu = true;
+                    } elseif (isset($_GET['jenis_check']) && strcasecmp($_GET['jenis_check'], 'Overhaul') === 0) {
+                        $isOverhaulMenu = true;
+                    }
+                } elseif (is_numeric($seg2)) {
+                    if (isset($header['jenis_check'])) {
+                        if (strtolower(str_replace(' ', '-', $header['jenis_check'])) === 'overhaul') {
+                            $isOverhaulMenu = true;
+                        } else {
+                            $isPreventiveMenu = true;
+                        }
+                    }
+                }
+            }
+          ?>
           <?php if ($role !== 'leader'): ?>
           <div style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.2rem; letter-spacing: 0.05em;">Preventive</div>
-          <a href="<?= site_url('riwayat/lokasi/mfg1?jenis_check=Preventive') ?>" class="menu-item <?= ($seg1 === 'riwayat' && (!isset($_GET['jenis_check']) || $_GET['jenis_check'] === 'Preventive')) ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 2px;">
+
+          <?php if (!in_array($role, ['sheadprd', 'sheadmtc'])): ?>
+          <a href="<?= site_url('riwayat/lokasi/mfg1?jenis_check=Preventive') ?>" class="menu-item <?= $isPreventiveMenu ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 2px;">
             <i class="bi bi-file-earmark-text"></i>Checklist Report
           </a>
+          <?php endif; ?>
           <a href="<?= site_url('kontrol') ?>" class="menu-item <?= $seg1 === 'kontrol' ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 2px;">
             <i class="bi bi-calendar2-check"></i>Ceklis Kontrol
           </a>
+          <?php if (!in_array($role, ['sheadprd', 'sheadmtc'])): ?>
           <a href="<?= site_url('abnormal') ?>" class="menu-item <?= $seg1 === 'abnormal' ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 10px;">
             <i class="bi bi-exclamation-triangle"></i>Laporan Abnormal
           </a>
+          <?php endif; ?>
           <?php endif; ?>
 
           <div style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.2rem; letter-spacing: 0.05em;">Overhaul</div>
@@ -653,7 +679,7 @@ $seg3 = $uri->getTotalSegments() >= 3 ? $uri->getSegment(3) : '';
                 $overhaulLokasi = strtolower(str_replace(' ', '', session()->get('lokasi')));
             }
           ?>
-          <a href="<?= site_url('riwayat/lokasi/' . $overhaulLokasi . '?jenis_check=Overhaul') ?>" class="menu-item <?= ($seg1 === 'riwayat' && isset($_GET['jenis_check']) && $_GET['jenis_check'] === 'Overhaul') ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 10px;">
+          <a href="<?= site_url('riwayat/lokasi/' . $overhaulLokasi . '?jenis_check=Overhaul') ?>" class="menu-item <?= $isOverhaulMenu ? 'active' : '' ?>" style="padding: 0.4rem 0.75rem; margin-bottom: 10px;">
             <i class="bi bi-tools"></i>Inspection Report
           </a>
 
@@ -676,7 +702,7 @@ $seg3 = $uri->getTotalSegments() >= 3 ? $uri->getSegment(3) : '';
       </a>
 
       <?php 
-        $hasMasterData = in_array($role, ['admin', 'member', 'sheadprd', 'sheadmtc', 'leader'], true);
+        $hasMasterData = in_array($role, ['admin', 'member'], true);
         $isMasterDataOpen = ($seg2 === 'mesin' || $seg2 === 'user' || $seg2 === 'pic' || $seg2 === 'parameter');
       ?>
       <?php if ($hasMasterData): ?>

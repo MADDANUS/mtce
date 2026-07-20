@@ -45,7 +45,7 @@ class UserController extends BaseController
             'username' => $this->request->getPost('username'),
             'password' => password_hash($this->request->getPost('password'), PASSWORD_DEFAULT),
             'role'     => $this->request->getPost('role'),
-            'lokasi'   => $this->request->getPost('lokasi') ?: null,
+            'line'     => $this->request->getPost('line') ?: null,
         ]);
 
         return redirect()->to('/admin/user')->with('success', 'User berhasil ditambahkan.');
@@ -86,7 +86,7 @@ class UserController extends BaseController
             'nama'     => $this->request->getPost('nama'),
             'username' => $this->request->getPost('username'),
             'role'     => $this->request->getPost('role'),
-            'lokasi'   => $this->request->getPost('lokasi') ?: null,
+            'line'     => $this->request->getPost('line') ?: null,
         ];
 
         if ($this->request->getPost('password') !== '') {
@@ -128,14 +128,14 @@ class UserController extends BaseController
         $output = fopen('php://output', 'w');
         
         // Header CSV
-        fputcsv($output, ['Nama', 'Username', 'Role', 'Lokasi', 'Password']);
+        fputcsv($output, ['Nama', 'Username', 'Role', 'Line', 'Password']);
         
         foreach ($users as $u) {
             fputcsv($output, [
                 $u['nama'],
                 $u['username'],
                 $u['role'],
-                $u['lokasi'] ?? '',
+                $u['line'] ?? '',
                 '' // Password dikosongkan saat ekspor demi keamanan
             ]);
         }
@@ -171,7 +171,7 @@ class UserController extends BaseController
                 $nama     = trim($row[0]);
                 $username = trim($row[1]);
                 $role     = strtolower(trim($row[2]));
-                $lokasi   = isset($row[3]) ? trim($row[3]) : '';
+                $line     = isset($row[3]) ? trim($row[3]) : '';
                 $password = isset($row[4]) ? trim($row[4]) : '';
                 
                 if (empty($nama) || empty($username) || empty($role)) {
@@ -190,7 +190,7 @@ class UserController extends BaseController
                     $updateData = [
                         'nama'   => $nama,
                         'role'   => $role,
-                        'lokasi' => empty($lokasi) ? null : $lokasi,
+                        'line'   => empty($line) ? null : $line,
                     ];
                     if (! empty($password)) {
                         $updateData['password'] = password_hash($password, PASSWORD_DEFAULT);
@@ -203,7 +203,7 @@ class UserController extends BaseController
                         'nama'     => $nama,
                         'username' => $username,
                         'role'     => $role,
-                        'lokasi'   => empty($lokasi) ? null : $lokasi,
+                        'line'     => empty($line) ? null : $line,
                         'password' => password_hash($passToSave, PASSWORD_DEFAULT),
                     ]);
                     $successInsert++;
@@ -229,7 +229,7 @@ class UserController extends BaseController
         return [
             'nama'   => 'required|max_length[100]',
             'role'   => 'required|in_list[magang,member,sheadprd,sheadmtc,admin,leader]',
-            'lokasi' => 'permit_empty|in_list[MFG 1,MFG 2]',
+            'line'   => 'permit_empty|in_list[Line 1,Line 2,Line 3,CG,Second]',
         ];
     }
 }

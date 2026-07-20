@@ -39,6 +39,7 @@
             <th>Type</th>
             <th>Serial Nomor</th>
             <th>Lokasi</th>
+            <th>Line</th>
             <th>Bar Feeder</th>
             <th class="text-end">Aksi</th>
           </tr>
@@ -50,6 +51,7 @@
               <td><?= esc($m['type_mesin']) ?></td>
               <td><?= esc($m['serial_nomor']) ?></td>
               <td><span class="badge bg-secondary"><?= esc($m['lokasi']) ?></span></td>
+              <td><span class="badge bg-info text-dark"><?= esc($m['line'] ?? '-') ?></span></td>
               <td><span class="text-muted small"><?= esc($m['bar_feeder_type'] ?? '-') ?></span></td>
               <td>
                 <div class="d-flex gap-1 flex-wrap">

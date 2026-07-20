@@ -60,9 +60,12 @@ class RiwayatController extends BaseController
         $daftarMesin = $mesinModel->getByLokasi($lokasiName);
 
         // Ambil input filter pencarian
+        $userLine = (session()->get('role') === 'leader') ? session()->get('line') : null;
+        
         $filters = [
             'lokasi'      => $lokasiName,
             'id_mesin'    => $this->request->getGet('id_mesin') ?: null,
+            'line'        => $userLine ?: ($this->request->getGet('line') ?: null),
             'jenis_check' => $this->request->getGet('jenis_check') ?: null,
             'kategori'    => $this->request->getGet('kategori') ?: null,
             'tanggal'     => $this->request->getGet('tanggal') ?: null,
@@ -96,11 +99,20 @@ class RiwayatController extends BaseController
         $jenisLabel = $filters['jenis_check'] === 'Preventive' ? 'Checklist Report' : ($filters['jenis_check'] === 'Overhaul' ? 'Inspection Report' : 'Pengecekan');
         $title = "Riwayat {$jenisLabel} — {$lokasiName}";
 
+        $availableLines = [];
+        if ($lokasiName === 'MFG 1') {
+            $availableLines = ['Line 1', 'Line 2', 'Line 3'];
+        } elseif ($lokasiName === 'MFG 2') {
+            $availableLines = ['CG', 'Second'];
+        }
+
         return view('riwayat/index', [
             'title'           => $title,
             'jenisLabel'      => $jenisLabel,
             'lokasiSlug'      => $lokasiSlug,
             'lokasiName'      => $lokasiName,
+            'availableLines'  => $availableLines,
+            'userLine'        => $userLine,
             'daftarMesin'     => $daftarMesin,
             'categories'      => $categoriesList,
             'riwayat'         => $riwayat,
@@ -147,7 +159,7 @@ class RiwayatController extends BaseController
         }
 
         return view('riwayat/detail', [
-            'title'       => 'Detail Pengecekan #' . $id,
+            'title'       => 'Detail Pengecekan',
             'header'      => $header,
             'details'     => $details,
             'durasiDetik' => $durasiDetik,
@@ -453,8 +465,15 @@ class RiwayatController extends BaseController
         if ($role === 'leader') {
             $mesinModel = new \App\Models\MesinModel();
             $mesinInfo = $mesinModel->find($transaksi['id_mesin']);
-            if ($mesinInfo && session()->get('lokasi') && $mesinInfo['lokasi'] !== session()->get('lokasi')) {
-                return redirect()->back()->with('error', 'Anda hanya dapat menyetujui laporan dari mesin di lokasi ' . session()->get('lokasi'));
+            
+            if ($mesinInfo) {
+                if (session()->get('lokasi') && $mesinInfo['lokasi'] !== session()->get('lokasi')) {
+                    return redirect()->back()->with('error', 'Anda hanya dapat menyetujui laporan dari mesin di lokasi ' . session()->get('lokasi'));
+                }
+                
+                if (session()->get('line') && strtolower($mesinInfo['line']) !== strtolower(session()->get('line'))) {
+                    return redirect()->back()->with('error', 'Akses ditolak! Mesin ini tidak berada di ' . session()->get('line') . ' yang menjadi tanggung jawab Anda.');
+                }
             }
         }
 
@@ -483,10 +502,17 @@ class RiwayatController extends BaseController
                 if ($transaksi['status'] !== 'Pending') {
                     return redirect()->back()->with('error', 'Laporan sudah diperiksa (bukan status Pending).');
                 }
+                
+                $leaderNama = $this->request->getPost('leader_nama');
+                if (empty(trim($leaderNama))) {
+                    return redirect()->back()->with('error', 'Nama Leader wajib diisi.');
+                }
+                
                 $newStatus = 'Approved L1';
                 $updateData = [
                     'status' => 'Approved L1',
                     'approval_l1_by' => $userId,
+                    'leader_nama' => trim($leaderNama),
                     'approval_l1_at' => $now,
                 ];
             } elseif ($role === 'sheadprd') {
@@ -514,13 +540,20 @@ class RiwayatController extends BaseController
             }
         } else {
             // PREVENTIVE (SINGLE-LEVEL)
-            if (!in_array($role, ['admin', 'leader'], true)) {
-                return redirect()->back()->with('error', 'Hanya Admin atau Leader yang dapat menyetujui laporan Preventive.');
+            if (!in_array($role, ['admin', 'member'], true)) {
+                return redirect()->back()->with('error', 'Hanya Admin atau Member MTC yang dapat menyetujui laporan Preventive.');
             }
+            
+            $picLineNama = $this->request->getPost('pic_line_nama');
+            if (empty(trim($picLineNama))) {
+                return redirect()->back()->with('error', 'Nama PIC Line wajib diisi.');
+            }
+
             $newStatus = 'Approved';
             $updateData = [
                 'status' => 'Approved',
                 'approved_by' => $userId,
+                'pic_line_nama' => trim($picLineNama),
                 'approved_at' => $now,
             ];
         }

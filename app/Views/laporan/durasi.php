@@ -18,6 +18,7 @@
             <th class="text-center">NO</th>
             <th>PIC</th>
             <th>Mesin</th>
+            <th>Jenis Pengecekan</th>
             <th>Waktu Mulai</th>
             <th>Waktu Selesai</th>
             <th>Durasi</th>
@@ -29,8 +30,20 @@
           <?php foreach ($laporan as $l): ?>
             <tr>
               <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>
-              <td><?= esc($l['nama_pic'] ?: $l['nama_staff']) ?></td>
+              <?php 
+                $rawNamaDurasi = $l['nama_pic'] ?: $l['nama_staff'];
+                $namaDurasiParts = explode(' - ', $rawNamaDurasi);
+                $namaDurasiOnly = end($namaDurasiParts);
+              ?>
+              <td><?= esc($namaDurasiOnly) ?></td>
               <td><?= esc($l['no_mesin']) ?> - <?= esc($l['type_mesin']) ?></td>
+              <td>
+                <?php if (strtolower($l['jenis_check']) === 'overhaul'): ?>
+                  <span class="badge bg-primary">Inspection Report</span>
+                <?php else: ?>
+                  <span class="badge bg-info text-dark">Checklist Report</span>
+                <?php endif; ?>
+              </td>
               <td><?= esc($l['waktu_mulai']) ?></td>
               <td><?= esc($l['waktu_selesai'] ?? '-') ?></td>
               <td>
