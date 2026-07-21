@@ -587,10 +587,21 @@
     ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
+    /* ---- SIDEBAR OVERLAY ---- */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.6);
+        z-index: 190;
+        backdrop-filter: blur(4px);
+    }
+
     /* ---- RESPONSIVE ---- */
     @media (max-width: 991.98px) {
         .sidebar { left: calc(-1 * var(--sidebar-w)); }
         .sidebar.show { left: 0; }
+        .sidebar-overlay.show { display: block; }
         .main-wrapper { margin-left: 0; }
     }
 </style>
@@ -599,12 +610,16 @@
 <?php 
 $role = session()->get('role'); 
 $uri = service('uri');
-$seg1 = $uri->getSegment(1);
+$seg1 = $uri->getTotalSegments() >= 1 ? $uri->getSegment(1) : '';
 $seg2 = $uri->getTotalSegments() >= 2 ? $uri->getSegment(2) : '';
 $seg3 = $uri->getTotalSegments() >= 3 ? $uri->getSegment(3) : '';
 ?>
 <div class="app-container">
-  <!-- Left Sidebar -->
+  
+  <!-- Sidebar Overlay for Mobile -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Sidebar -->
   <aside class="sidebar">
     <a href="<?= site_url('dashboard') ?>" class="sidebar-brand">
       <div class="brand-icon"><i class="bi bi-shield-fill-check text-white"></i></div>

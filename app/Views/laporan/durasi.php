@@ -1,6 +1,6 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
-<h5 class="mb-3">Laporan Durasi Pengecekan (Efisiensi)</h5>
+<h3 class="fw-bold mb-3">Laporan Durasi Pengecekan (Efisiensi)</h3>
 
 <div class="card-stat p-3 mb-3" style="max-width:320px;">
   <div class="text-muted small">Rata-rata Durasi Semua Transaksi</div>
@@ -11,7 +11,7 @@
   <?php if (empty($laporan)): ?>
     <p class="text-muted mb-0">Belum ada data transaksi.</p>
   <?php else: ?>
-    <div class="table-responsive">
+    <div class="table-responsive text-nowrap">
       <table class="table table-sm align-middle table-hover">
         <thead>
           <tr>

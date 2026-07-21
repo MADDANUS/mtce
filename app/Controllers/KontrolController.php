@@ -73,6 +73,11 @@ class KontrolController extends BaseController
      */
     public function index()
     {
+        // Jika parameter view=summary atau tidak ada parameter spesifik, tampilkan halaman ringkasan
+        if ($this->request->getGet('view') === 'summary' || (!$this->request->getGet('lokasi') && !$this->request->getGet('line') && !$this->request->getGet('kategori'))) {
+            return $this->summary();
+        }
+
         $lokasi   = $this->request->getGet('lokasi') ?: 'MFG 1';
         $kategori = $this->request->getGet('kategori') ?: 'Penerangan';
         $bulan    = $this->request->getGet('bulan') ?: date('Y-m');
@@ -192,6 +197,157 @@ class KontrolController extends BaseController
             'allChecked'     => $allChecked,
             'approvalStatus' => $approvalStatus,
             'approvalData'   => $approval,
+        ]);
+    }
+
+    /**
+     * Halaman Ringkasan (Summary) Ceklis Kontrol
+     */
+    private function summary()
+    {
+        $bulan = $this->request->getGet('bulan') ?: date('Y-m');
+        $filterLokasi = $this->request->getGet('filter_lokasi') ?: '';
+        $filterLine = $this->request->getGet('filter_line') ?: '';
+        $filterKategori = $this->request->getGet('filter_kategori') ?: '';
+        $filterStatus = $this->request->getGet('filter_status') ?: '';
+        $sortBy = $this->request->getGet('sort_by') ?: 'lokasi';
+        $order = strtolower($this->request->getGet('order') ?: 'asc');
+
+        $db = \Config\Database::connect();
+
+        // 1. Total mesin per Line
+        $totalMesinQuery = $db->table('master_mesin')
+                              ->select('lokasi, line, COUNT(id_mesin) as total')
+                              ->groupBy('lokasi, line')
+                              ->get()->getResultArray();
+        
+        $totalMesin = [];
+        $linesByLokasi = [];
+        foreach($totalMesinQuery as $tm) {
+            $totalMesin[$tm['lokasi']][$tm['line']] = (int) $tm['total'];
+            $linesByLokasi[$tm['lokasi']][] = $tm['line'];
+        }
+
+        // 2. Checked machines per Line & Category
+        $checkedQuery = $db->table('ceklis_kontrol')
+                           ->select('master_mesin.lokasi, master_mesin.line, ceklis_kontrol.kategori, COUNT(DISTINCT ceklis_kontrol.id_mesin) as checked_count')
+                           ->join('master_mesin', 'master_mesin.id_mesin = ceklis_kontrol.id_mesin')
+                           ->where('ceklis_kontrol.bulan_tahun', $bulan)
+                           ->where("ceklis_kontrol.pic_nama != 'PIC'")
+                           ->where("ceklis_kontrol.pic_nama IS NOT NULL")
+                           ->groupBy('master_mesin.lokasi, master_mesin.line, ceklis_kontrol.kategori')
+                           ->get()->getResultArray();
+                           
+        $checkedData = [];
+        foreach($checkedQuery as $cq) {
+            $checkedData[$cq['lokasi']][$cq['line']][$cq['kategori']] = (int) $cq['checked_count'];
+        }
+
+        // 3. Approval status
+        $approvals = $db->table('approval_bulanan')
+                        ->where('type', 'kontrol')
+                        ->where('bulan_tahun', $bulan)
+                        ->get()->getResultArray();
+                        
+        $approvalData = [];
+        foreach($approvals as $ap) {
+            $approvalData[$ap['lokasi']][$ap['line']][$ap['kategori']] = $ap['status'];
+        }
+
+        // Categories mapping
+        $kategoriByLokasi = [
+            'MFG 1' => ['Penerangan', 'Kabel dan Pipa', 'Angin Bocor', 'Bearing Cam', 'Gearbox', 'Belt Cam'],
+            'MFG 2' => ['Penerangan', 'Kabel dan Pipa', 'Angin Bocor']
+        ];
+
+        // Buat list 12 bulan terakhir untuk dropdown filter
+        $bulanList = [];
+        for ($i = 0; $i < 12; $i++) {
+            $time = Time::now()->subMonths($i);
+            $val  = $time->format('Y-m');
+            $label = $time->toLocalizedString('MMMM yyyy');
+            $bulanList[$val] = $label;
+        }
+
+        // Build flat array for summary rows
+        $summaryRows = [];
+        foreach ($kategoriByLokasi as $lokasi => $categories) {
+            if (!empty($filterLokasi) && $lokasi !== $filterLokasi) continue;
+            
+            $lines = isset($linesByLokasi[$lokasi]) ? array_unique($linesByLokasi[$lokasi]) : [];
+            sort($lines);
+
+            foreach ($lines as $line) {
+                if (!empty($filterLine) && $line !== $filterLine) continue;
+
+                foreach ($categories as $kategori) {
+                    if (!empty($filterKategori) && $kategori !== $filterKategori) continue;
+                    
+                    $total = $totalMesin[$lokasi][$line] ?? 0;
+                    if ($total == 0) continue; 
+                    
+                    $checked = $checkedData[$lokasi][$line][$kategori] ?? 0;
+                    $percent = $total > 0 ? round(($checked / $total) * 100) : 0;
+                    
+                    $status = $approvalData[$lokasi][$line][$kategori] ?? '';
+                    
+                    $badgeClass = 'bg-secondary';
+                    $statusText = 'Belum Selesai';
+                    
+                    if ($percent == 100) {
+                        if (empty($status) || $status === 'Pending') {
+                            $badgeClass = 'bg-warning text-dark';
+                            $statusText = 'Menunggu Approval (L1)';
+                        } elseif ($status === 'Approved L1') {
+                            $badgeClass = 'bg-info text-dark';
+                            $statusText = 'Approved L1 (Menunggu L2)';
+                        } elseif ($status === 'Approved L2') {
+                            $badgeClass = 'bg-primary';
+                            $statusText = 'Approved L2 (Menunggu Final)';
+                        } elseif ($status === 'Final' || $status === 'Approved Final') {
+                            $badgeClass = 'bg-success';
+                            $statusText = 'Selesai (Final)';
+                        }
+                    }
+                    
+                    if (!empty($filterStatus) && $statusText !== $filterStatus) continue;
+
+                    $summaryRows[] = [
+                        'lokasi'      => $lokasi,
+                        'line'        => $line,
+                        'kategori'    => $kategori,
+                        'total'       => $total,
+                        'checked'     => $checked,
+                        'percent'     => $percent,
+                        'statusText'  => $statusText,
+                        'badgeClass'  => $badgeClass
+                    ];
+                }
+            }
+        }
+
+        // Sort the flat array
+        usort($summaryRows, function($a, $b) use ($sortBy, $order) {
+            $valA = $a[$sortBy] ?? '';
+            $valB = $b[$sortBy] ?? '';
+            
+            if ($valA == $valB) return 0;
+            
+            $cmp = ($valA < $valB) ? -1 : 1;
+            return ($order === 'asc') ? $cmp : -$cmp;
+        });
+
+        return view('kontrol/summary', [
+            'title'            => 'Ringkasan Ceklis Kontrol',
+            'bulan'            => $bulan,
+            'bulanList'        => $bulanList,
+            'summaryRows'      => $summaryRows,
+            'filterLokasi'     => $filterLokasi,
+            'filterLine'       => $filterLine,
+            'filterKategori'   => $filterKategori,
+            'filterStatus'     => $filterStatus,
+            'sortBy'           => $sortBy,
+            'order'            => $order,
         ]);
     }
 

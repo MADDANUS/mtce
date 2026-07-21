@@ -36,85 +36,7 @@
   </div>
 </div>
 
-<?php if (isset($pendingKontrol) && !empty($pendingKontrol)): ?>
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 border-start border-warning border-4" style="border-left-width: 4px !important;">
-  <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center">
-    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-exclamation-circle-fill text-warning me-2"></i>Menunggu Persetujuan Anda (Ceklis Kontrol Bulanan)</h5>
-  </div>
-  <div class="card-body px-0 pt-0 pb-2">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th class="ps-4">Lokasi</th>
-            <th>Line</th>
-            <th>Kategori</th>
-            <th>Bulan</th>
-            <th>Status</th>
-            <th class="pe-4 text-end">Aksi</th>
-          </tr>
-        </thead>
-        <tbody class="border-top-0">
-          <?php foreach ($pendingKontrol as $pk): ?>
-            <tr>
-              <td class="ps-4 fw-semibold text-secondary"><?= esc($pk['lokasi']) ?></td>
-              <td><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25"><?= esc($pk['line'] ?? '-') ?></span></td>
-              <td class="fw-medium text-dark"><?= esc($pk['kategori']) ?></td>
-              <td class="fw-medium"><?= date('F Y', strtotime($pk['bulan_tahun'] . '-01')) ?></td>
-              <td>
-                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 py-2"><?= esc($pk['status']) ?></span>
-              </td>
-              <td class="pe-4 text-end">
-                <a href="<?= site_url('kontrol?lokasi=' . urlencode($pk['lokasi']) . '&line=' . urlencode($pk['line']) . '&kategori=' . urlencode($pk['kategori']) . '&bulan=' . urlencode($pk['bulan_tahun'])) ?>" class="btn btn-sm btn-primary fw-bold rounded-pill px-3"><i class="bi bi-search me-1"></i> Periksa</a>
-              </td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-<?php endif; ?>
 
-<?php if (isset($pendingOverhaul) && !empty($pendingOverhaul)): ?>
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 border-start border-danger border-4" style="border-left-width: 4px !important;">
-  <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center">
-    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-exclamation-circle-fill text-danger me-2"></i>Menunggu Persetujuan Anda (Inspection Report)</h5>
-  </div>
-  <div class="card-body px-0 pt-0 pb-2">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th class="ps-4">No. Transaksi</th>
-            <th>Mesin</th>
-            <th>Kategori</th>
-            <th>Tanggal</th>
-            <th>Status</th>
-            <th class="pe-4 text-end">Aksi</th>
-          </tr>
-        </thead>
-        <tbody class="border-top-0">
-          <?php foreach ($pendingOverhaul as $po): ?>
-            <tr>
-              <td class="ps-4 fw-semibold text-secondary">#<?= esc($po['id_transaksi']) ?></td>
-              <td><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25"><?= esc($po['id_mesin']) ?></span></td>
-              <td class="fw-medium text-dark"><?= esc($po['kategori']) ?></td>
-              <td class="fw-medium"><?= date('d-m-Y H:i', strtotime($po['waktu_mulai'])) ?></td>
-              <td>
-                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3 py-2"><?= esc($po['status']) ?></span>
-              </td>
-              <td class="pe-4 text-end">
-                <a href="<?= site_url('riwayat/' . $po['id_transaksi']) ?>" class="btn btn-sm btn-primary fw-bold rounded-pill px-3"><i class="bi bi-search me-1"></i> Periksa</a>
-              </td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-<?php endif; ?>
 
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
   <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center">
@@ -128,13 +50,14 @@
         <p class="text-muted mt-3 mb-0">Belum ada pengecekan.</p>
       </div>
     <?php else: ?>
-      <div class="table-responsive">
+      <div class="table-responsive text-nowrap">
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th style="width: 5%;" class="ps-4 text-center">NO</th>
               <th>PIC</th>
               <th>MESIN</th>
+              <th>LINE</th>
               <th>JENIS</th>
               <th>WAKTU MULAI</th>
               <th>Durasi</th>
@@ -148,14 +71,26 @@
               <tr>
                 <td class="ps-4 fw-semibold text-secondary text-center"><?= $no++ ?></td>
                 <td>
+                  <?php 
+                    $rawNama = trim($t['nama_pic'] ?? '');
+                    $namaStaff = trim($t['nama_staff'] ?? '');
+                    
+                    if (empty($rawNama) || $rawNama === $namaStaff) {
+                        $picName = 'Belum Ada PIC';
+                    } else {
+                        $namaParts = explode(' - ', $rawNama);
+                        $picName = trim(end($namaParts));
+                    }
+                  ?>
                   <div class="d-flex align-items-center">
                     <div class="avatar-circle me-2 bg-primary bg-opacity-10 text-primary fw-bold" style="width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem;">
-                      <?= strtoupper(substr($t['nama_pic'] ?: $t['nama_staff'], 0, 1)) ?>
+                      <?= strtoupper(substr($picName, 0, 1)) ?>
                     </div>
-                    <span class="fw-medium text-dark"><?= esc($t['nama_pic'] ?: $t['nama_staff']) ?></span>
+                    <span class="fw-medium text-dark"><?= esc($picName) ?></span>
                   </div>
                 </td>
                 <td><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25"><?= esc($t['no_mesin']) ?></span></td>
+                <td><span class="fw-medium text-muted"><?= esc($t['line'] ?? '-') ?></span></td>
                 <td>
                   <?php if (strtolower($t['jenis_check']) === 'overhaul'): ?>
                     <span class="badge bg-primary">Inspection Report</span>

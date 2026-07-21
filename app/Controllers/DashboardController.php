@@ -86,7 +86,7 @@ class DashboardController extends BaseController
     private function leader()
     {
         $role = session()->get('role');
-        $lokasiLine = session()->get('lokasi'); // Menyimpan data Line (contoh: 'Line 1')
+        $lokasiLine = session()->get('line') ?: session()->get('lokasi'); // Menyimpan data Line (contoh: 'Line 1')
 
         $transaksiModel = new TransaksiCheckModel();
         $laporan        = $transaksiModel->getLaporanDurasi();
@@ -114,7 +114,7 @@ class DashboardController extends BaseController
         
         // Ambil riwayat terbaru khusus line ini
         $terbaruQuery = $db->table('transaksi_check')
-                           ->select('transaksi_check.*, users.nama as nama_pic, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.line, TIMESTAMPDIFF(SECOND, transaksi_check.waktu_mulai, transaksi_check.waktu_selesai) as durasi_detik')
+                           ->select('transaksi_check.*, users.nama as nama_staff, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.line, TIMESTAMPDIFF(SECOND, transaksi_check.waktu_mulai, transaksi_check.waktu_selesai) as durasi_detik')
                            ->join('users', 'users.id = transaksi_check.id_user')
                            ->join('master_mesin', 'master_mesin.id_mesin = transaksi_check.id_mesin')
                            ->where('transaksi_check.jenis_check', 'Overhaul');
@@ -157,6 +157,16 @@ class DashboardController extends BaseController
         }
         $pendingOverhaul = $pendingOverhaulQuery->orderBy('transaksi_check.waktu_mulai', 'DESC')->get()->getResultArray();
 
+        // Fetch pending kontrol for leader
+        $pendingKontrol = [];
+        if ($lokasiLine) {
+            $lokasiMesin = $db->table('master_mesin')->select('lokasi')->where('line', $lokasiLine)->limit(1)->get()->getRowArray();
+            if ($lokasiMesin) {
+                $ceklisKontrolModel = new \App\Models\CeklisKontrolModel();
+                $pendingKontrol = $ceklisKontrolModel->getPendingApprovalsForLeader($lokasiMesin['lokasi'], $lokasiLine, date('Y-m'));
+            }
+        }
+
         return view('dashboard/leader', [
             'title'          => 'Dashboard Leader Line ' . ($lokasiLine ?: ''),
             'totalTransaksi' => $totalTransaksi,
@@ -164,6 +174,7 @@ class DashboardController extends BaseController
             'perluTindakan'  => $findings,
             'terbaru'        => array_slice($terbaru, 0, 8),
             'pendingOverhaul'=> $pendingOverhaul,
+            'pendingKontrol' => $pendingKontrol,
         ]);
     }
 
@@ -217,9 +228,10 @@ class DashboardController extends BaseController
         
         if ($role === 'leader') {
             $pendingOverhaulQuery->where('transaksi_check.status', 'Pending');
-            // For leaders, 'lokasi' in session actually stores their assigned Line
-            if (session()->get('lokasi')) {
-                $pendingOverhaulQuery->where('master_mesin.line', session()->get('lokasi'));
+            // For leaders, get 'line' from session
+            $sessionLine = session()->get('line') ?: session()->get('lokasi');
+            if ($sessionLine) {
+                $pendingOverhaulQuery->where('master_mesin.line', $sessionLine);
             }
         } elseif ($role === 'sheadprd') {
             $pendingOverhaulQuery->where('transaksi_check.status', 'Approved L1');

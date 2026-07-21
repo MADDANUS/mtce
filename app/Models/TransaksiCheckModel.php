@@ -60,7 +60,7 @@ class TransaksiCheckModel extends Model
      */
     public function getRiwayatFiltered(array $filters = [], ?int $userId = null, ?int $limit = null): array
     {
-        $builder = $this->select('transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, master_mesin.no_mesin, master_mesin.type_mesin')
+        $builder = $this->select('transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.line as line')
                          ->join('users', 'users.id = transaksi_check.id_user')
                          ->join('users as approver', 'approver.id = transaksi_check.approved_by', 'left')
                          ->join('master_mesin', 'master_mesin.id_mesin = transaksi_check.id_mesin');
@@ -145,7 +145,7 @@ class TransaksiCheckModel extends Model
      */
     public function getLaporanDurasi(?string $lokasi = null): array
     {
-        $builder = $this->select("transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.lokasi as lokasi_mesin, TIMESTAMPDIFF(SECOND, transaksi_check.waktu_mulai, transaksi_check.waktu_selesai) as durasi_detik, transaksi_overhaul.bar_feeder_type, transaksi_overhaul.support_pic")
+        $builder = $this->select("transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.line, master_mesin.lokasi as lokasi_mesin, TIMESTAMPDIFF(SECOND, transaksi_check.waktu_mulai, transaksi_check.waktu_selesai) as durasi_detik, transaksi_overhaul.bar_feeder_type, transaksi_overhaul.support_pic")
                     ->join('users', 'users.id = transaksi_check.id_user')
                     ->join('users as approver', 'approver.id = transaksi_check.approved_by', 'left')
                     ->join('master_mesin', 'master_mesin.id_mesin = transaksi_check.id_mesin')

@@ -51,7 +51,7 @@
         <p class="text-muted mt-3 mb-0">Anda belum melakukan pengecekan apapun.</p>
       </div>
     <?php else: ?>
-      <div class="table-responsive">
+      <div class="table-responsive text-nowrap">
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>

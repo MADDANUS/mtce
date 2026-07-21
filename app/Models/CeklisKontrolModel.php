@@ -97,4 +97,86 @@ class CeklisKontrolModel extends Model
 
         return $grid;
     }
+
+    /**
+     * Get Ceklis Kontrol ready for Leader approval (100% checked, but not approved yet)
+     */
+    public function getPendingApprovalsForLeader(string $lokasi, string $line, string $bulanTahun): array
+    {
+        $db = \Config\Database::connect();
+        
+        // Define categories based on lokasi (same logic as in KontrolController)
+        $categories = ['Penerangan', 'Kabel dan Pipa', 'Angin Bocor'];
+        if ($lokasi !== 'MFG 2') {
+            $categories = array_merge($categories, ['Bearing Cam', 'Gearbox', 'Belt Cam']);
+        }
+
+        $pendingList = [];
+
+        foreach ($categories as $kategori) {
+            $grid = $this->getGridData($lokasi, $kategori, $bulanTahun, $line);
+            
+            // Skip if there are no machines
+            if (empty($grid)) {
+                continue;
+            }
+
+            // Check if 100% completed
+            $allChecked = true;
+            foreach ($grid as $row) {
+                if ($row['pic_nama'] === 'PIC') {
+                    $allChecked = false;
+                    break;
+                }
+            }
+
+            if ($allChecked) {
+                // Check if already approved by leader
+                $approval = $db->table('approval_bulanan')
+                               ->where('type', 'kontrol')
+                               ->where('lokasi', $lokasi)
+                               ->where('line', $line)
+                               ->where('kategori', $kategori)
+                               ->where('bulan_tahun', $bulanTahun)
+                               ->get()
+                               ->getRowArray();
+
+                if (!$approval || $approval['status'] === 'Pending') {
+                    $pendingList[] = [
+                        'lokasi'      => $lokasi,
+                        'line'        => $line,
+                        'kategori'    => $kategori,
+                        'bulan_tahun' => $bulanTahun,
+                        'status'      => 'Siap Approve'
+                    ];
+                }
+            }
+        }
+
+        return $pendingList;
+    }
+
+    /**
+     * Get Ceklis Kontrol ready for Section Head approval
+     */
+    public function getPendingApprovalsForSHead(string $role, string $bulanTahun = null): array
+    {
+        $db = \Config\Database::connect();
+        $builder = $db->table('approval_bulanan')->where('type', 'kontrol');
+        
+        if ($role === 'section_head_produksi') {
+            $builder->where('status', 'Approved L1');
+        } elseif ($role === 'section_head_mtc') {
+            $builder->where('status', 'Approved L2');
+        } else {
+            return []; // Other roles don't have SH pending approvals
+        }
+
+        // Optional: Filter by month if needed. Usually dashboard shows all pending.
+        if ($bulanTahun) {
+            $builder->where('bulan_tahun', $bulanTahun);
+        }
+
+        return $builder->get()->getResultArray();
+    }
 }

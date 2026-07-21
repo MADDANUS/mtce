@@ -32,9 +32,8 @@ class RiwayatController extends BaseController
      */
     public function index()
     {
-        return view('riwayat/landing', [
-            'title' => 'Pilih Lokasi Riwayat',
-        ]);
+        // Redirect default to MFG 1, allowing filter retention if any
+        return redirect()->to('/riwayat/lokasi/mfg1');
     }
 
     /**
@@ -424,7 +423,7 @@ class RiwayatController extends BaseController
 
         // Jika tipe checklist ini update ceklis_kontrol, coba hapus
         if (in_array(strtolower($header['jenis_check']), ['preventive', 'checklist report'], true)) {
-            $tanggalCheckDate = date('Y-m-d', strtotime($header['waktu_selesai']));
+            $tanggalCheckDate = date('Y-m-d', strtotime($header['waktu_selesai'] ?? date('Y-m-d')));
             $db->table('ceklis_kontrol')
                ->where('id_mesin', $header['id_mesin'])
                ->where('kategori', $header['kategori'])
@@ -432,13 +431,19 @@ class RiwayatController extends BaseController
                ->delete();
         }
 
-        // Delete transaksi (transaksi_check_detail, laporan_abnormal, transaksi_overhaul will cascade)
+        // Hapus laporan abnormal secara eksplisit karena mungkin tidak ada CASCADE
+        $db->table('laporan_abnormal')->where('id_transaksi', $id)->delete();
+        
+        // Hapus detail check secara eksplisit
+        $db->table('transaksi_check_detail')->where('id_transaksi', $id)->delete();
+
+        // Delete transaksi utama
         $transaksiModel->delete($id);
 
         $db->transComplete();
 
         if ($db->transStatus() === false) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus riwayat.');
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus riwayat (Gagal menghapus detail/abnormal).');
         }
 
         return redirect()->back()->with('success', 'Riwayat pengecekan berhasil dihapus.');
@@ -734,4 +739,5 @@ class RiwayatController extends BaseController
             return redirect()->back()->with('success', 'Laporan berhasil disetujui (Tahap: ' . $newStatus . '). Menunggu persetujuan selanjutnya.');
         }
     }
+
 }

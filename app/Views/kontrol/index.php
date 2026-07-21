@@ -1,9 +1,12 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
-<div class="page-header">
+<div class="page-header d-flex align-items-center mb-4">
+  <a href="<?= site_url('kontrol?view=summary') ?>" class="btn btn-outline-secondary btn-sm me-3 shadow-sm rounded-pill px-3">
+    <i class="bi bi-arrow-left me-1"></i> Kembali
+  </a>
   <div>
-    <h5 class="mb-0"><i class="bi bi-calendar-check me-2 text-primary"></i>Ceklis Kontrol Bulanan</h5>
-    <p class="text-muted small mb-0">Pantau ringkasan hasil pemeriksaan checklist report bulanan per mesin dan per kategori.</p>
+    <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-check me-2 text-primary"></i>Ceklis Kontrol Bulanan</h5>
+    <p class="text-muted small mb-0">Area: <?= esc($lokasi) ?> <?= $line ? '/ ' . esc($line) : '' ?> | Kategori: <?= esc($kategori) ?> | Bulan: <?= esc($bulan) ?></p>
   </div>
 </div>
 
@@ -16,54 +19,6 @@
   </div>
 <?php endif; ?>
 
-<!-- FILTER CARD -->
-<div class="card border-0 shadow-sm bg-white p-3 mb-4">
-  <form id="filterForm" method="get" action="<?= site_url('kontrol') ?>">
-    <div class="row g-3 align-items-center">
-      <!-- Lokasi Switcher -->
-      <div class="col-md-3">
-        <label class="form-label small fw-semibold text-muted mb-1.5">Lokasi MFG</label>
-        <div class="d-flex gap-1 bg-light p-1 rounded-3">
-          <a href="<?= site_url('kontrol?lokasi=MFG+1&kategori=' . urlencode($kategori) . '&bulan=' . urlencode($bulan)) ?>" 
-             class="btn btn-xs w-50 py-1.5 fw-semibold rounded-2 <?= $lokasi === 'MFG 1' ? 'btn-white shadow-sm' : 'text-secondary' ?>" style="font-size:0.75rem;">MFG 1</a>
-          <a href="<?= site_url('kontrol?lokasi=MFG+2&kategori=' . urlencode($kategori) . '&bulan=' . urlencode($bulan)) ?>" 
-             class="btn btn-xs w-50 py-1.5 fw-semibold rounded-2 <?= $lokasi === 'MFG 2' ? 'btn-white shadow-sm' : 'text-secondary' ?>" style="font-size:0.75rem;">MFG 2</a>
-        </div>
-        <input type="hidden" name="lokasi" value="<?= esc($lokasi) ?>">
-      </div>
-
-      <!-- Line Select -->
-      <div class="col-md-2">
-        <label class="form-label small fw-semibold text-muted mb-1.5">Pilih Line</label>
-        <select name="line" class="form-select form-select-sm rounded-3 py-1.5" onchange="document.getElementById('filterForm').submit()">
-          <?php foreach ($availableLines as $l): ?>
-            <option value="<?= esc($l) ?>" <?= (isset($line) && $line === $l) ? 'selected' : '' ?>><?= esc($l) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-
-      <!-- Kategori Select -->
-      <div class="col-md-4">
-        <label class="form-label small fw-semibold text-muted mb-1.5">Kategori Checklist Report</label>
-        <select name="kategori" class="form-select form-select-sm rounded-3 py-1.5" onchange="document.getElementById('filterForm').submit()">
-          <?php foreach ($categories as $kKey => $kVal): ?>
-            <option value="<?= esc($kKey) ?>" <?= $kategori === $kKey ? 'selected' : '' ?>><?= esc($kVal) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-
-      <!-- Bulan & Tahun Select -->
-      <div class="col-md-3">
-        <label class="form-label small fw-semibold text-muted mb-1.5">Pilih Bulan & Tahun</label>
-        <select name="bulan" class="form-select form-select-sm rounded-3 py-1.5" onchange="document.getElementById('filterForm').submit()">
-          <?php foreach ($bulanList as $bVal => $bLabel): ?>
-            <option value="<?= esc($bVal) ?>" <?= $bulan === $bVal ? 'selected' : '' ?>><?= esc($bLabel) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-    </div>
-  </form>
-</div>
 
 <!-- APPROVAL PANEL -->
 <div class="card border-0 shadow-sm bg-white mb-4">

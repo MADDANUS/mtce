@@ -35,10 +35,7 @@ $getSortIcon = function(string $column) use ($selectedFilters) {
 
 <div class="page-header">
   <div>
-    <a href="<?= site_url('riwayat') ?>" class="btn btn-sm btn-outline-secondary mb-2">
-      <i class="bi bi-arrow-left"></i> Kembali
-    </a>
-    <h5 class="mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Riwayat <?= esc($jenisLabel ?? 'Pengecekan') ?> — <strong><?= esc($lokasiName) ?></strong></h5>
+    <h3 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Riwayat <?= esc($jenisLabel ?? 'Pengecekan') ?> — <strong><?= esc($lokasiName) ?></strong></h3>
   </div>
   <?php if (in_array(session()->get('role'), ['staff', 'admin'], true)): ?>
     <div>
@@ -49,146 +46,142 @@ $getSortIcon = function(string $column) use ($selectedFilters) {
   <?php endif; ?>
 </div>
 
-<div class="card p-3 mb-4 border-0 shadow-sm bg-white">
-  <form action="<?= site_url("riwayat/lokasi/{$lokasiSlug}") ?>" method="get" id="filterForm">
-    <!-- Keep sorting parameters when changing filters -->
-    <input type="hidden" name="sort_by" value="<?= esc($selectedFilters['sort_by'] ?? 'id_transaksi') ?>">
-    <input type="hidden" name="order" value="<?= esc($selectedFilters['order'] ?? 'desc') ?>">
-    <input type="hidden" name="jenis_check" value="<?= esc($selectedFilters['jenis_check'] ?? '') ?>">
-
-    <div class="mb-4">
-      <label class="form-label text-uppercase" style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.05em;">Lokasi MFG</label>
-      <div class="d-flex bg-light rounded-3 p-1 border" style="max-width: 300px;">
-        <a href="<?= site_url('riwayat/lokasi/mfg1?jenis_check=' . urlencode($selectedFilters['jenis_check'] ?? '')) ?>" class="btn btn-sm w-50 <?= $lokasiSlug === 'mfg1' ? 'bg-white shadow-sm text-dark' : 'text-muted' ?> fw-semibold border-0 rounded-2">MFG 1</a>
-        <a href="<?= site_url('riwayat/lokasi/mfg2?jenis_check=' . urlencode($selectedFilters['jenis_check'] ?? '')) ?>" class="btn btn-sm w-50 <?= $lokasiSlug === 'mfg2' ? 'bg-white shadow-sm text-dark' : 'text-muted' ?> fw-semibold border-0 rounded-2">MFG 2</a>
-      </div>
-    </div>
-
-    <div class="row g-3 align-items-end border-top pt-3">
-      <!-- Filter Line -->
-      <div class="col-md-2">
-        <label class="form-label" style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">Line</label>
-        <?php if (!empty($userLine)): ?>
-          <input type="text" class="form-control form-control-sm bg-light" value="<?= esc($userLine) ?>" readonly disabled>
-          <input type="hidden" name="line" value="<?= esc($userLine) ?>">
-        <?php else: ?>
-          <select name="line" class="form-select form-select-sm" onchange="this.form.submit()">
-            <option value="">-- Semua Line --</option>
-            <?php foreach ($availableLines as $l): ?>
-              <option value="<?= esc($l) ?>" <?= isset($selectedFilters['line']) && $selectedFilters['line'] === $l ? 'selected' : '' ?>>
-                <?= esc($l) ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-        <?php endif; ?>
-      </div>
-
-      <!-- Filter Mesin -->
-      <div class="col-md-2">
-        <label class="form-label" style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">Mesin</label>
-        <select name="id_mesin" class="form-select form-select-sm" onchange="this.form.submit()">
-          <option value="">-- Semua Mesin --</option>
-          <?php foreach ($daftarMesin as $m): ?>
-            <option value="<?= esc($m['id_mesin']) ?>" <?= isset($selectedFilters['id_mesin']) && (int)$selectedFilters['id_mesin'] === (int)$m['id_mesin'] ? 'selected' : '' ?>>
-              <?= esc($m['no_mesin']) ?> - <?= esc($m['type_mesin']) ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-
-      <!-- Filter Kategori -->
-      <div class="col-md-2">
-        <label class="form-label" style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">Kategori</label>
-        <select name="kategori" class="form-select form-select-sm" onchange="this.form.submit()">
-          <option value="">-- Semua Kategori --</option>
-          <?php foreach ($categories as $slug => $name): ?>
-            <option value="<?= esc($name) ?>" <?= isset($selectedFilters['kategori']) && $selectedFilters['kategori'] === $name ? 'selected' : '' ?>>
-              <?= esc($name) ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-
-      <!-- Filter Tanggal -->
-      <div class="col-md-2">
-        <label class="form-label" style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">Tanggal</label>
-        <input type="date" name="tanggal" class="form-control form-control-sm" value="<?= esc($selectedFilters['tanggal'] ?? '') ?>" onchange="this.form.submit()">
-      </div>
-
-      <!-- Filter Status -->
-      <div class="col-md-2">
-        <label class="form-label" style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">Status</label>
-        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-          <option value="">-- Semua Status --</option>
-          <option value="Pending" <?= isset($selectedFilters['status']) && $selectedFilters['status'] === 'Pending' ? 'selected' : '' ?>>Pending</option>
-          <option value="Approved" <?= isset($selectedFilters['status']) && $selectedFilters['status'] === 'Approved' ? 'selected' : '' ?>>Approved</option>
-        </select>
-      </div>
-
-      <!-- Tombol Aksi -->
-      <div class="col-md-2">
-        <?php 
-          $resetUrl = site_url("riwayat/lokasi/{$lokasiSlug}");
-          if (!empty($selectedFilters['jenis_check'])) {
-              $resetUrl .= '?jenis_check=' . urlencode($selectedFilters['jenis_check']);
-          }
-        ?>
-        <a href="<?= $resetUrl ?>" class="btn btn-sm btn-outline-secondary w-100 py-2">
-          <i class="bi bi-arrow-counterclockwise"></i> Reset Filter
-        </a>
-      </div>
-    </div>
-  </form>
-</div>
 
 <!-- KARTU TABEL DAFTAR RIWAYAT -->
-<div class="card p-3 border-0 shadow-sm bg-white">
+<form action="<?= site_url("riwayat/lokasi/{$lokasiSlug}") ?>" method="get" id="filterForm">
+  <!-- Keep sorting parameters when changing filters -->
+  <input type="hidden" name="sort_by" value="<?= esc($selectedFilters['sort_by'] ?? 'id_transaksi') ?>">
+  <input type="hidden" name="order" value="<?= esc($selectedFilters['order'] ?? 'desc') ?>">
+  <input type="hidden" name="jenis_check" value="<?= esc($selectedFilters['jenis_check'] ?? '') ?>">
+
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-3">
+        <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-auto text-muted fw-bold ms-2 me-3 mb-2 mb-md-0">
+                <i class="bi bi-funnel-fill me-1"></i> Filter:
+            </div>
+            <div class="col-12 col-md">
+                <select class="form-select form-select-sm fw-bold text-uppercase border-1 bg-white" onchange="window.location.href='<?= site_url('riwayat/lokasi/') ?>' + this.value + '?jenis_check=<?= urlencode($selectedFilters['jenis_check'] ?? '') ?>'">
+                    <option value="mfg1" <?= $lokasiSlug === 'mfg1' ? 'selected' : '' ?>>MFG 1</option>
+                    <option value="mfg2" <?= $lokasiSlug === 'mfg2' ? 'selected' : '' ?>>MFG 2</option>
+                </select>
+            </div>
+            <div class="col-12 col-md">
+              <?php if (!empty($userLine)): ?>
+                <input type="text" class="form-control form-control-sm border-0 bg-light fw-bold text-uppercase px-2" value="<?= esc($userLine) ?>" readonly disabled>
+                <input type="hidden" name="line" value="<?= esc($userLine) ?>">
+              <?php else: ?>
+                <select name="line" class="form-select form-select-sm fw-bold text-uppercase border-1 bg-white" onchange="this.form.submit()">
+                  <option value="">-- SEMUA LINE --</option>
+                  <?php foreach ($availableLines as $l): ?>
+                    <option value="<?= esc($l) ?>" <?= isset($selectedFilters['line']) && $selectedFilters['line'] === $l ? 'selected' : '' ?>>
+                      <?= esc($l) ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              <?php endif; ?>
+            </div>
+            <div class="col-12 col-md">
+              <select name="id_mesin" class="form-select form-select-sm fw-bold text-uppercase border-1 bg-white" onchange="this.form.submit()">
+                <option value="">-- SEMUA MESIN --</option>
+                <?php foreach ($daftarMesin as $m): ?>
+                  <option value="<?= esc($m['id_mesin']) ?>" <?= isset($selectedFilters['id_mesin']) && (int)$selectedFilters['id_mesin'] === (int)$m['id_mesin'] ? 'selected' : '' ?>>
+                    <?= esc($m['no_mesin']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-12 col-md">
+              <select name="kategori" class="form-select form-select-sm fw-bold text-uppercase border-1 bg-white" onchange="this.form.submit()">
+                <option value="">-- SEMUA KATEGORI --</option>
+                <?php foreach ($categories as $slug => $name): ?>
+                  <option value="<?= esc($name) ?>" <?= isset($selectedFilters['kategori']) && $selectedFilters['kategori'] === $name ? 'selected' : '' ?>>
+                    <?= esc($name) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-12 col-md">
+              <input type="date" name="tanggal" class="form-control form-control-sm fw-bold text-uppercase border-1 bg-white" value="<?= esc($selectedFilters['tanggal'] ?? '') ?>" onchange="this.form.submit()">
+            </div>
+            <div class="col-12 col-md">
+              <select name="status" class="form-select form-select-sm fw-bold text-uppercase border-1 bg-white" onchange="this.form.submit()">
+                <option value="">-- SEMUA STATUS --</option>
+                <option value="Pending" <?= isset($selectedFilters['status']) && $selectedFilters['status'] === 'Pending' ? 'selected' : '' ?>>Pending</option>
+                <option value="Approved L1" <?= isset($selectedFilters['status']) && $selectedFilters['status'] === 'Approved L1' ? 'selected' : '' ?>>Approved L1</option>
+                <option value="Approved L2" <?= isset($selectedFilters['status']) && $selectedFilters['status'] === 'Approved L2' ? 'selected' : '' ?>>Approved L2</option>
+                <option value="Approved" <?= isset($selectedFilters['status']) && $selectedFilters['status'] === 'Approved' ? 'selected' : '' ?>>Approved (Final)</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-auto ms-auto pe-2">
+                <?php 
+                  $resetUrl = site_url("riwayat/lokasi/{$lokasiSlug}");
+                  if (!empty($selectedFilters['jenis_check'])) {
+                      $resetUrl .= '?jenis_check=' . urlencode($selectedFilters['jenis_check']);
+                  }
+                ?>
+                <a href="<?= $resetUrl ?>" class="btn btn-sm btn-outline-secondary px-3" title="Reset Filter">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+</form>
+
+<div class="card border-0 shadow-sm bg-white mb-4">
   <?php if (empty($riwayat)): ?>
     <div class="text-center py-4">
       <i class="bi bi-clipboard-x text-muted" style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;"></i>
       <p class="text-muted mb-0">Belum ada data riwayat pengecekan yang sesuai dengan filter.</p>
     </div>
   <?php else: ?>
-    <div class="table-responsive">
+    <div class="table-responsive text-nowrap">
       <table class="table align-middle table-hover">
-        <thead>
+                <thead class="table-light">
+                    <!-- Baris Kolom dan Sorting -->
           <tr>
-            <th style="width: 5%;" class="text-center">
+            <th style="width: 5%;" class="text-center align-middle">
               <a href="<?= $getSortUrl('id_transaksi') ?>" class="text-decoration-none text-secondary d-inline-flex align-items-center fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.08em;">
                 NO <?= $getSortIcon('id_transaksi') ?>
               </a>
             </th>
-            <th style="width: 15%;">
+            <th style="width: 12%;" class="align-middle">
               <a href="<?= $getSortUrl('nama_staff') ?>" class="text-decoration-none text-secondary d-inline-flex align-items-center fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.08em;">
                 PIC <?= $getSortIcon('nama_staff') ?>
               </a>
             </th>
-            <th style="width: 20%;">
+            <th style="width: 13%;" class="align-middle">
+              <a href="<?= $getSortUrl('line') ?>" class="text-decoration-none text-secondary d-inline-flex align-items-center fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.08em;">
+                LINE <?= $getSortIcon('line') ?>
+              </a>
+            </th>
+            <th style="width: 15%;" class="align-middle">
               <a href="<?= $getSortUrl('no_mesin') ?>" class="text-decoration-none text-secondary d-inline-flex align-items-center fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.08em;">
-                Mesin <?= $getSortIcon('no_mesin') ?>
+                MESIN <?= $getSortIcon('no_mesin') ?>
               </a>
             </th>
-            <th style="width: 25%;">
+            <th style="width: 15%;" class="align-middle">
               <a href="<?= $getSortUrl('kategori') ?>" class="text-decoration-none text-secondary d-inline-flex align-items-center fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.08em;">
-                Kategori / Jenis <?= $getSortIcon('kategori') ?>
+                KATEGORI <?= $getSortIcon('kategori') ?>
               </a>
             </th>
-            <th style="width: 17%;">
+            <th style="width: 15%;" class="align-middle">
               <a href="<?= $getSortUrl('waktu_mulai') ?>" class="text-decoration-none text-secondary d-inline-flex align-items-center fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.08em;">
-                Waktu Mulai <?= $getSortIcon('waktu_mulai') ?>
+                TANGGAL <?= $getSortIcon('waktu_mulai') ?>
               </a>
             </th>
-            <th style="width: 10%;">
+            <th style="width: 8%;" class="align-middle">
               <a href="<?= $getSortUrl('durasi') ?>" class="text-decoration-none text-secondary d-inline-flex align-items-center fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.08em;">
-                Durasi <?= $getSortIcon('durasi') ?>
+                DURASI <?= $getSortIcon('durasi') ?>
               </a>
             </th>
-            <th style="width: 10%;">
+            <th style="width: 12%;" class="align-middle">
               <a href="<?= $getSortUrl('status') ?>" class="text-decoration-none text-secondary d-inline-flex align-items-center fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.08em;">
-                Status <?= $getSortIcon('status') ?>
+                STATUS <?= $getSortIcon('status') ?>
               </a>
             </th>
-            <th style="width: 5%;" class="fw-bold text-uppercase text-secondary" style="font-size: 0.72rem; letter-spacing: 0.08em;">Aksi</th>
+            <th style="width: 5%;" class="fw-bold text-uppercase text-secondary align-middle" style="font-size: 0.72rem; letter-spacing: 0.08em;">Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -202,9 +195,10 @@ $getSortIcon = function(string $column) use ($selectedFilters) {
             ?>
             <tr>
               <td class="fw-semibold text-muted text-center"><?= $no++ ?></td>
-            <td class="fw-semibold"><?= esc($r['nama_pic'] ?: $r['nama_staff']) ?></td>
+              <td class="text-muted" style="font-size: 0.85rem;"><?= esc($r['nama_pic']) ?></td>
+              <td class="fw-medium text-dark" style="font-size: 0.85rem; text-center"><?= esc($r['line'] ?? '-') ?></td>
               <td>
-                <div class="fw-semibold text-dark"><?= esc($r['no_mesin']) ?></div>
+                <div class="fw-semibold text-dark" style="font-size: 0.85rem;"><?= esc($r['no_mesin']) ?></div>
                 <div class="text-muted small" style="font-size: 0.75rem;"><?= esc($r['type_mesin']) ?></div>
               </td>
               <td>

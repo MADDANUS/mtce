@@ -1,59 +1,16 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
-<div class="page-header">
+<div class="page-header d-flex align-items-center mb-4">
+  <a href="<?= site_url('abnormal?view=summary') ?>" class="btn btn-outline-secondary btn-sm me-3 shadow-sm rounded-pill px-3">
+    <i class="bi bi-arrow-left me-1"></i> Kembali
+  </a>
   <div>
-    <h5 class="mb-0"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Laporan Abnormal Condition</h5>
-    <p class="text-muted small mb-0">Kelola dan tindak lanjuti temuan kondisi abnormal (status Δ atau X) hasil pengecekan checklist report.</p>
+    <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Laporan Abnormal Condition</h5>
+    <p class="text-muted small mb-0">Area: <?= esc($lokasiFilter) ?> | Kategori: <?= esc($kategoriFilter) ?> | Bulan: <?= esc($bulanFilter) ?></p>
   </div>
 </div>
 
-<!-- FILTER & SEARCH CARD -->
-<div class="card border-0 shadow-sm bg-white p-3 mb-4">
-  <form id="filterForm" method="get" action="<?= site_url('abnormal') ?>">
-    <div class="row g-3 align-items-center">
-      <!-- Lokasi Switcher -->
-      <div class="col-md-3">
-        <label class="form-label small fw-semibold text-muted mb-1.5">Lokasi MFG</label>
-        <div class="d-flex gap-1 bg-light p-1 rounded-3">
-          <a href="<?= site_url('abnormal?lokasi=MFG+1&kategori=' . urlencode($kategoriFilter) . '&search=' . urlencode($searchFilter)) ?>" 
-             class="btn btn-xs w-50 py-1.5 fw-semibold rounded-2 <?= $lokasiFilter === 'MFG 1' ? 'btn-white shadow-sm bg-white' : 'text-secondary' ?>" style="font-size:0.75rem;">MFG 1</a>
-          <a href="<?= site_url('abnormal?lokasi=MFG+2&kategori=' . urlencode($kategoriFilter) . '&search=' . urlencode($searchFilter)) ?>" 
-             class="btn btn-xs w-50 py-1.5 fw-semibold rounded-2 <?= $lokasiFilter === 'MFG 2' ? 'btn-white shadow-sm bg-white' : 'text-secondary' ?>" style="font-size:0.75rem;">MFG 2</a>
-        </div>
-        <input type="hidden" name="lokasi" value="<?= esc($lokasiFilter) ?>">
-      </div>
 
-      <!-- Kategori Select -->
-      <div class="col-md-3">
-        <label class="form-label small fw-semibold text-muted mb-1.5">Kategori Checklist Report</label>
-        <select name="kategori" class="form-select form-select-sm rounded-3 py-1.5" onchange="document.getElementById('filterForm').submit()">
-          <?php foreach ($categories as $cat): ?>
-            <option value="<?= esc($cat) ?>" <?= $kategoriFilter === $cat ? 'selected' : '' ?>><?= esc($cat) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-
-      <!-- Bulan & Tahun Select -->
-      <div class="col-md-3">
-        <label class="form-label small fw-semibold text-muted mb-1.5">Pilih Bulan</label>
-        <select name="bulan" class="form-select form-select-sm rounded-3 py-1.5" onchange="document.getElementById('filterForm').submit()">
-          <?php foreach ($bulanList as $bVal => $bLabel): ?>
-            <option value="<?= esc($bVal) ?>" <?= $bulanFilter === $bVal ? 'selected' : '' ?>><?= esc($bLabel) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-
-      <!-- Search Input -->
-      <div class="col-md-3 ms-auto">
-        <label class="form-label small fw-semibold text-muted mb-1.5">Cari Temuan</label>
-        <div class="input-group input-group-sm">
-          <input type="text" name="search" class="form-control rounded-start-3 py-1.5" placeholder="Cari mesin..." value="<?= esc($searchFilter) ?>">
-          <button class="btn btn-primary btn-sm px-3 rounded-end-3" type="submit"><i class="bi bi-search"></i></button>
-        </div>
-      </div>
-    </div>
-  </form>
-</div>
 
 <!-- ABNORMAL TABLE CARD -->
 <div class="card border-0 shadow-sm bg-white overflow-hidden mb-4">

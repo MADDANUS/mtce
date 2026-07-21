@@ -1,10 +1,14 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
-<div class="page-header">
-  <h5><i class="bi bi-clipboard-check me-2 text-primary"></i>Detail Pengecekan</h5>
-  <a href="<?= site_url('riwayat') ?>" class="btn btn-sm btn-outline-secondary">
+<div class="page-header d-flex align-items-center gap-3" style="justify-content: flex-start;">
+  <?php 
+    $lokSlug = strtolower(str_replace(' ', '', $header['lokasi_check']));
+    $jenisParam = urlencode($header['jenis_check']);
+  ?>
+  <a href="<?= site_url('riwayat/lokasi/' . $lokSlug . '?jenis_check=' . $jenisParam) ?>" class="btn btn-sm btn-outline-secondary">
     <i class="bi bi-arrow-left"></i> Kembali
   </a>
+  <h5 class="mb-0"><i class="bi bi-clipboard-check me-2 text-primary"></i>Detail Pengecekan</h5>
 </div>
 
 <div class="card-stat p-3 mb-3">
