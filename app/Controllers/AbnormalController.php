@@ -19,6 +19,77 @@ class AbnormalController extends BaseController
     /**
      * GET /abnormal
      */
+     
+
+        public function pdf()
+    {
+        $lokasiFilter   = $this->request->getGet('lokasi') ?: 'MFG 1';
+        $searchFilter   = $this->request->getGet('search') ?: '';
+        $kategoriFilter = $this->request->getGet('kategori') ?: 'Penerangan';
+        $bulanFilter    = $this->request->getGet('bulan') ?: date('Y-m');
+
+        $db = \Config\Database::connect();
+        $builder = $db->table('laporan_abnormal')
+                      ->select('laporan_abnormal.*, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.lokasi, transaksi_check.kategori')
+                      ->join('master_mesin', 'master_mesin.id_mesin = laporan_abnormal.id_mesin')
+                      ->join('transaksi_check', 'transaksi_check.id_transaksi = laporan_abnormal.id_transaksi', 'left');
+
+        if (!empty($lokasiFilter)) {
+            $builder->where('master_mesin.lokasi', $lokasiFilter);
+        }
+
+        if (!empty($kategoriFilter)) {
+            $builder->where('transaksi_check.kategori', $kategoriFilter);
+        }
+
+        if (!empty($bulanFilter)) {
+            $builder->like('laporan_abnormal.pengecekan_tanggal', $bulanFilter . '-', 'after');
+        }
+
+        if (!empty($searchFilter)) {
+            $builder->groupStart()
+                    ->like('laporan_abnormal.point_check', $searchFilter)
+                    ->orLike('laporan_abnormal.abnormal_condition', $searchFilter)
+                    ->orLike('master_mesin.no_mesin', $searchFilter)
+                    ->orLike('master_mesin.type_mesin', $searchFilter)
+                    ->groupEnd();
+        }
+
+        $reports = $builder->orderBy('laporan_abnormal.pengecekan_tanggal', 'DESC')
+                           ->orderBy('laporan_abnormal.id_abnormal', 'DESC')
+                           ->get()
+                           ->getResultArray();
+
+        if ($lokasiFilter === 'MFG 2') {
+            $categories = ['Penerangan', 'Kabel dan Pipa', 'Angin Bocor'];
+        } else {
+            $categories = ['Penerangan', 'Kabel dan Pipa', 'Angin Bocor', 'Bearing Cam', 'Gearbox', 'Belt Cam'];
+        }
+
+        if (!in_array($kategoriFilter, $categories)) {
+            $kategoriFilter = 'Penerangan';
+        }
+
+        $data = [
+            'title'          => 'Laporan Abnormal Condition',
+            'reports'        => $reports,
+            'lokasiFilter'   => $lokasiFilter,
+            'searchFilter'   => $searchFilter,
+            'kategoriFilter' => $kategoriFilter,
+            'bulanFilter'    => $bulanFilter,
+            'categories'     => $categories,
+        ];
+
+        $html = view('abnormal/pdf', $data);
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->set_option('isRemoteEnabled', true);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+        $dompdf->stream('Laporan_Abnormal_' . str_replace(' ', '_', $kategoriFilter) . '_' . str_replace(' ', '_', $lokasiFilter) . '.pdf', ['Attachment' => true]);
+        return;
+    }
+
     public function index()
     {
         // Jika parameter view=summary atau tidak ada parameter spesifik, tampilkan halaman ringkasan
@@ -248,3 +319,6 @@ class AbnormalController extends BaseController
     }
 
 }
+
+
+

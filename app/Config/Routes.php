@@ -45,6 +45,7 @@ $routes->group('riwayat', ['filter' => 'auth'], static function ($routes) {
     $routes->get('/', 'RiwayatController::index');
     $routes->get('lokasi/(:segment)', 'RiwayatController::lokasi/$1');
     $routes->get('kategori/(:segment)', 'RiwayatController::kategori/$1');
+    $routes->get('download-pdf/(:num)', 'RiwayatController::downloadPdf/$1');
     $routes->get('(:num)', 'RiwayatController::detail/$1');
     $routes->post('approve/(:num)', 'RiwayatController::approve/$1', ['filter' => 'role:member,sheadprd,sheadmtc,admin,leader']);
     
@@ -60,9 +61,10 @@ $routes->group('scan', ['filter' => 'role:magang,member,admin'], static function
     $routes->get('mesin/(:num)', 'ScanController::mesin/$1');
 });
 
-// Ceklis Kontrol Bulanan (semua role login)
+// Checklist Control Bulanan (semua role login)
 $routes->group('kontrol', ['filter' => 'auth'], static function ($routes) {
     $routes->get('/', 'KontrolController::index');
+    $routes->get('pdf', 'KontrolController::pdf');
     $routes->post('update-cell', 'KontrolController::updateCell');
     $routes->post('approve', 'KontrolController::approveBulanan');
 });
@@ -70,6 +72,7 @@ $routes->group('kontrol', ['filter' => 'auth'], static function ($routes) {
 // Laporan Abnormal Condition (semua role login)
 $routes->group('abnormal', ['filter' => 'auth'], static function ($routes) {
     $routes->get('/', 'AbnormalController::index');
+    $routes->get('pdf', 'AbnormalController::pdf');
     $routes->post('update', 'AbnormalController::update');
     $routes->post('approve', 'AbnormalController::approveBulanan');
 });
@@ -147,3 +150,4 @@ $routes->group('admin/jadwal', ['filter' => 'auth', 'namespace' => 'App\Controll
  *       'role' => \App\Filters\RoleFilter::class,
  *   ];
  */
+

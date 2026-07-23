@@ -105,7 +105,23 @@ class ChecklistController extends BaseController
         $jenisDisplayName = $this->resolveJenisDisplay($jenisDbName);
         $idMesin          = $this->request->getGet('id_mesin') ?: null;
 
-        // Jika Overhaul MFG 1, langsung arahkan ke form Mesin CNC & Bar Feeder
+        // Auto-routing jika id_mesin ada
+        if ($idMesin && strtolower($jenisSlug) === 'overhaul') {
+            $mesin = $this->mesinModel->find($idMesin);
+            if ($mesin) {
+                if (!empty($mesin['jenis'])) {
+                    $kategoriSlug = url_title(strtolower($mesin['jenis']), '-', true);
+                    return redirect()->to("/checklist/{$lokasiSlug}/{$jenisSlug}/create/{$kategoriSlug}?id_mesin={$idMesin}");
+                } else {
+                    // Fallback jika jenis kosong
+                    if ($lokasiName === 'MFG 1') {
+                        return redirect()->to("/checklist/{$lokasiSlug}/{$jenisSlug}/create/mesin-cnc-bar-feeder?id_mesin={$idMesin}");
+                    }
+                }
+            }
+        }
+
+        // Jika Overhaul MFG 1 tanpa id_mesin, langsung arahkan ke form Mesin CNC & Bar Feeder
         if (strtolower($jenisSlug) === 'overhaul' && $lokasiName === 'MFG 1') {
             $redirectUrl = "/checklist/{$lokasiSlug}/{$jenisSlug}/create/mesin-cnc-bar-feeder";
             if ($idMesin) {
@@ -175,6 +191,25 @@ class ChecklistController extends BaseController
         $waktuMulai       = Time::now();
         $idMesin          = $this->request->getGet('id_mesin') ?: null;
 
+        if (strtolower($jenisSlug) === 'overhaul') {
+            if ($lokasiName === 'MFG 2') {
+                $daftarMesin = $this->mesinModel->where('lokasi', $lokasiName)
+                                                ->where('jenis', $categoryName)
+                                                ->orderBy('no_mesin', 'ASC')
+                                                ->findAll();
+            } else {
+                $daftarMesin = $this->mesinModel->where('lokasi', $lokasiName)
+                                                ->groupStart()
+                                                ->where('jenis', null)
+                                                ->orWhere('jenis', '')
+                                                ->groupEnd()
+                                                ->orderBy('no_mesin', 'ASC')
+                                                ->findAll();
+            }
+        } else {
+            $daftarMesin = $this->mesinModel->getByLokasi($lokasiName);
+        }
+
         $data = [
             'title'             => "Form Pengecekan {$jenisDisplayName} - {$categoryName}",
             'lokasiSlug'        => $lokasiSlug,
@@ -183,7 +218,7 @@ class ChecklistController extends BaseController
             'jenisName'         => $jenisDisplayName,
             'categorySlug'      => $categorySlug,
             'categoryName'      => $categoryName,
-            'daftarMesin'       => $this->mesinModel->getByLokasi($lokasiName),
+            'daftarMesin'       => $daftarMesin,
             'rows'              => $this->parameterModel->getFormRows($lokasiName, $jenisDbName, $categoryName),
             'masterPic'         => (new \App\Models\PicModel())->findAll(),
             'namaStaff'         => session()->get('nama'),
@@ -208,7 +243,7 @@ class ChecklistController extends BaseController
 
         if (strtolower($jenisSlug) === 'overhaul') {
             $rules['bar_feeder_type'] = 'permit_empty|string';
-            $rules['support_pic']     = 'permit_empty|string';
+            $rules['support_pic.*']   = 'permit_empty|string';
         }
 
         if (! $this->validate($rules)) {
@@ -263,11 +298,21 @@ class ChecklistController extends BaseController
 
         // Simpan metadata khusus Overhaul (Opsi C: Tabel transaksi_overhaul)
         if (strtolower($jenisSlug) === 'overhaul') {
-            $db->table('transaksi_overhaul')->insert([
-                'id_transaksi'    => $idTransaksi,
-                'bar_feeder_type' => $this->request->getPost('bar_feeder_type') ?: null,
-                'support_pic'     => $this->request->getPost('support_pic') ?: null,
-            ]);
+                $rawSupport = $this->request->getPost('support_pic');
+                $supportStr = null;
+                if (is_array($rawSupport)) {
+                    $filtered = array_filter(array_map('trim', $rawSupport));
+                    if (!empty($filtered)) {
+                        $supportStr = implode(', ', $filtered);
+                    }
+                }
+                
+                $db->table('transaksi_overhaul')->insert([
+                    'id_transaksi'        => $idTransaksi,
+                    'bar_feeder_type'     => $this->request->getPost('bar_feeder_type') ?: null,
+                    'support_pic'         => $supportStr,
+                    'note_recommendation' => $this->request->getPost('note_recommendation') ?: null,
+                ]);
         }
 
         $db->transComplete();

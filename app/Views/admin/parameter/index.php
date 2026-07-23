@@ -102,7 +102,9 @@
                   <th style="width: 15%;" class="fw-bold text-uppercase text-secondary">Section</th>
                   <th colspan="2" style="width: 38%;" class="fw-bold text-uppercase text-secondary">Item Check</th>
                   <th style="width: 17%;" class="fw-bold text-uppercase text-secondary">Point Check</th>
+                  <?php if (!($lokasi === 'MFG 2' && strtolower($jenisCheck) === 'overhaul')): ?>
                   <th style="width: 12%;" class="fw-bold text-uppercase text-secondary">Standar Item</th>
+                  <?php endif; ?>
                   <th style="width: 5%;" class="fw-bold text-uppercase text-secondary text-center">Urut</th>
                   <th style="width: 8%;" class="pe-4 fw-bold text-uppercase text-secondary text-end">Aksi</th>
                 </tr>
@@ -111,7 +113,8 @@
                 <?php foreach ($params as $p): ?>
                   <?php if (isset($p['is_section_start']) && $p['is_section_start']): ?>
                     <tr style="background-color: #f8fafc; font-weight: 700; border-left: 4px solid var(--accent);">
-                      <td colspan="8" class="ps-4 text-primary font-monospace py-2" style="font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase;">
+                      <?php $colSpan = ($lokasi === 'MFG 2' && strtolower($jenisCheck) === 'overhaul') ? 7 : 8; ?>
+                      <td colspan="<?= $colSpan ?>" class="ps-4 text-primary font-monospace py-2" style="font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase;">
                         [SECTION] <?= esc($p['section_check']) ?>
                       </td>
                     </tr>
@@ -142,8 +145,10 @@
                       <td rowspan="<?= (int) $p['point_rowspan'] ?>"><?= esc($p['point_check']) ?></td>
                     <?php endif; ?>
 
+                    <?php if (!($lokasi === 'MFG 2' && strtolower($jenisCheck) === 'overhaul')): ?>
                     <?php if ($p['show_standard']): ?>
                       <td rowspan="<?= (int) $p['standard_rowspan'] ?>"><?= nl2br(esc($p['standard_check'])) ?></td>
+                    <?php endif; ?>
                     <?php endif; ?>
 
                     <td class="text-center font-monospace text-muted"><?= (int) $p['urutan'] ?></td>

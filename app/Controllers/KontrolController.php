@@ -19,7 +19,7 @@ class KontrolController extends BaseController
 
     /**
      * POST /kontrol/update-cell
-     * Menyimpan atau memperbarui data sel ceklis kontrol (dari Modal Quick Edit).
+     * Menyimpan atau memperbarui data sel Checklist Control (dari Modal Quick Edit).
      */
     public function updateCell()
     {
@@ -64,13 +64,122 @@ class KontrolController extends BaseController
         }
 
         return redirect()->to("/kontrol?lokasi=" . urlencode($lokasiRedirect) . "&kategori=" . urlencode($kategori) . "&bulan=" . urlencode($bulanTahun))
-                         ->with('success', 'Sel Ceklis Kontrol berhasil diperbarui.');
+                         ->with('success', 'Sel Checklist Control berhasil diperbarui.');
     }
 
     /**
      * GET /kontrol
-     * Dashboard Ceklis Kontrol bulanan.
+     * Dashboard Checklist Control bulanan.
      */
+     
+
+        public function pdf()
+    {
+        $lokasi   = $this->request->getGet('lokasi') ?: 'MFG 1';
+        $kategori = $this->request->getGet('kategori') ?: 'Penerangan';
+        $bulan    = $this->request->getGet('bulan') ?: date('Y-m');
+        $line     = $this->request->getGet('line') ?: null;
+
+        if ($lokasi === 'MFG 2') {
+            $categories = [
+                'Penerangan'     => 'Penerangan',
+                'Kabel dan Pipa' => 'Kabel dan Pipa',
+                'Angin Bocor'    => 'Angin Bocor',
+            ];
+        } else {
+            $categories = [
+                'Penerangan'     => 'Penerangan',
+                'Kabel dan Pipa' => 'Kabel dan Pipa',
+                'Angin Bocor'    => 'Angin Bocor',
+                'Bearing Cam'    => 'Bearing Cam',
+                'Gearbox'        => 'Gearbox',
+                'Belt Cam'       => 'Belt Cam',
+            ];
+        }
+
+        if (!isset($categories[$kategori])) {
+            $kategori = 'Penerangan';
+        }
+
+        $availableLines = [];
+        if ($lokasi === 'MFG 1') {
+            $availableLines = ['Line 1', 'Line 2', 'Line 3'];
+        } elseif ($lokasi === 'MFG 2') {
+            $availableLines = ['CG', 'Second'];
+        }
+
+        if (empty($line) && !empty($availableLines)) {
+            $line = $availableLines[0];
+        }
+
+        $grid = $this->kontrolModel->getGridData($lokasi, $kategori, $bulan, $line);
+
+        $db = \Config\Database::connect();
+        $schedule = $db->table('jadwal_preventive')
+                       ->where('lokasi', $lokasi)
+                       ->where('kategori', $kategori)
+                       ->where('bulan_tahun', $bulan)
+                       ->get()
+                       ->getRowArray();
+
+        $columnDates = [];
+        $hasSchedule = false;
+
+        if ($schedule) {
+            $hasSchedule    = true;
+            $tglRencana     = strtotime($schedule['tanggal_rencana']);
+            $dayOfWeek      = (int) date('N', $tglRencana);
+            $mondayTs       = strtotime('-' . ($dayOfWeek - 1) . ' days', $tglRencana);
+
+            for ($d = 0; $d < 5; $d++) {
+                $columnDates[$d + 1] = date('Y-m-d', strtotime("+${d} days", $mondayTs));
+            }
+        }
+
+        $approvalQuery = $db->table('approval_bulanan a')
+                       ->select('a.*, u1.nama as l1_name, u2.nama as l2_name, u3.nama as final_name')
+                       ->join('users u1', 'u1.id = a.approved_l1_by', 'left')
+                       ->join('users u2', 'u2.id = a.approved_l2_by', 'left')
+                       ->join('users u3', 'u3.id = a.approved_final_by', 'left')
+                       ->where('a.type', 'kontrol')
+                       ->where('a.lokasi', $lokasi)
+                       ->where('a.kategori', $kategori)
+                       ->where('a.bulan_tahun', $bulan);
+
+        if ($line) {
+            $approvalQuery->where('a.line', $line);
+        } else {
+            $approvalQuery->where('a.line', 'NONE');
+        }
+        
+        $approval = $approvalQuery->get()->getRowArray();
+        $approvalStatus = $approval ? $approval['status'] : 'Pending';
+
+        $data = [
+            'title'          => 'Checklist Control Bulanan',
+            'lokasi'         => $lokasi,
+            'line'           => $line,
+            'kategori'       => $kategori,
+            'bulan'          => $bulan,
+            'categories'     => $categories,
+            'availableLines' => $availableLines,
+            'grid'           => $grid,
+            'hasSchedule'    => $hasSchedule,
+            'columnDates'    => $columnDates,
+            'approvalStatus' => $approvalStatus,
+            'approvalData'   => $approval,
+        ];
+        
+        $html = view('kontrol/pdf', $data);
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->set_option('isRemoteEnabled', true);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+        $dompdf->stream('Ceklis_Kontrol_' . str_replace(' ', '_', $kategori) . '_' . str_replace(' ', '_', $lokasi) . '.pdf', ['Attachment' => true]);
+        return;
+    }
+
     public function index()
     {
         // Jika parameter view=summary atau tidak ada parameter spesifik, tampilkan halaman ringkasan
@@ -183,7 +292,7 @@ class KontrolController extends BaseController
         $approvalStatus = $approval ? $approval['status'] : 'Pending';
 
         return view('kontrol/index', [
-            'title'          => 'Ceklis Kontrol Bulanan',
+            'title'          => 'Checklist Control Bulanan',
             'lokasi'         => $lokasi,
             'line'           => $line,
             'kategori'       => $kategori,
@@ -201,7 +310,7 @@ class KontrolController extends BaseController
     }
 
     /**
-     * Halaman Ringkasan (Summary) Ceklis Kontrol
+     * Halaman Ringkasan (Summary) Checklist Control
      */
     private function summary()
     {
@@ -338,7 +447,7 @@ class KontrolController extends BaseController
         });
 
         return view('kontrol/summary', [
-            'title'            => 'Ringkasan Ceklis Kontrol',
+            'title'            => 'Ringkasan Checklist Control',
             'bulan'            => $bulan,
             'bulanList'        => $bulanList,
             'summaryRows'      => $summaryRows,
@@ -429,6 +538,11 @@ class KontrolController extends BaseController
             $db->table('approval_bulanan')->insert($data);
         }
 
-        return redirect()->back()->with('success', 'Berhasil menyetujui Ceklis Kontrol bulanan.');
+        return redirect()->back()->with('success', 'Berhasil menyetujui Checklist Control bulanan.');
     }
 }
+
+
+
+
+

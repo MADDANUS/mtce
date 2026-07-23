@@ -1,16 +1,31 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
-<div class="page-header d-flex align-items-center mb-4">
+
+
+<div class="d-flex align-items-center mb-3">
   <a href="<?= site_url('abnormal?view=summary') ?>" class="btn btn-outline-secondary btn-sm me-3 shadow-sm rounded-pill px-3">
     <i class="bi bi-arrow-left me-1"></i> Kembali
   </a>
-  <div>
-    <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Laporan Abnormal Condition</h5>
-    <p class="text-muted small mb-0">Area: <?= esc($lokasiFilter) ?> | Kategori: <?= esc($kategoriFilter) ?> | Bulan: <?= esc($bulanFilter) ?></p>
+  <div class="ms-auto">
+    <a href="<?= site_url('abnormal/pdf?lokasi=' . urlencode($lokasiFilter) . '&kategori=' . urlencode($kategoriFilter) . '&bulan=' . urlencode($bulanFilter) . '&search=' . urlencode($searchFilter)) ?>" target="_blank" class="btn btn-sm btn-outline-danger fw-semibold shadow-sm">
+      <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF
+    </a>
   </div>
 </div>
 
-
+<table class="kop-table text-center shadow-sm">
+  <tr>
+    <td colspan="6" class="kop-table-title" style="padding: 10px;">LAPORAN ABNORMAL CONDITION</td>
+  </tr>
+  <tr>
+    <td class="kop-label text-start">AREA</td>
+    <td class="kop-val text-start"><?= esc($lokasiFilter) ?></td>
+    <td class="kop-label text-start">KATEGORI</td>
+    <td class="kop-val text-start"><?= esc($kategoriFilter) ?></td>
+    <td class="kop-label text-start">BULAN</td>
+    <td class="kop-val text-start"><?= esc($bulanFilter) ?></td>
+  </tr>
+</table>
 
 <!-- ABNORMAL TABLE CARD -->
 <div class="card border-0 shadow-sm bg-white overflow-hidden mb-4">
@@ -103,28 +118,6 @@
   </div>
 </div>
 
-<!-- CSS Border & Hover Guidelines -->
-<style>
-  .abnormal-table {
-    width: 100% !important;
-  }
-  .abnormal-table th, .abnormal-table td {
-    border: 1px solid #cbd5e1 !important;
-    vertical-align: middle !important;
-  }
-  .abnormal-table th {
-    background-color: #f1f5f9 !important;
-    color: #1e293b !important;
-    padding: 0.75rem 0.5rem !important;
-    border-bottom: 2px solid #cbd5e1 !important;
-  }
-  .abnormal-table td {
-    padding: 0.6rem 0.6rem !important;
-  }
-  .row-editable:hover {
-    background-color: #f8fafc !important;
-  }
-</style>
 
 <!-- MODAL QUICK EDIT ABNORMAL (LEADER & ADMIN ONLY) -->
 <?php if (in_array(session()->get('role'), ['member', 'sheadprd', 'sheadmtc', 'admin'], true)): ?>
@@ -230,3 +223,8 @@
 <?php endif; ?>
 
 <?= view('layout/footer') ?>
+
+
+
+
+

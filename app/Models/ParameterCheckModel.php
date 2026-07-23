@@ -105,12 +105,17 @@ class ParameterCheckModel extends Model
         $total = count($rows);
 
         // Inject virtual categories for 'Mesin CNC & Bar Feeder' so the view can paginate them
+        $isCnc = true;
         for ($i = 0; $i < $total; $i++) {
             if (strtolower($rows[$i]['kategori'] ?? '') === 'mesin cnc & bar feeder') {
-                if ($i >= 52) { // 52 parameters are Mesin CNC, the rest are Bar Feeder
-                    $rows[$i]['kategori'] = 'Bar Feeder CNC';
-                } else {
+                if (strtoupper($rows[$i]['section_check'] ?? '') === 'EQUIPMENT CHECK') {
+                    $isCnc = false;
+                }
+                
+                if ($isCnc) {
                     $rows[$i]['kategori'] = 'Mesin CNC';
+                } else {
+                    $rows[$i]['kategori'] = 'Bar Feeder CNC';
                 }
             }
         }
@@ -142,7 +147,12 @@ class ParameterCheckModel extends Model
                     $itemLetterSuffixIndex = 0; // start with 'a'
                     $prevBagianCheck = $rows[$i]['bagian_check'];
                     $rows[$i]['is_section_start'] = true;
-                    $rows[$i]['dynamic_section_header'] = "{$sectionCounter}. {$sec}";
+                    
+                    if ($currentCategory === 'Bar Feeder CNC') {
+                        $rows[$i]['dynamic_section_header'] = "1.{$sectionCounter} {$sec}";
+                    } else {
+                        $rows[$i]['dynamic_section_header'] = "{$sectionCounter}. {$sec}";
+                    }
                 } else {
                     $rows[$i]['is_section_start'] = false;
                     $rows[$i]['dynamic_section_header'] = null;
@@ -153,9 +163,14 @@ class ParameterCheckModel extends Model
                     }
                 }
                 
-                // Convert index to letter (0 -> 'A', 1 -> 'B'...)
-                $letter = chr(65 + $itemLetterSuffixIndex);
-                $rows[$i]['dynamic_no'] = "{$sectionCounter}{$letter}";
+                // Convert index to lowercase letter (0 -> 'a', 1 -> 'b'...)
+                $letter = chr(97 + $itemLetterSuffixIndex);
+                
+                if ($currentCategory === 'Bar Feeder CNC') {
+                    $rows[$i]['dynamic_no'] = "1.{$sectionCounter}{$letter}";
+                } else {
+                    $rows[$i]['dynamic_no'] = "{$sectionCounter}{$letter}";
+                }
             } else {
                 $rows[$i]['is_section_start'] = false;
                 $rows[$i]['dynamic_section_header'] = null;

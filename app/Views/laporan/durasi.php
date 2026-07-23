@@ -18,6 +18,7 @@
             <th class="text-center">NO</th>
             <th>PIC</th>
             <th>Mesin</th>
+            <th>Lokasi / Line</th>
             <th>Jenis Pengecekan</th>
             <th>Waktu Mulai</th>
             <th>Waktu Selesai</th>
@@ -37,6 +38,7 @@
               ?>
               <td><?= esc($namaDurasiOnly) ?></td>
               <td><?= esc($l['no_mesin']) ?> - <?= esc($l['type_mesin']) ?></td>
+              <td><?= esc($l['lokasi_check']) ?> / <?= esc($l['line'] ?? '-') ?></td>
               <td>
                 <?php if (strtolower($l['jenis_check']) === 'overhaul'): ?>
                   <span class="badge bg-primary">Inspection Report</span>

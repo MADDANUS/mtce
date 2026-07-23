@@ -34,9 +34,9 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
   <div class="form-header-box p-3 mb-3 shadow-sm border-0 bg-white">
     <div class="row g-3">
       <div class="col-md-6">
-        <label class="form-label fw-semibold">Pilih Mesin (<?= esc($lokasiName) ?>)</label>
-        <select name="id_mesin" id="id_mesin" class="form-select" required <?= !empty($idMesin) ? 'disabled' : '' ?>>
-          <option value="">-- Pilih Mesin --</option>
+        <label class="form-label fw-semibold">No Mesin (<?= esc($lokasiName) ?>)</label>
+        <select name="id_mesin" id="id_mesin" class="form-select searchable-select" required <?= !empty($idMesin) ? 'disabled' : '' ?>>
+          <option value="">-- Cari Mesin --</option>
           <?php foreach ($daftarMesin as $m): ?>
             <option value="<?= esc($m['id_mesin']) ?>" data-bar-feeder="<?= esc($m['bar_feeder_type'] ?? '') ?>" <?= (!empty($idMesin) && (int)$idMesin === (int)$m['id_mesin']) ? 'selected' : '' ?>>
               <?= esc($m['no_mesin']) ?> - <?= esc($m['type_mesin']) ?> - <?= esc($m['serial_nomor']) ?>
@@ -49,8 +49,8 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
       </div>
       <div class="col-md-3">
         <label class="form-label fw-semibold">PIC</label>
-        <select name="nama_pic" class="form-select" required>
-          <option value="">-- Pilih PIC --</option>
+        <select name="nama_pic" class="form-select searchable-select" required>
+          <option value="">-- Cari PIC --</option>
           <?php if (isset($masterPic) && !empty($masterPic)): ?>
             <?php foreach ($masterPic as $pic): ?>
               <?php $picVal = esc($pic['id_pic'] . ' - ' . $pic['nama_pic']); ?>
@@ -68,41 +68,60 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
       </div>
       
       <?php if (strtolower($jenisSlug) === 'overhaul'): ?>
-        <?php if (strtolower($lokasiSlug) === 'mfg1'): ?>
-          <div class="col-md-6">
-            <label class="form-label fw-semibold text-primary">Bar Feeder Type</label>
-            <input type="text" name="bar_feeder_type" id="barFeederInput" class="form-control border-primary bg-primary bg-opacity-10" placeholder="Otomatis terisi dari master mesin..." value="<?= esc($barFeederType ?? '') ?>" readonly>
+        <div id="overhaulAdditionalFields" class="col-12 p-0 m-0 d-none mt-3">
+          <div class="row g-3 mt-0">
+            <?php if (strtolower($lokasiSlug) === 'mfg1'): ?>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-primary">Bar Feeder Type</label>
+                <input type="text" name="bar_feeder_type" id="barFeederInput" class="form-control border-primary bg-primary bg-opacity-10" placeholder="Otomatis terisi dari master mesin..." value="<?= esc($barFeederType ?? '') ?>" readonly>
+              </div>
+            <?php endif; ?>
+            <div class="col-md-<?= strtolower($lokasiSlug) === 'mfg1' ? '6' : '12' ?>">
+              <label class="form-label fw-semibold text-primary">Support PIC (Maksimal 4 Orang)</label>
+              <?php 
+                $arrSupport = array_filter(array_map('trim', explode(',', $supportPic ?? '')));
+              ?>
+              <div class="col-12">
+                <select name="support_pic[]" class="form-select searchable-select border-primary bg-primary bg-opacity-10" multiple data-max-items="4" data-placeholder="Pilih maksimal 4 PIC Support...">
+                  <?php foreach ($masterPic as $pic): ?>
+                    <?php $selected = in_array($pic['nama_pic'], $arrSupport) ? 'selected' : ''; ?>
+                    <option value="<?= esc($pic['nama_pic']) ?>" <?= $selected ?>>
+                      <?= esc($pic['nama_pic']) ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+            </div>
           </div>
-        <?php endif; ?>
-        <div class="col-md-<?= strtolower($lokasiSlug) === 'mfg1' ? '6' : '12' ?>">
-          <label class="form-label fw-semibold text-primary">Support PIC</label>
-          <input type="text" name="support_pic" class="form-control border-primary bg-primary bg-opacity-10" placeholder="Masukkan rekan kerja pendukung..." value="<?= esc($supportPic ?? '') ?>">
         </div>
 
-        <?php if (strtolower($lokasiSlug) === 'mfg1'): ?>
         <script>
         document.addEventListener('DOMContentLoaded', function() {
             const selectMesin = document.getElementById('id_mesin');
             const inputBarFeeder = document.getElementById('barFeederInput');
+            const additionalFields = document.getElementById('overhaulAdditionalFields');
             
-            function updateBarFeeder() {
-                if (selectMesin.selectedIndex > 0) {
-                    const selectedOption = selectMesin.options[selectMesin.selectedIndex];
-                    const barFeeder = selectedOption.getAttribute('data-bar-feeder');
-                    inputBarFeeder.value = barFeeder || '';
+            function updateFields() {
+                if (selectMesin.value && selectMesin.value !== "") {
+                    additionalFields.classList.remove('d-none');
+                    if(inputBarFeeder && selectMesin.selectedIndex > 0) {
+                        const selectedOption = selectMesin.options[selectMesin.selectedIndex];
+                        const barFeeder = selectedOption.getAttribute('data-bar-feeder');
+                        inputBarFeeder.value = barFeeder || '';
+                    }
                 } else {
-                    inputBarFeeder.value = '';
+                    additionalFields.classList.add('d-none');
+                    if(inputBarFeeder) inputBarFeeder.value = '';
                 }
             }
 
-            selectMesin.addEventListener('change', updateBarFeeder);
+            selectMesin.addEventListener('change', updateFields);
             
             if (selectMesin.value) {
-                updateBarFeeder();
+                updateFields();
             }
         });
         </script>
-        <?php endif; ?>
       <?php endif; ?>
     </div>
   </div>
@@ -156,8 +175,8 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
                   $rowCategory = $r['kategori'] ?? ''; 
                 ?>
                 <?php if ($r['is_section_start']): ?>
-                  <tr class="section-header page-row-mfg2" data-page="<?= $pageNo ?>" data-kategori="<?= esc($rowCategory) ?>" style="background-color: #f8fafc; font-weight: 700; border-left: 4px solid var(--accent);">
-                    <td colspan="7" class="text-primary py-2 px-3" style="font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase;">
+                  <tr class="section-header page-row-mfg2" data-page="<?= $pageNo ?>" data-kategori="<?= esc($rowCategory) ?>" style="background-color: #ffffff; font-weight: 700;">
+                    <td colspan="7" class="py-2 px-3" style="color: #000000; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase;">
                       <?= esc($r['dynamic_section_header']) ?>
                     </td>
                   </tr>
@@ -289,6 +308,13 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
           </table>
         <?php endif; ?>
       <?php endif; ?>
+
+      <?php if (strtolower($jenisSlug) === 'overhaul'): ?>
+        <div class="mt-4 border rounded p-3 bg-light shadow-sm">
+          <label class="form-label fw-bold text-secondary mb-2" style="letter-spacing: 0.5px;">NOTE AND RECOMMENDATION</label>
+          <textarea name="note_recommendation" class="form-control" rows="4" placeholder="Ketikkan catatan atau rekomendasi di sini..."><?= esc($noteRecommendation ?? '') ?></textarea>
+        </div>
+      <?php endif; ?>
     </div>
 
     <!-- KETERANGAN CHECK LIST -->
@@ -341,7 +367,7 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
     </div>
   </div>
 
-  <!-- Ceklis Kontrol is automatically populated in the background upon submission -->
+  <!-- Checklist Control is automatically populated in the background upon submission -->
 
   <?php if (!empty($rows)): ?>
     <div class="d-flex justify-content-end mt-4 mb-5 gap-3">
@@ -350,6 +376,7 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
         <button type="button" id="btnPrev" class="btn btn-secondary px-4 py-2 fw-semibold shadow-sm" style="display:none;"><i class="bi bi-arrow-left me-2"></i> Kembali</button>
         <button type="submit" id="btnSubmit" class="btn btn-success px-5 py-2 fw-semibold shadow-sm" style="display:none;">Submit Pengecekan</button>
 
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
         document.addEventListener('DOMContentLoaded', function() {
             const rows = document.querySelectorAll('tr[data-kategori]');
@@ -385,10 +412,99 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
                 }
             }
 
+            function validateCurrentView() {
+                let isValid = true;
+                let firstUnchecked = null;
+                let missingItems = [];
+                let currentNo = '';
+                let currentBagian = '';
+                
+                rows.forEach(row => {
+                    if (row.getAttribute('data-kategori') === currentView) {
+                        const noCell = row.querySelector('.text-muted');
+                        if (noCell) currentNo = noCell.innerText.trim();
+                        
+                        const bagianCell = row.querySelector('.bagian-cell');
+                        if (bagianCell) currentBagian = bagianCell.innerText.trim();
+                        
+                        const radios = row.querySelectorAll('input[type="radio"]');
+                        if (radios.length > 0) {
+                            const isChecked = row.querySelector('input[type="radio"]:checked');
+                            if (!isChecked) {
+                                isValid = false;
+                                row.classList.add('table-danger');
+                                if (!firstUnchecked) firstUnchecked = row;
+                                
+                                let itemName = currentNo;
+                                if (currentBagian) itemName += ' ' + currentBagian;
+                                missingItems.push(itemName.trim() || 'Item tanpa nama');
+                            } else {
+                                row.classList.remove('table-danger');
+                            }
+                        }
+                    }
+                });
+                
+                if (!isValid && firstUnchecked) {
+                    let uniqueMissing = [...new Set(missingItems)];
+                    let missingHtml = '<ul class="text-start" style="max-height: 200px; overflow-y: auto; font-size: 0.9rem;">';
+                    uniqueMissing.forEach(item => {
+                        missingHtml += '<li>' + item + '</li>';
+                    });
+                    missingHtml += '</ul>';
+                    
+                    if (typeof Swal !== 'undefined') {
+                        firstUnchecked.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Data Belum Lengkap!',
+                            html: '<p>Terdapat isian yang belum diisi pada bagian <b>' + currentView + '</b>:</p>' + missingHtml,
+                            confirmButtonText: 'Tutup',
+                            returnFocus: false
+                        });
+                    } else {
+                        firstUnchecked.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        alert('Mohon lengkapi poin pengecekan berikut pada ' + currentView + ':\n\n' + uniqueMissing.join('\n'));
+                    }
+                }
+                
+                return isValid;
+            }
+
+            function validateHeader() {
+                let missingHeader = [];
+                const idMesin = document.getElementById('id_mesin');
+                const namaPic = document.querySelector('select[name="nama_pic"]');
+
+                if (idMesin && !idMesin.value) missingHeader.push('No Mesin');
+                if (namaPic && !namaPic.value) missingHeader.push('PIC');
+
+                if (missingHeader.length > 0) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Data Belum Lengkap!',
+                            text: 'Mohon isi ' + missingHeader.join(' dan ') + ' terlebih dahulu di bagian atas form.',
+                            confirmButtonText: 'Tutup',
+                            returnFocus: false
+                        }).then(() => {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        });
+                    } else {
+                        alert('Mohon isi ' + missingHeader.join(' dan ') + ' terlebih dahulu di bagian atas form.');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                    return false;
+                }
+                return true;
+            }
+
             if (rows.length > 0) {
                 updateView();
 
                 btnNext.addEventListener('click', () => {
+                    if (!validateHeader()) return;
+                    if (!validateCurrentView()) return;
                     currentView = 'Bar Feeder CNC';
                     updateView();
                     window.scrollTo(0, 0);
@@ -406,6 +522,10 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
                 });
                 
                 if(navBarFeeder) navBarFeeder.addEventListener('click', () => {
+                    if (currentView === 'Mesin CNC') {
+                        if (!validateHeader()) return;
+                        if (!validateCurrentView()) return;
+                    }
                     currentView = 'Bar Feeder CNC';
                     updateView();
                 });
@@ -464,9 +584,92 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
                 }
             }
 
+            function validateCurrentPage() {
+                let isValid = true;
+                let firstUnchecked = null;
+                let missingItems = [];
+                let currentBagian = '';
+                
+                mfg2Rows.forEach(row => {
+                    if (parseInt(row.getAttribute('data-page')) === currentPage) {
+                        const bagianCell = row.querySelector('.bagian-cell');
+                        if (bagianCell) currentBagian = bagianCell.innerText.trim();
+                        
+                        const radios = row.querySelectorAll('input[type="radio"]');
+                        if (radios.length > 0) {
+                            const isChecked = row.querySelector('input[type="radio"]:checked');
+                            if (!isChecked) {
+                                isValid = false;
+                                row.classList.add('table-danger');
+                                if (!firstUnchecked) firstUnchecked = row;
+                                
+                                missingItems.push(currentBagian || 'Item tanpa nama');
+                            } else {
+                                row.classList.remove('table-danger');
+                            }
+                        }
+                    }
+                });
+                
+                if (!isValid && firstUnchecked) {
+                    let uniqueMissing = [...new Set(missingItems)];
+                    let missingHtml = '<ul class="text-start" style="max-height: 200px; overflow-y: auto; font-size: 0.9rem;">';
+                    uniqueMissing.forEach(item => {
+                        missingHtml += '<li>' + item + '</li>';
+                    });
+                    missingHtml += '</ul>';
+                    
+                    if (typeof Swal !== 'undefined') {
+                        firstUnchecked.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Data Belum Lengkap!',
+                            html: '<p>Terdapat isian yang belum diisi pada <b>Halaman ' + currentPage + '</b>:</p>' + missingHtml,
+                            confirmButtonText: 'Tutup',
+                            returnFocus: false
+                        });
+                    } else {
+                        firstUnchecked.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        alert('Mohon lengkapi poin pengecekan berikut pada Halaman ' + currentPage + ':\n\n' + uniqueMissing.join('\n'));
+                    }
+                }
+                
+                return isValid;
+            }
+
+            function validateHeader() {
+                let missingHeader = [];
+                const idMesin = document.getElementById('id_mesin');
+                const namaPic = document.querySelector('select[name="nama_pic"]');
+
+                if (idMesin && !idMesin.value) missingHeader.push('No Mesin');
+                if (namaPic && !namaPic.value) missingHeader.push('PIC');
+
+                if (missingHeader.length > 0) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Data Belum Lengkap!',
+                            text: 'Mohon isi ' + missingHeader.join(' dan ') + ' terlebih dahulu di bagian atas form.',
+                            confirmButtonText: 'Tutup',
+                            returnFocus: false
+                        }).then(() => {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        });
+                    } else {
+                        alert('Mohon isi ' + missingHeader.join(' dan ') + ' terlebih dahulu di bagian atas form.');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                    return false;
+                }
+                return true;
+            }
+
             updatePageView();
 
             btnNext.addEventListener('click', () => {
+                if (!validateHeader()) return;
+                if (!validateCurrentPage()) return;
                 if (currentPage < totalPages) {
                     currentPage++;
                     updatePageView();
@@ -484,7 +687,12 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
 
             navButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    currentPage = parseInt(btn.getAttribute('data-target'));
+                    let targetPage = parseInt(btn.getAttribute('data-target'));
+                    if (targetPage > currentPage) {
+                        if (!validateHeader()) return;
+                        if (!validateCurrentPage()) return;
+                    }
+                    currentPage = targetPage;
                     updatePageView();
                     window.scrollTo(0, 0);
                 });
@@ -499,3 +707,4 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
 </form>
 
 <?= view('layout/footer') ?>
+

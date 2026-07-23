@@ -15,5 +15,22 @@
     this.classList.remove('show');
   });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script>
+  document.querySelectorAll('.searchable-select').forEach((el) => {
+    let maxItems = el.getAttribute('data-max-items');
+    let config = {
+      create: false,
+      sortField: { field: "text", direction: "asc" }
+    };
+    if (maxItems) {
+        config.maxItems = parseInt(maxItems);
+    }
+    new TomSelect(el, config);
+  });
+</script>
 </body>
 </html>
+
+
+

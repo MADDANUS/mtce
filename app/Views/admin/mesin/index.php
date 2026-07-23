@@ -41,6 +41,7 @@
             <th>Lokasi</th>
             <th>Line</th>
             <th>Bar Feeder</th>
+            <th>Jenis</th>
             <th class="text-end">Aksi</th>
           </tr>
         </thead>
@@ -53,6 +54,7 @@
               <td><span class="badge bg-secondary"><?= esc($m['lokasi']) ?></span></td>
               <td><span class="badge bg-info text-dark"><?= esc($m['line'] ?? '-') ?></span></td>
               <td><span class="text-muted small"><?= esc($m['bar_feeder_type'] ?? '-') ?></span></td>
+              <td><span class="badge bg-secondary"><?= esc($m['jenis'] ?? '-') ?></span></td>
               <td>
                 <div class="d-flex gap-1 flex-wrap">
                   <button type="button" class="btn btn-sm btn-outline-primary show-qr-btn"

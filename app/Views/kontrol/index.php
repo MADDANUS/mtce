@@ -1,107 +1,35 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
-<div class="page-header d-flex align-items-center mb-4">
+
+
+<div class="d-flex align-items-center mb-3">
   <a href="<?= site_url('kontrol?view=summary') ?>" class="btn btn-outline-secondary btn-sm me-3 shadow-sm rounded-pill px-3">
     <i class="bi bi-arrow-left me-1"></i> Kembali
   </a>
-  <div>
-    <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-check me-2 text-primary"></i>Ceklis Kontrol Bulanan</h5>
-    <p class="text-muted small mb-0">Area: <?= esc($lokasi) ?> <?= $line ? '/ ' . esc($line) : '' ?> | Kategori: <?= esc($kategori) ?> | Bulan: <?= esc($bulan) ?></p>
+  <div class="ms-auto">
+    <a href="<?= site_url('kontrol/pdf?lokasi=' . urlencode($lokasi) . '&kategori=' . urlencode($kategori) . '&bulan=' . urlencode($bulan) . '&line=' . urlencode($line)) ?>" target="_blank" class="btn btn-sm btn-outline-danger fw-semibold shadow-sm">
+      <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF
+    </a>
   </div>
 </div>
 
-<?php if (service('request')->getGet('auto') == 1): ?>
-  <div class="alert alert-info border-0 shadow-sm rounded-3 mb-4 d-flex align-items-center gap-2">
-    <div class="spinner-border spinner-border-sm text-info" role="status"></div>
-    <div>
-      <strong>Sistem Otomatis:</strong> Data tersimpan di Ceklis Kontrol. Mengalihkan ke halaman Laporan Abnormal Condition dalam 1.5 detik...
-    </div>
-  </div>
-<?php endif; ?>
-
-
-<!-- APPROVAL PANEL -->
-<div class="card border-0 shadow-sm bg-white mb-4">
-  <div class="card-body p-3 d-flex align-items-center justify-content-between">
-    <div>
-      <h6 class="mb-1 fw-bold text-dark"><i class="bi bi-shield-check text-primary me-2"></i>Status Persetujuan (<?= esc($lokasi) ?><?= $line ? ' - ' . esc($line) : '' ?> - <?= esc($kategori) ?> - <?= esc($bulan) ?>)</h6>
-      <p class="mb-0 small text-muted">
-        Status: 
-        <?php if (empty($line)): ?>
-          <span class="badge bg-secondary">Pilih Line</span>
-        <?php elseif ($approvalStatus === 'Pending'): ?>
-          <span class="badge bg-secondary">Pending</span>
-        <?php elseif ($approvalStatus === 'Approved L1'): ?>
-          <span class="badge bg-info">Approved L1</span>
-        <?php elseif ($approvalStatus === 'Approved L2'): ?>
-          <span class="badge bg-primary">Approved L2</span>
-        <?php elseif ($approvalStatus === 'Approved Final'): ?>
-          <span class="badge bg-success">Approved Final</span>
-        <?php endif; ?>
-      </p>
-    </div>
-    
-    <div>
-      <?php 
-        $role = session()->get('role');
-        $canApprove = false;
-        if ($role === 'admin' && $approvalStatus !== 'Approved Final') {
-            $canApprove = true;
-        } elseif ($role === 'member' && $approvalStatus === 'Pending') {
-            $canApprove = true;
-        } elseif ($role === 'sheadprd' && $approvalStatus === 'Approved L1') {
-            $canApprove = true;
-        } elseif ($role === 'sheadmtc' && $approvalStatus === 'Approved L2') {
-            $canApprove = true;
-        }
-      ?>
-      
-      <?php if (empty($line)): ?>
-        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
-          <i class="bi bi-info-circle me-1"></i>Pilih Line untuk Approval
-        </button>
-      <?php elseif (!$allChecked): ?>
-        <button type="button" class="btn btn-secondary btn-sm" disabled>
-          <i class="bi bi-x-circle me-1"></i>Belum bisa di-Approve (Ada mesin belum dicek)
-        </button>
-      <?php elseif ($approvalStatus === 'Approved Final'): ?>
-        <button type="button" class="btn btn-success btn-sm" disabled>
-          <i class="bi bi-check-all me-1"></i>Selesai (Approved Final)
-        </button>
-      <?php elseif ($canApprove): ?>
-        <form action="<?= site_url('kontrol/approve') ?>" method="post" class="m-0 p-0 d-inline-block d-flex gap-2" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui laporan bulan ini?');">
-          <input type="hidden" name="lokasi" value="<?= esc($lokasi) ?>">
-          <input type="hidden" name="line" value="<?= esc($line) ?>">
-          <input type="hidden" name="kategori" value="<?= esc($kategori) ?>">
-          <input type="hidden" name="bulan_tahun" value="<?= esc($bulan) ?>">
-          
-          <?php if ($role === 'member'): ?>
-            <input type="text" name="pic_line_nama" class="form-control form-control-sm" placeholder="Nama PIC Line" required style="min-width: 200px;">
-          <?php endif; ?>
-          
-          <button type="submit" class="btn btn-primary btn-sm shadow-sm">
-            <i class="bi bi-check-circle me-1"></i>Approve (<?= esc($role) ?>)
-          </button>
-        </form>
-      <?php else: ?>
-        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
-          Menunggu Giliran Approve
-        </button>
-      <?php endif; ?>
-    </div>
-  </div>
-</div>
+<table class="kop-table text-center shadow-sm">
+  <tr>
+    <td colspan="6" class="kop-table-title" style="padding: 10px;">CHECKLIST CONTROL - <?= strtoupper(esc($kategori)) ?></td>
+  </tr>
+  <tr>
+    <td class="kop-label text-start">AREA</td>
+    <td class="kop-val text-start"><?= esc($lokasi) ?> <?= $line ? '/ ' . esc($line) : '' ?></td>
+    <td class="kop-label text-start">KATEGORI</td>
+    <td class="kop-val text-start"><?= esc($kategori) ?></td>
+    <td class="kop-label text-start">BULAN</td>
+    <td class="kop-val text-start"><?= esc($bulanList[$bulan] ?? $bulan) ?></td>
+  </tr>
+</table>
 
 <!-- GRID TABEL KONTROL -->
 <div class="card border-0 shadow-sm bg-white overflow-hidden mb-4">
-  <div class="card-header bg-white py-3 px-4 border-0 d-flex justify-content-between align-items-center">
-    <h6 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
-      <i class="bi bi-grid-3x3-gap-fill text-primary"></i> Grid Ceklis Kontrol — <?= esc($kategori) ?> (<?= esc($lokasi) ?>)
-    </h6>
-    <span class="badge bg-light text-primary fw-semibold border px-2.5 py-1.5" style="font-size: 0.72rem;">
-      Bulan: <?= esc($bulanList[$bulan] ?? $bulan) ?>
-    </span>
-  </div>
+  
 
   <div class="card-body p-0">
     <div class="table-responsive" style="border: 1px solid var(--border-strong) !important; border-radius: var(--radius);">
@@ -149,7 +77,7 @@
               <tr>
                 <td rowspan="2" class="fw-bold font-monospace text-secondary" style="background-color: #faf9f6; border-bottom: 2px solid #d6d3d1 !important; vertical-align: middle !important;"><?= $no++ ?></td>
                 <td class="text-start fw-bold text-dark ps-4 py-2" style="border-bottom: 1px solid #e7e5e4 !important; background-color: #fff;">
-                  <?= esc($m['no_mesin']) ?> - <?= esc($m['type_mesin']) ?>
+                  <?= esc($m['jenis']) ?> <?= esc($m['no_mesin']) ?>
                 </td>
                 
                 <!-- Periode 1 s.d 5 Cells (Status Check) -->
@@ -388,3 +316,9 @@
 <?php endif; ?>
 
 <?= view('layout/footer') ?>
+
+
+
+
+
+

@@ -84,13 +84,29 @@ class TransaksiCheckDetailModel extends Model
         // Logic for Overhaul
         $total = count($rows);
 
-        // Inject virtual categories for 'Mesin CNC & Bar Feeder' so the numbering restarts for Bar Feeder
+        // Pre-process parts with | (pipe) to separate bagian_check and sub_item_check
+        for ($i = 0; $i < $total; $i++) {
+            if (!empty($rows[$i]['bagian_check']) && strpos($rows[$i]['bagian_check'], '|') !== false) {
+                $parts = explode('|', $rows[$i]['bagian_check']);
+                $rows[$i]['bagian_check'] = trim($parts[0]);
+                if (empty($rows[$i]['sub_item_check'])) {
+                    $rows[$i]['sub_item_check'] = trim($parts[1]);
+                }
+            }
+        }
+
+        // Inject virtual categories for 'Mesin CNC & Bar Feeder' so the view can paginate them
+        $isCnc = true;
         for ($i = 0; $i < $total; $i++) {
             if (strtolower($rows[$i]['kategori'] ?? '') === 'mesin cnc & bar feeder') {
-                if ($i >= 52) { // 52 parameters are Mesin CNC, the rest are Bar Feeder
-                    $rows[$i]['kategori'] = 'Bar Feeder CNC';
-                } else {
+                if (strtoupper($rows[$i]['section_check'] ?? '') === 'EQUIPMENT CHECK') {
+                    $isCnc = false;
+                }
+                
+                if ($isCnc) {
                     $rows[$i]['kategori'] = 'Mesin CNC';
+                } else {
+                    $rows[$i]['kategori'] = 'Bar Feeder CNC';
                 }
             }
         }
@@ -122,7 +138,12 @@ class TransaksiCheckDetailModel extends Model
                     $itemLetterSuffixIndex = 0; // start with 'a'
                     $prevBagianCheck = $rows[$i]['bagian_check'];
                     $rows[$i]['is_section_start'] = true;
-                    $rows[$i]['dynamic_section_header'] = "{$sectionCounter}. {$sec}";
+                    
+                    if ($currentCategory === 'Bar Feeder CNC') {
+                        $rows[$i]['dynamic_section_header'] = "1.{$sectionCounter} {$sec}";
+                    } else {
+                        $rows[$i]['dynamic_section_header'] = "{$sectionCounter}. {$sec}";
+                    }
                 } else {
                     $rows[$i]['is_section_start'] = false;
                     $rows[$i]['dynamic_section_header'] = null;
@@ -133,9 +154,14 @@ class TransaksiCheckDetailModel extends Model
                     }
                 }
                 
-                // Convert index to letter (0 -> 'a', 1 -> 'b'...)
+                // Convert index to lowercase letter (0 -> 'a', 1 -> 'b'...)
                 $letter = chr(97 + $itemLetterSuffixIndex);
-                $rows[$i]['dynamic_no'] = $letter;
+                
+                if ($currentCategory === 'Bar Feeder CNC') {
+                    $rows[$i]['dynamic_no'] = "1.{$sectionCounter}{$letter}";
+                } else {
+                    $rows[$i]['dynamic_no'] = "{$sectionCounter}{$letter}";
+                }
             } else {
                 $rows[$i]['is_section_start'] = false;
                 $rows[$i]['dynamic_section_header'] = null;
@@ -208,14 +234,14 @@ class TransaksiCheckDetailModel extends Model
                 $rows[$i]['point_rowspan'] = $span;
             }
 
-            // standard_check rowspan (only span if standard check is not empty)
-            if (!empty($rows[$i]['standard_check'])) {
-                if ($i > 0 && $rows[$i - 1]['section_check'] === $sec && $rows[$i]['standard_check'] === $rows[$i - 1]['standard_check']) {
+            // standard_check rowspan (only span if standard check is not empty or '-')
+            if (!empty($rows[$i]['standard_check']) && $rows[$i]['standard_check'] !== '-') {
+                if ($i > 0 && $rows[$i - 1]['section_check'] === $sec && $rows[$i]['dynamic_no'] === $rows[$i - 1]['dynamic_no'] && $rows[$i]['standard_check'] === $rows[$i - 1]['standard_check']) {
                     $rows[$i]['show_standard'] = false;
                 } else {
                     $span = 1;
                     for ($j = $i + 1; $j < $total; $j++) {
-                        if ($rows[$j]['section_check'] === $sec && $rows[$j]['standard_check'] === $rows[$i]['standard_check']) {
+                        if ($rows[$j]['section_check'] === $sec && $rows[$j]['dynamic_no'] === $rows[$i]['dynamic_no'] && $rows[$j]['standard_check'] === $rows[$i]['standard_check']) {
                             $span++;
                         } else {
                             break;

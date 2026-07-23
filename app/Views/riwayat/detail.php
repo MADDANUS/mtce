@@ -8,79 +8,117 @@
   <a href="<?= site_url('riwayat/lokasi/' . $lokSlug . '?jenis_check=' . $jenisParam) ?>" class="btn btn-sm btn-outline-secondary">
     <i class="bi bi-arrow-left"></i> Kembali
   </a>
-  <h5 class="mb-0"><i class="bi bi-clipboard-check me-2 text-primary"></i>Detail Pengecekan</h5>
+  <div>
+    <h5 class="mb-0 fw-bold"><i class="bi bi-clipboard-check me-2 text-primary"></i>Detail Pengecekan</h5>
+  </div>
+  <div class="ms-auto d-flex align-items-center gap-2">
+    <a href="<?= site_url('riwayat/download-pdf/' . $header['id_transaksi']) ?>" class="btn btn-sm btn-outline-danger shadow-sm" target="_blank">
+      <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF
+    </a>
+  </div>
 </div>
 
-<div class="card-stat p-3 mb-3">
-  <div class="row g-3 align-items-center">
-    <div class="col-md-2">
-      <div class="text-muted small">Staff / PIC</div>
-      <?php 
-        $rawNamaTop = $header['nama_pic'] ?: $header['nama_staff'];
-        $namaTopParts = explode(' - ', $rawNamaTop);
-        $namaTopOnly = end($namaTopParts);
-      ?>
-      <div class="fw-semibold"><?= esc($namaTopOnly) ?></div>
-    </div>
-    <div class="col-md-3">
-      <div class="text-muted small">Mesin</div>
-      <div class="fw-semibold"><?= esc($header['no_mesin']) ?> - <?= esc($header['type_mesin']) ?></div>
-    </div>
-    <div class="col-md-2">
-      <div class="text-muted small">Lokasi / Jenis</div>
-      <div class="fw-semibold"><?= esc($header['lokasi_check']) ?> / <?= esc($header['jenis_check'] === 'Preventive' ? 'Checklist Report' : $header['jenis_check']) ?></div>
-    </div>
-    <div class="col-md-2">
-      <div class="text-muted small">Waktu Mulai</div>
-      <div class="fw-semibold"><?= esc($header['waktu_mulai']) ?></div>
-    </div>
-    <div class="col-md-1">
-      <div class="text-muted small">Durasi</div>
-      <div class="fw-semibold"><?= $durasiDetik !== null ? gmdate('i:s', $durasiDetik) : '-' ?></div>
-    </div>
-    <div class="col-md-2 text-md-end">
-      <div class="text-muted small mb-1">Status</div>
+<?php 
+  $rawNamaTop = $header['nama_pic'] ?: $header['nama_staff'];
+  $namaTopParts = explode(' - ', $rawNamaTop);
+  $namaTopOnly = end($namaTopParts);
+  $waktuMulai = strtotime($header['waktu_mulai']);
+  $waktuSelesai = $header['waktu_selesai'] ? strtotime($header['waktu_selesai']) : null;
+?>
+
+
+
+<?php if (strtolower($header['jenis_check']) === 'overhaul'): ?>
+  <table class="kop-table text-center">
+    <tr>
+      <td colspan="7" class="kop-table-title" style="padding: 10px;">INSPECTION REPORT - <?= strtoupper(esc($header['kategori'] ?? 'MESIN CNC')) ?></td>
+    </tr>
+    <tr>
+      <td class="kop-label text-start" style="width:12%;">MAIN PIC</td>
+      <td class="kop-val text-start" colspan="2" style="width:28%;"><?= esc($namaTopOnly) ?></td>
+      <td class="kop-label text-start" style="width:15%;">NO MACHINE</td>
+      <td class="kop-val text-start" style="width:15%;"><?= esc($header['no_mesin']) ?></td>
+      <td class="kop-label text-start" style="width:15%;">DATE</td>
+      <td class="kop-val text-start" style="width:15%;"><?= date('Y-m-d', $waktuMulai) ?></td>
+    </tr>
+    <tr>
+      <td class="kop-label text-start" rowspan="2">SUPPORT PIC</td>
+      <td class="kop-val text-start" colspan="2" rowspan="2" style="vertical-align: top;"><?= esc($header['support_pic'] ?? '-') ?></td>
+      <td class="kop-label text-start">MACHINE TYPE</td>
+      <td class="kop-val text-start"><?= esc($header['type_mesin']) ?></td>
+      <td class="kop-label text-start">START TIME</td>
+      <td class="kop-val text-start"><?= date('H:i:s', $waktuMulai) ?></td>
+    </tr>
+    <tr>
+      <td class="kop-label text-start">BAR FEEDER TYPE</td>
+      <td class="kop-val text-start"><?= esc($header['bar_feeder_type'] ?? '-') ?></td>
+      <td class="kop-label text-start">FINISH TIME</td>
+      <td class="kop-val text-start"><?= $waktuSelesai ? date('H:i:s', $waktuSelesai) : '-' ?></td>
+    </tr>
+  </table>
+
+  <div class="d-flex justify-content-end gap-4 mb-3">
+    <div>
+      <span class="text-muted small me-1">Status:</span> 
       <?php if ($header['status'] === 'Approved'): ?>
-        <span class="badge bg-success px-3 py-2">Approved</span>
+        <span class="badge bg-success">Approved</span>
       <?php else: ?>
-        <span class="badge bg-warning text-dark px-3 py-2">Pending</span>
+        <span class="badge bg-warning text-dark">Pending</span>
+      <?php endif; ?>
+    </div>
+    <div>
+      <span class="text-muted small me-1">Durasi:</span> 
+      <span class="fw-bold"><?= $durasiDetik !== null ? gmdate('H:i:s', $durasiDetik) : '-' ?></span>
+    </div>
+  </div>
+
+<?php else: ?>
+  <table class="kop-table text-center">
+    <tr>
+      <td colspan="7" class="kop-table-title" style="padding: 10px;">INSPECTION REPORT - <?= strtoupper(esc($header['kategori'] ?? 'MESIN CNC')) ?></td>
+    </tr>
+    <tr>
+      <td class="kop-label text-start" style="width:12%;">NO MACHINE</td>
+      <td class="kop-val text-start" colspan="2" style="width:28%;"><?= esc($header['no_mesin']) ?></td>
+      <td class="kop-label text-start" style="width:15%;">DATE</td>
+      <td class="kop-val text-start" style="width:15%;"><?= date('Y-m-d', $waktuMulai) ?></td>
+      <td class="kop-label text-start" style="width:15%;">LOKASI</td>
+      <td class="kop-val text-start" style="width:15%;"><?= esc($header['lokasi_check']) ?></td>
+    </tr>
+    <tr>
+      <td class="kop-label text-start">MACHINE TYPE</td>
+      <td class="kop-val text-start" colspan="2"><?= esc($header['type_mesin']) ?></td>
+      <td class="kop-label text-start">START TIME</td>
+      <td class="kop-val text-start"><?= date('H:i:s', $waktuMulai) ?></td>
+      <td class="kop-label text-start">DURASI</td>
+      <td class="kop-val text-start"><?= $durasiDetik !== null ? gmdate('H:i:s', $durasiDetik) : '-' ?></td>
+    </tr>
+    <tr>
+      <td class="kop-label text-start">SERIAL NUMBER</td>
+      <td class="kop-val text-start" colspan="2"><?= esc($header['serial_nomor'] ?? '-') ?></td>
+      <td class="kop-label text-start">FINISH TIME</td>
+      <td class="kop-val text-start" colspan="3"><?= $waktuSelesai ? date('H:i:s', $waktuSelesai) : '-' ?></td>
+    </tr>
+  </table>
+
+  <div class="d-flex justify-content-end gap-4 mb-3">
+    <div>
+      <span class="text-muted small me-1">Status:</span> 
+      <?php if ($header['status'] === 'Approved'): ?>
+        <span class="badge bg-success">Approved</span>
+      <?php else: ?>
+        <span class="badge bg-warning text-dark">Pending</span>
       <?php endif; ?>
     </div>
   </div>
-  
-  <?php if (!empty($header['bar_feeder_type']) || !empty($header['support_pic'])): ?>
-    <div class="row g-3 mt-2 border-top pt-2">
-      <?php if (!empty($header['bar_feeder_type'])): ?>
-        <div class="col-md-6">
-          <span class="text-muted small">Bar Feeder Type: </span>
-          <span class="fw-semibold text-primary"><?= esc($header['bar_feeder_type']) ?></span>
-        </div>
-      <?php endif; ?>
-      <?php if (!empty($header['support_pic'])): ?>
-        <div class="col-md-6">
-          <span class="text-muted small">Support PIC: </span>
-          <span class="fw-semibold text-primary"><?= esc($header['support_pic']) ?></span>
-        </div>
-      <?php endif; ?>
-    </div>
-  <?php endif; ?>
-</div>
+<?php endif; ?>
 
 <?php 
   $status = $header['status'] ?? 'Pending';
   $role = session()->get('role');
 ?>
 
-<?php if ($status === 'Approved'): ?>
-  <div class="alert alert-success d-flex align-items-center shadow-sm border-0 mb-3" role="alert">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-patch-check-fill me-2" viewBox="0 0 16 16">
-      <path d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01-.622-.636zm.287 5.984-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
-    </svg>
-    <div>
-      Disetujui Final oleh <strong><?= esc($header['approver_nama'] ?? 'System') ?></strong> pada <strong><?= esc($header['approved_at']) ?></strong>
-    </div>
-  </div>
-<?php endif; ?>
+
 
 <div class="card-stat p-3">
   <?php if (strtolower($header['jenis_check']) === 'overhaul'): ?>
@@ -91,7 +129,9 @@
           <th style="width:5%;">NO</th>
           <th colspan="2" style="width:30%;">ITEM CHECK</th>
           <th style="width:20%;">POINT CHECK</th>
+          <?php if (strtolower($header['lokasi_check']) !== 'mfg 2'): ?>
           <th style="width:15%;">STANDAR ITEM</th>
+          <?php endif; ?>
           <th style="width:10%;">HASIL</th>
           <th style="width:20%;">ULASAN</th>
         </tr>
@@ -100,7 +140,8 @@
         <?php foreach ($details as $d): ?>
           <?php if ($d['is_section_start']): ?>
             <tr class="section-header">
-              <td colspan="7"><?= esc($d['dynamic_section_header']) ?></td>
+              <?php $colSpan = strtolower($header['lokasi_check']) === 'mfg 2' ? 6 : 7; ?>
+              <td colspan="<?= $colSpan ?>"><?= esc($d['dynamic_section_header']) ?></td>
             </tr>
           <?php endif; ?>
           <tr>
@@ -121,8 +162,10 @@
               <td rowspan="<?= (int) $d['point_rowspan'] ?>"><?= esc($d['point_check']) ?></td>
             <?php endif; ?>
 
+            <?php if (strtolower($header['lokasi_check']) !== 'mfg 2'): ?>
             <?php if ($d['show_standard']): ?>
               <td rowspan="<?= (int) $d['standard_rowspan'] ?>"><?= nl2br(esc($d['standard_check'])) ?></td>
+            <?php endif; ?>
             <?php endif; ?>
 
             <td class="text-center">
@@ -141,6 +184,11 @@
         <?php endforeach; ?>
       </tbody>
     </table>
+    
+    <div class="mt-4 border rounded p-3 bg-light shadow-sm">
+      <label class="form-label fw-bold text-secondary mb-2" style="letter-spacing: 0.5px;">NOTE AND RECOMMENDATION</label>
+      <p class="mb-0" style="white-space: pre-wrap;"><?= !empty($header['note_recommendation']) ? esc($header['note_recommendation']) : '-' ?></p>
+    </div>
   <?php else: ?>
     <!-- PREVENTIVE DETAIL TABLE -->
     <table class="table table-bordered align-middle checklist-table bg-white">
@@ -400,3 +448,5 @@
 <?php endif; ?>
 
 <?= view('layout/footer') ?>
+
+

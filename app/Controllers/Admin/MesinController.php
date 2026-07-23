@@ -51,6 +51,7 @@ class MesinController extends BaseController
             'lokasi'          => $this->request->getPost('lokasi'),
             'line'            => $this->request->getPost('line') ?: null,
             'bar_feeder_type' => $this->request->getPost('bar_feeder_type'),
+            'jenis'           => $this->request->getPost('jenis') ?: null,
         ]);
 
         return redirect()->to('/admin/mesin')->with('success', 'Mesin berhasil ditambahkan.');
@@ -86,6 +87,7 @@ class MesinController extends BaseController
             'lokasi'          => $this->request->getPost('lokasi'),
             'line'            => $this->request->getPost('line') ?: null,
             'bar_feeder_type' => $this->request->getPost('bar_feeder_type'),
+            'jenis'           => $this->request->getPost('jenis') ?: null,
         ]);
 
         return redirect()->to('/admin/mesin')->with('success', 'Mesin berhasil diperbarui.');
@@ -253,6 +255,7 @@ class MesinController extends BaseController
             'lokasi'          => 'required|in_list[MFG 1,MFG 2]',
             'line'            => 'permit_empty|string|max_length[50]',
             'bar_feeder_type' => 'permit_empty|string|max_length[100]',
+            'jenis'           => 'permit_empty|string|max_length[100]',
         ];
     }
 }

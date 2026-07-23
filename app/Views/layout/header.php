@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 <!-- Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
@@ -471,16 +472,16 @@
         font-size: 0.875rem !important;
     }
     .checklist-table tr.section-header td {
-        background: #1e293b !important;
-        color: #0284c7 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
         font-family: 'Roboto Mono', monospace;
         font-size: 0.82rem !important;
         font-weight: 600 !important;
         text-transform: uppercase;
         letter-spacing: 0.1em;
+        text-align: center !important;
         padding: 0.7rem 1rem !important;
-        border: 1px solid #334155 !important;
-        border-left: 4px solid #0284c7 !important;
+        border: 1px solid var(--border-light) !important;
     }
 
     /* ---- FORMS ---- */
@@ -802,3 +803,5 @@ $seg3 = $uri->getTotalSegments() >= 3 ? $uri->getSegment(3) : '';
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       <?php endif; ?>
+
+

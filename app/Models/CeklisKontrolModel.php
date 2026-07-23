@@ -23,7 +23,7 @@ class CeklisKontrolModel extends Model
     protected $returnType    = 'array';
 
     /**
-     * Mengambil data ceklis kontrol untuk lokasi, kategori, dan bulan tertentu.
+     * Mengambil data Checklist Control untuk lokasi, kategori, dan bulan tertentu.
      * Mengembalikan data yang distrukturkan per mesin lengkap dengan data periode 1-5.
      */
     public function getGridData(string $lokasi, string $kategori, string $bulanTahun, ?string $line = null): array
@@ -36,7 +36,7 @@ class CeklisKontrolModel extends Model
         }
         $daftarMesin = $builder->orderBy('no_mesin', 'ASC')->findAll();
 
-        // 2. Ambil semua catatan ceklis kontrol untuk kategori & bulan ini
+        // 2. Ambil semua catatan Checklist Control untuk kategori & bulan ini
         $records = $this->where('kategori', $kategori)
                         ->where('bulan_tahun', $bulanTahun)
                         ->findAll();
@@ -47,7 +47,7 @@ class CeklisKontrolModel extends Model
             $mapped[$r['id_mesin']][$r['periode_ke']] = $r;
         }
 
-        // 3. Gabungkan data mesin dengan data ceklis kontrol periode 1 s.d 5
+        // 3. Gabungkan data mesin dengan data Checklist Control periode 1 s.d 5
         $grid = [];
         foreach ($daftarMesin as $m) {
             $idMesin = (int) $m['id_mesin'];
@@ -99,7 +99,7 @@ class CeklisKontrolModel extends Model
     }
 
     /**
-     * Get Ceklis Kontrol ready for Leader approval (100% checked, but not approved yet)
+     * Get Checklist Control ready for Leader approval (100% checked, but not approved yet)
      */
     public function getPendingApprovalsForLeader(string $lokasi, string $line, string $bulanTahun): array
     {
@@ -157,7 +157,7 @@ class CeklisKontrolModel extends Model
     }
 
     /**
-     * Get Ceklis Kontrol ready for Section Head approval
+     * Get Checklist Control ready for Section Head approval
      */
     public function getPendingApprovalsForSHead(string $role, string $bulanTahun = null): array
     {
@@ -180,3 +180,4 @@ class CeklisKontrolModel extends Model
         return $builder->get()->getResultArray();
     }
 }
+

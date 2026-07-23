@@ -129,7 +129,7 @@ class TransaksiCheckModel extends Model
      */
     public function getDetailTransaksi(int $idTransaksi): ?array
     {
-        return $this->select('transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, approver_l1.nama as approver_l1_nama, approver_l2.nama as approver_l2_nama, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.serial_nomor, transaksi_overhaul.bar_feeder_type, transaksi_overhaul.support_pic')
+        return $this->select('transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, approver_l1.nama as approver_l1_nama, approver_l2.nama as approver_l2_nama, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.serial_nomor, transaksi_overhaul.bar_feeder_type, transaksi_overhaul.support_pic, transaksi_overhaul.note_recommendation')
                     ->join('users', 'users.id = transaksi_check.id_user')
                     ->join('users as approver', 'approver.id = transaksi_check.approved_by', 'left')
                     ->join('users as approver_l1', 'approver_l1.id = transaksi_check.approval_l1_by', 'left')
@@ -145,7 +145,7 @@ class TransaksiCheckModel extends Model
      */
     public function getLaporanDurasi(?string $lokasi = null): array
     {
-        $builder = $this->select("transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.line, master_mesin.lokasi as lokasi_mesin, TIMESTAMPDIFF(SECOND, transaksi_check.waktu_mulai, transaksi_check.waktu_selesai) as durasi_detik, transaksi_overhaul.bar_feeder_type, transaksi_overhaul.support_pic")
+        $builder = $this->select("transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.line, master_mesin.lokasi as lokasi_mesin, TIMESTAMPDIFF(SECOND, transaksi_check.waktu_mulai, transaksi_check.waktu_selesai) as durasi_detik, transaksi_overhaul.bar_feeder_type, transaksi_overhaul.support_pic, transaksi_overhaul.note_recommendation")
                     ->join('users', 'users.id = transaksi_check.id_user')
                     ->join('users as approver', 'approver.id = transaksi_check.approved_by', 'left')
                     ->join('master_mesin', 'master_mesin.id_mesin = transaksi_check.id_mesin')

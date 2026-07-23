@@ -48,6 +48,26 @@
              value="<?= esc(old('bar_feeder_type', $mesin['bar_feeder_type'] ?? '')) ?>">
       <div class="form-text small">Diperlukan untuk otomatisasi form Overhaul. Biarkan kosong jika tidak memiliki Bar Feeder.</div>
     </div>
+    <div class="mb-4">
+      <label class="form-label text-primary fw-semibold">Jenis (Opsional)</label>
+      <select name="jenis" class="form-select border-primary bg-primary bg-opacity-10">
+        <option value="">-- Standar --</option>
+        <?php 
+          $jenisVal = old('jenis', $mesin['jenis'] ?? '');
+          $categories = [
+              'KASAHARA MILLING', 'KASAHARA SLOTHING', 'THREAD', 'KASAHARA TAPPING', 
+              'DOUBLE MILLING', 'MILLING', 'DOUBLE CENTER DRILL', 'OSL', 
+              'KNURLING', 'BROTHER', 'BURNISHING', 'BUFFING', 'CENTERING GRINDING'
+          ];
+          foreach ($categories as $cat) {
+              $selected = $jenisVal === $cat ? 'selected' : '';
+              echo "<option value=\"{$cat}\" {$selected}>{$cat}</option>";
+          }
+        ?>
+      </select>
+      <div class="form-text small">Pilih jenis form agar saat scan QR otomatis diarahkan ke form yang tepat. (MFG 2)</div>
+    </div>
+
 
     <button type="submit" class="btn btn-primary">Simpan</button>
     <a href="<?= site_url('admin/mesin') ?>" class="btn btn-outline-secondary">Batal</a>

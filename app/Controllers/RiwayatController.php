@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Models\TransaksiCheckDetailModel;
 use App\Models\TransaksiCheckModel;
 use App\Models\MesinModel;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 class RiwayatController extends BaseController
 {
@@ -165,6 +167,50 @@ class RiwayatController extends BaseController
         ]);
     }
 
+    /**
+     * Download PDF untuk Riwayat
+     */
+    public function downloadPdf(int $id)
+    {
+        $transaksiModel = new TransaksiCheckModel();
+        $header         = $transaksiModel->getDetailTransaksi($id);
+
+        if (! $header) {
+            return redirect()->to('/riwayat')->with('error', 'Transaksi tidak ditemukan.');
+        }
+
+        $detailModel = new TransaksiCheckDetailModel();
+        $details     = $detailModel->getDetailByTransaksi($id);
+        $details     = $detailModel->calculateRowspans($details, $header['jenis_check']);
+
+        $durasiDetik = null;
+        if (! empty($header['waktu_mulai']) && ! empty($header['waktu_selesai'])) {
+            $durasiDetik = strtotime($header['waktu_selesai']) - strtotime($header['waktu_mulai']);
+        }
+
+        // Render HTML
+        $html = view('riwayat/detail_pdf', [
+            'title'       => 'Detail Pengecekan',
+            'header'      => $header,
+            'details'     => $details,
+            'durasiDetik' => $durasiDetik,
+        ]);
+
+        $options = new Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', true);
+        $options->set('defaultFont', 'DejaVu Sans');
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $filename = 'Laporan_' . ($header['jenis_check'] === 'Preventive' ? 'Checklist' : 'Inspection') . '_' . $header['no_mesin'] . '_' . date('Ymd', strtotime($header['waktu_mulai'])) . '.pdf';
+
+        $dompdf->stream($filename, ["Attachment" => true]);
+        exit();
+    }
 
     /**
      * GET /riwayat/edit/(:num)
@@ -227,6 +273,7 @@ class RiwayatController extends BaseController
             if ($overhaul) {
                 $data['barFeederType'] = $overhaul['bar_feeder_type'];
                 $data['supportPic'] = $overhaul['support_pic'];
+                $data['noteRecommendation'] = $overhaul['note_recommendation'];
             }
         }
 
@@ -257,7 +304,7 @@ class RiwayatController extends BaseController
 
         if (strtolower($header['jenis_check']) === 'overhaul') {
             $rules['bar_feeder_type'] = 'permit_empty|string';
-            $rules['support_pic']     = 'permit_empty|string';
+            $rules['support_pic.*']   = 'permit_empty|string';
         }
 
         if (! $this->validate($rules)) {
@@ -329,24 +376,34 @@ class RiwayatController extends BaseController
         // 4. Update Overhaul Table
         if (strtolower($header['jenis_check']) === 'overhaul') {
             $barFeederType = $this->request->getPost('bar_feeder_type');
-            $supportPic    = $this->request->getPost('support_pic');
+            $rawSupport    = $this->request->getPost('support_pic');
+            
+            $supportStr = null;
+            if (is_array($rawSupport)) {
+                $filtered = array_filter(array_map('trim', $rawSupport));
+                if (!empty($filtered)) {
+                    $supportStr = implode(', ', $filtered);
+                }
+            }
             
             $existing = $db->table('transaksi_overhaul')->where('id_transaksi', $id)->get()->getRowArray();
             if ($existing) {
                 $db->table('transaksi_overhaul')->where('id_transaksi', $id)->update([
-                    'bar_feeder_type' => $barFeederType ?: null,
-                    'support_pic'     => $supportPic ?: null,
+                    'bar_feeder_type'     => $barFeederType ?: null,
+                    'support_pic'         => $supportStr,
+                    'note_recommendation' => $this->request->getPost('note_recommendation') ?: null,
                 ]);
             } else {
                 $db->table('transaksi_overhaul')->insert([
-                    'id_transaksi'    => $id,
-                    'bar_feeder_type' => $barFeederType ?: null,
-                    'support_pic'     => $supportPic ?: null,
+                    'id_transaksi'        => $id,
+                    'bar_feeder_type'     => $barFeederType ?: null,
+                    'support_pic'         => $supportStr,
+                    'note_recommendation' => $this->request->getPost('note_recommendation') ?: null,
                 ]);
             }
         }
 
-        // 5. Update Ceklis Kontrol (jika preventive)
+        // 5. Update Checklist Control (jika preventive)
         if (strtolower($header['jenis_check']) === 'preventive' || strtolower($header['jenis_check']) === 'checklist report') {
             // Re-calculate
             $combinedUlasan = [];
@@ -569,7 +626,7 @@ class RiwayatController extends BaseController
         // 1. Update status
         $transaksiModel->update($idTransaksi, $updateData);
 
-        // Jika sudah Final (Approved), barulah proses Laporan Abnormal & Ceklis Kontrol
+        // Jika sudah Final (Approved), barulah proses Laporan Abnormal & Checklist Control
         if ($newStatus === 'Approved') {
 
         // 2. Fetch details for laporan_abnormal
@@ -614,7 +671,7 @@ class RiwayatController extends BaseController
             }
         }
 
-        // 3. Simpan atau update Ceklis Kontrol jika jenisnya adalah Preventive
+        // 3. Simpan atau update Checklist Control jika jenisnya adalah Preventive
         $jenisSlug = strtolower(str_replace(' ', '-', $transaksi['jenis_check']));
         if ($jenisSlug === 'preventive' || $jenisSlug === 'checklist-report') {
             $kategoriName = $transaksi['kategori'];
@@ -734,10 +791,11 @@ class RiwayatController extends BaseController
         }
 
         if ($newStatus === 'Approved') {
-            return redirect()->back()->with('success', 'Laporan berhasil disetujui sepenuhnya. Data kini masuk ke Ceklis Kontrol dan Laporan Abnormal jika ada.');
+            return redirect()->back()->with('success', 'Laporan berhasil disetujui sepenuhnya. Data kini masuk ke Checklist Control dan Laporan Abnormal jika ada.');
         } else {
             return redirect()->back()->with('success', 'Laporan berhasil disetujui (Tahap: ' . $newStatus . '). Menunggu persetujuan selanjutnya.');
         }
     }
 
 }
+
