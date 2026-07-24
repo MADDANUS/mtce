@@ -4,6 +4,9 @@
   .form-header-box { background:#fff; border:1px solid #dee2e6; border-radius:.5rem; }
   .keterangan-box { background:#fff; border:1px solid #dee2e6; border-radius:.5rem; }
   .keterangan-box table td { padding:.25rem .5rem; }
+
+  /* Memaksa tabel agar tidak menyusut terlalu kecil di layar HP sehingga bisa digeser (swipe) */
+  .checklist-table { min-width: 850px; }
 </style>
 
 <div class="page-header d-flex align-items-center">
@@ -27,7 +30,7 @@ $isEdit = $isEdit ?? false;
 $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("checklist/{$lokasiSlug}/{$jenisSlug}/store");
 ?>
 
-<form action="<?= $editUrl ?>" method="post">
+<form id="checklistForm" action="<?= $editUrl ?>" method="post" novalidate>
   <?= csrf_field() ?>
 
   <!-- HEADER FORM: Mesin, Staff, Waktu Mulai -->
@@ -95,217 +98,320 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
           </div>
         </div>
 
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const selectMesin = document.getElementById('id_mesin');
-            const inputBarFeeder = document.getElementById('barFeederInput');
-            const additionalFields = document.getElementById('overhaulAdditionalFields');
-            
-            function updateFields() {
-                if (selectMesin.value && selectMesin.value !== "") {
-                    additionalFields.classList.remove('d-none');
-                    if(inputBarFeeder && selectMesin.selectedIndex > 0) {
-                        const selectedOption = selectMesin.options[selectMesin.selectedIndex];
-                        const barFeeder = selectedOption.getAttribute('data-bar-feeder');
-                        inputBarFeeder.value = barFeeder || '';
-                    }
-                } else {
-                    additionalFields.classList.add('d-none');
-                    if(inputBarFeeder) inputBarFeeder.value = '';
-                }
-            }
-
-            selectMesin.addEventListener('change', updateFields);
-            
-            if (selectMesin.value) {
-                updateFields();
-            }
-        });
-        </script>
       <?php endif; ?>
     </div>
   </div>
 
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+      const selectMesin = document.getElementById('id_mesin');
+      if (!selectMesin) return;
+
+      const inputBarFeeder = document.getElementById('barFeederInput');
+      const additionalFields = document.getElementById('overhaulAdditionalFields');
+
+      function updateFields() {
+          if (additionalFields) {
+              if (selectMesin.value && selectMesin.value !== "") {
+                  additionalFields.classList.remove('d-none');
+                  if (inputBarFeeder && selectMesin.selectedIndex > 0) {
+                      const selectedOption = selectMesin.options[selectMesin.selectedIndex];
+                      const barFeeder = selectedOption.getAttribute('data-bar-feeder');
+                      inputBarFeeder.value = barFeeder || '';
+                  }
+              } else {
+                  additionalFields.classList.add('d-none');
+                  if (inputBarFeeder) inputBarFeeder.value = '';
+              }
+          }
+      }
+
+      function checkDuplicateOnChange() {
+          const idMesin = selectMesin.value;
+          if (!idMesin) return;
+
+          const jenisCheck = "<?= esc($jenisSlug) ?>";
+          const kategori  = "<?= esc($categorySlug ?? '') ?>";
+
+          fetch('<?= site_url("checklist/check-duplicate") ?>', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  'X-Requested-With': 'XMLHttpRequest'
+              },
+              body: 'id_mesin=' + encodeURIComponent(idMesin)
+                    + '&jenis_check=' + encodeURIComponent(jenisCheck)
+                    + '&kategori='   + encodeURIComponent(kategori)
+          })
+          .then(res => {
+              if (!res.ok) throw new Error('HTTP ' + res.status);
+              return res.json();
+          })
+          .then(data => {
+              if (data.duplicate) {
+                  Swal.fire({
+                      icon: 'warning',
+                      title: 'Sudah Pernah Dicek!',
+                      html: `
+                          <p>Mesin ini sudah pernah dilakukan pengecekan <strong>${data.kategori || jenisCheck}</strong> pada bulan ini.</p>
+                          <table class="table table-sm table-bordered mt-2 text-start" style="font-size:0.9rem;">
+                              <tr><td class="fw-semibold" style="width:40%">Tanggal & Waktu</td><td>${data.tanggal || '-'}</td></tr>
+                              <tr><td class="fw-semibold">PIC</td><td>${data.pic || '-'}</td></tr>
+                          </table>
+                          <p class="text-muted mt-2" style="font-size:0.85rem;">Apakah Anda yakin ingin mengisi form pengecekan lagi?</p>
+                      `,
+                      showCancelButton: true,
+                      confirmButtonText: 'Ya, Lanjutkan',
+                      cancelButtonText: 'Batal',
+                      confirmButtonColor: '#0d6efd',
+                      cancelButtonColor: '#dc3545',
+                      allowOutsideClick: false
+                  }).then(function(result) {
+                      if (!result.isConfirmed) {
+                          if (!selectMesin.disabled) {
+                              if (selectMesin.tomselect) {
+                                  selectMesin.tomselect.clear(true);
+                              } else {
+                                  selectMesin.value = '';
+                              }
+                          } else {
+                              window.location.href = '<?= site_url("checklist") ?>';
+                          }
+                      }
+                  });
+              }
+          })
+          .catch(function(err) {
+              console.error('Duplicate check error:', err);
+          });
+      }
+
+      // TomSelect menggantikan <select> asli — event change biasa tidak aktif.
+      // Kita harus tunggu TomSelect selesai init dulu.
+      function bindEvents() {
+          if (selectMesin.tomselect) {
+              // Lepas listener lama supaya tidak dobel
+              selectMesin.tomselect.off('change');
+              selectMesin.tomselect.on('change', function(value) {
+                  updateFields();
+                  if (value) checkDuplicateOnChange();
+              });
+          } else {
+              selectMesin.addEventListener('change', function() {
+                  updateFields();
+                  checkDuplicateOnChange();
+              });
+          }
+      }
+
+      // Tunggu TomSelect benar-benar selesai init (polling loop, max 3 detik)
+      let _bindAttempts = 0;
+      const _bindInterval = setInterval(function() {
+          _bindAttempts++;
+          if (selectMesin.tomselect) {
+              clearInterval(_bindInterval);
+              bindEvents();
+              // Cek duplikat jika mesin sudah dipilih sejak awal
+              if (selectMesin.value) {
+                  updateFields();
+                  checkDuplicateOnChange();
+              }
+          } else if (_bindAttempts > 30) { // max 3 detik (30 × 100ms)
+              clearInterval(_bindInterval);
+              // Fallback: pakai native change event
+              selectMesin.addEventListener('change', function() {
+                  updateFields();
+                  checkDuplicateOnChange();
+              });
+          }
+      }, 100);
+  });
+  </script>
+
   <div class="row g-3">
     <!-- TABEL CHECKLIST -->
-    <div class="col-lg-9">
+    <div class="col-12 col-lg-9 order-2 order-lg-1" style="overflow: hidden;">
       <?php if (empty($rows)): ?>
         <div class="alert alert-info">Belum ada parameter check yang didefinisikan untuk kategori ini.</div>
       <?php else: ?>
         <?php if (strtolower($jenisSlug) === 'overhaul'): ?>
           <!-- OVERHAUL TABLE -->
-          <table class="table table-bordered align-middle checklist-table bg-white shadow-sm rounded">
-            <thead>
-              <tr>
-                <th style="width:5%;">NO</th>
-                <th colspan="2" style="width:30%;">ITEM CHECK</th>
-                <th style="width:20%;">POINT CHECK</th>
-                <?php if (strtolower($lokasiSlug) !== 'mfg2'): ?>
-                  <th style="width:15%;">STANDAR ITEM</th>
-                <?php endif; ?>
-                <th style="width:12%;">CHECK LIST</th>
-                <th style="<?= strtolower($lokasiSlug) === 'mfg2' ? 'width:33%;' : 'width:18%;' ?>">REMARK</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php 
-                $itemIndex = 0;
-                $perPage = 49;
-              ?>
-              <?php foreach ($rows as $r): ?>
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle checklist-table bg-white shadow-sm rounded">
+              <thead>
+                <tr>
+                  <th style="width:5%;">NO</th>
+                  <th colspan="2" style="width:30%;">ITEM CHECK</th>
+                  <th style="width:20%;">POINT CHECK</th>
+                  <?php if (strtolower($lokasiSlug) !== 'mfg2'): ?>
+                    <th style="width:15%;">STANDAR ITEM</th>
+                  <?php endif; ?>
+                  <th style="width:12%;">CHECK LIST</th>
+                  <th style="<?= strtolower($lokasiSlug) === 'mfg2' ? 'width:33%;' : 'width:18%;' ?>">REMARK</th>
+                </tr>
+              </thead>
+              <tbody>
                 <?php 
-                  $itemIndex++;
-                  if (strtolower($categorySlug) === 'kasahara-tapping') {
-                      if ($itemIndex <= 32) $pageNo = 1;
-                      elseif ($itemIndex <= 68) $pageNo = 2;
-                      else $pageNo = 3;
-                  } elseif (strtolower($categorySlug) === 'double-milling') {
-                      if ($itemIndex <= 36) $pageNo = 1;
-                      else $pageNo = 2;
-                  } elseif (strtolower($categorySlug) === 'double-center-drill') {
-                      if ($itemIndex <= 40) $pageNo = 1;
-                      else $pageNo = 2;
-                  } elseif (strtolower($categorySlug) === 'centering-grinding') {
-                      if ($itemIndex <= 32) $pageNo = 1;
-                      elseif ($itemIndex <= 72) $pageNo = 2;
-                      else $pageNo = 3;
-                  } else {
-                      $pageNo = ceil($itemIndex / $perPage);
-                  }
-                  $rowCategory = $r['kategori'] ?? ''; 
+                  $itemIndex = 0;
+                  $perPage = 49;
                 ?>
-                <?php if ($r['is_section_start']): ?>
-                  <tr class="section-header page-row-mfg2" data-page="<?= $pageNo ?>" data-kategori="<?= esc($rowCategory) ?>" style="background-color: #ffffff; font-weight: 700;">
-                    <td colspan="7" class="py-2 px-3" style="color: #000000; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase;">
-                      <?= esc($r['dynamic_section_header']) ?>
+                <?php foreach ($rows as $r): ?>
+                  <?php 
+                    $itemIndex++;
+                    if (strtolower($categorySlug) === 'kasahara-tapping') {
+                        if ($itemIndex <= 32) $pageNo = 1;
+                        elseif ($itemIndex <= 68) $pageNo = 2;
+                        else $pageNo = 3;
+                    } elseif (strtolower($categorySlug) === 'double-milling') {
+                        if ($itemIndex <= 36) $pageNo = 1;
+                        else $pageNo = 2;
+                    } elseif (strtolower($categorySlug) === 'double-center-drill') {
+                        if ($itemIndex <= 40) $pageNo = 1;
+                        else $pageNo = 2;
+                    } elseif (strtolower($categorySlug) === 'centering-grinding') {
+                        if ($itemIndex <= 32) $pageNo = 1;
+                        elseif ($itemIndex <= 72) $pageNo = 2;
+                        else $pageNo = 3;
+                    } else {
+                        $pageNo = ceil($itemIndex / $perPage);
+                    }
+                    $rowCategory = $r['kategori'] ?? ''; 
+                  ?>
+                  <?php if ($r['is_section_start']): ?>
+                    <tr class="section-header page-row-mfg2" data-page="<?= $pageNo ?>" data-kategori="<?= esc($rowCategory) ?>" style="background-color: #ffffff; font-weight: 700;">
+                      <td colspan="7" class="py-2 px-3" style="color: #000000; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase;">
+                        <?= esc($r['dynamic_section_header']) ?>
+                      </td>
+                    </tr>
+                  <?php endif; ?>
+                  <tr class="page-row-mfg2" data-page="<?= $pageNo ?>" data-kategori="<?= esc($rowCategory) ?>">
+                    <?php if ($r['show_no']): ?>
+                      <td class="text-center fw-semibold text-muted" rowspan="<?= (int) $r['no_rowspan'] ?>"><?= esc($r['dynamic_no']) ?></td>
+                    <?php endif; ?>
+
+                    <?php if ($r['sub_item_check']): ?>
+                      <?php if ($r['show_bagian']): ?>
+                        <td class="bagian-cell" rowspan="<?= (int) $r['bagian_rowspan'] ?>"><?= esc($r['bagian_check']) ?></td>
+                      <?php endif; ?>
+                      <td><?= esc($r['sub_item_check']) ?></td>
+                    <?php else: ?>
+                      <td class="bagian-cell" colspan="2"><?= esc($r['bagian_check']) ?></td>
+                    <?php endif; ?>
+
+                    <?php if ($r['show_point']): ?>
+                      <td rowspan="<?= (int) $r['point_rowspan'] ?>"><?= esc($r['point_check']) ?></td>
+                    <?php endif; ?>
+
+                    <?php if (strtolower($lokasiSlug) !== 'mfg2'): ?>
+                      <?php if ($r['show_standard']): ?>
+                        <td rowspan="<?= (int) $r['standard_rowspan'] ?>"><?= nl2br(esc($r['standard_check'])) ?></td>
+                      <?php endif; ?>
+                    <?php endif; ?>
+
+                    <td>
+                      <?php
+                      $h = $detailsMap[$r['id_parameter']]['hasil_check'] ?? '';
+                      $u = $detailsMap[$r['id_parameter']]['ulasan'] ?? '';
+                      ?>
+                      <div class="d-flex">
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio"
+                                 name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
+                                 id="v_<?= (int) $r['id_parameter'] ?>" value="V" <?= $h === 'V' ? 'checked' : '' ?> required>
+                          <label class="form-check-label text-success fw-bold" for="v_<?= (int) $r['id_parameter'] ?>">V</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio"
+                                 name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
+                                 id="d_<?= (int) $r['id_parameter'] ?>" value="Δ" <?= $h === 'Δ' ? 'checked' : '' ?> required>
+                          <label class="form-check-label text-warning fw-bold" for="d_<?= (int) $r['id_parameter'] ?>">Δ</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio"
+                                 name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
+                                 id="x_<?= (int) $r['id_parameter'] ?>" value="X" <?= $h === 'X' ? 'checked' : '' ?> required>
+                          <label class="form-check-label text-danger fw-bold" for="x_<?= (int) $r['id_parameter'] ?>">X</label>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td>
+                      <textarea class="form-control form-control-sm"
+                                name="ulasan[<?= (int) $r['id_parameter'] ?>]"
+                                placeholder="Tulis ulasan/keterangan..."
+                                rows="1"
+                                style="min-height: 38px; resize: vertical; font-size: 0.85rem;"><?= esc($u) ?></textarea>
                     </td>
                   </tr>
-                <?php endif; ?>
-                <tr class="page-row-mfg2" data-page="<?= $pageNo ?>" data-kategori="<?= esc($rowCategory) ?>">
-                  <?php if ($r['show_no']): ?>
-                    <td class="text-center fw-semibold text-muted" rowspan="<?= (int) $r['no_rowspan'] ?>"><?= esc($r['dynamic_no']) ?></td>
-                  <?php endif; ?>
-
-                  <?php if ($r['sub_item_check']): ?>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php else: ?>
+          <!-- PREVENTIVE TABLE -->
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle checklist-table bg-white shadow-sm rounded">
+              <thead>
+                <tr>
+                  <th style="width:15%;">BAGIAN CHECK</th>
+                  <th style="width:20%;">POINT CHECK</th>
+                  <th style="width:20%;">STANDARD CHECK</th>
+                  <th style="width:15%;">CHECK LIST</th>
+                  <th style="width:30%;">ULASAN</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($rows as $r): ?>
+                  <tr>
                     <?php if ($r['show_bagian']): ?>
                       <td class="bagian-cell" rowspan="<?= (int) $r['bagian_rowspan'] ?>"><?= esc($r['bagian_check']) ?></td>
                     <?php endif; ?>
-                    <td><?= esc($r['sub_item_check']) ?></td>
-                  <?php else: ?>
-                    <td class="bagian-cell" colspan="2"><?= esc($r['bagian_check']) ?></td>
-                  <?php endif; ?>
 
-                  <?php if ($r['show_point']): ?>
-                    <td rowspan="<?= (int) $r['point_rowspan'] ?>"><?= esc($r['point_check']) ?></td>
-                  <?php endif; ?>
-
-                  <?php if (strtolower($lokasiSlug) !== 'mfg2'): ?>
-                    <?php if ($r['show_standard']): ?>
-                      <td rowspan="<?= (int) $r['standard_rowspan'] ?>"><?= nl2br(esc($r['standard_check'])) ?></td>
+                    <?php if ($r['show_point']): ?>
+                      <td rowspan="<?= (int) $r['point_rowspan'] ?>"><?= esc($r['point_check']) ?></td>
                     <?php endif; ?>
-                  <?php endif; ?>
 
-                  <td>
-                    <?php
-                    $h = $detailsMap[$r['id_parameter']]['hasil_check'] ?? '';
-                    $u = $detailsMap[$r['id_parameter']]['ulasan'] ?? '';
-                    ?>
-                    <div class="d-flex">
-                      <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio"
-                               name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
-                               id="v_<?= (int) $r['id_parameter'] ?>" value="V" <?= $h === 'V' ? 'checked' : '' ?> required>
-                        <label class="form-check-label text-success fw-bold" for="v_<?= (int) $r['id_parameter'] ?>">V</label>
-                      </div>
-                      <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio"
-                               name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
-                               id="d_<?= (int) $r['id_parameter'] ?>" value="Δ" <?= $h === 'Δ' ? 'checked' : '' ?> required>
-                        <label class="form-check-label text-warning fw-bold" for="d_<?= (int) $r['id_parameter'] ?>">Δ</label>
-                      </div>
-                      <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio"
-                               name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
-                               id="x_<?= (int) $r['id_parameter'] ?>" value="X" <?= $h === 'X' ? 'checked' : '' ?> required>
-                        <label class="form-check-label text-danger fw-bold" for="x_<?= (int) $r['id_parameter'] ?>">X</label>
-                      </div>
-                    </div>
-                  </td>
+                    <td><?= esc($r['standard_check']) ?></td>
 
-                  <td>
-                    <textarea class="form-control form-control-sm"
-                              name="ulasan[<?= (int) $r['id_parameter'] ?>]"
-                              placeholder="Tulis ulasan/keterangan..."
-                              rows="1"
-                              style="min-height: 38px; resize: vertical; font-size: 0.85rem;"><?= esc($u) ?></textarea>
-                  </td>
-                </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
-        <?php else: ?>
-          <!-- PREVENTIVE TABLE -->
-          <table class="table table-bordered align-middle checklist-table bg-white shadow-sm rounded">
-            <thead>
-              <tr>
-                <th style="width:15%;">BAGIAN CHECK</th>
-                <th style="width:20%;">POINT CHECK</th>
-                <th style="width:20%;">STANDARD CHECK</th>
-                <th style="width:15%;">CHECK LIST</th>
-                <th style="width:30%;">ULASAN</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php foreach ($rows as $r): ?>
-                <tr>
-                  <?php if ($r['show_bagian']): ?>
-                    <td class="bagian-cell" rowspan="<?= (int) $r['bagian_rowspan'] ?>"><?= esc($r['bagian_check']) ?></td>
-                  <?php endif; ?>
-
-                  <?php if ($r['show_point']): ?>
-                    <td rowspan="<?= (int) $r['point_rowspan'] ?>"><?= esc($r['point_check']) ?></td>
-                  <?php endif; ?>
-
-                  <td><?= esc($r['standard_check']) ?></td>
-
-                  <td>
-                    <?php
-                    $h = $detailsMap[$r['id_parameter']]['hasil_check'] ?? '';
-                    $u = $detailsMap[$r['id_parameter']]['ulasan'] ?? '';
-                    ?>
-                    <div class="d-flex">
-                      <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio"
-                               name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
-                               id="v_<?= (int) $r['id_parameter'] ?>" value="V" <?= $h === 'V' ? 'checked' : '' ?> required>
-                        <label class="form-check-label text-success fw-bold" for="v_<?= (int) $r['id_parameter'] ?>">V</label>
+                    <td>
+                      <?php
+                      $h = $detailsMap[$r['id_parameter']]['hasil_check'] ?? '';
+                      $u = $detailsMap[$r['id_parameter']]['ulasan'] ?? '';
+                      ?>
+                      <div class="d-flex">
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio"
+                                 name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
+                                 id="v_<?= (int) $r['id_parameter'] ?>" value="V" <?= $h === 'V' ? 'checked' : '' ?> required>
+                          <label class="form-check-label text-success fw-bold" for="v_<?= (int) $r['id_parameter'] ?>">V</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio"
+                                 name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
+                                 id="d_<?= (int) $r['id_parameter'] ?>" value="Δ" <?= $h === 'Δ' ? 'checked' : '' ?> required>
+                          <label class="form-check-label text-warning fw-bold" for="d_<?= (int) $r['id_parameter'] ?>">Δ</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio"
+                                 name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
+                                 id="x_<?= (int) $r['id_parameter'] ?>" value="X" <?= $h === 'X' ? 'checked' : '' ?> required>
+                          <label class="form-check-label text-danger fw-bold" for="x_<?= (int) $r['id_parameter'] ?>">X</label>
+                        </div>
                       </div>
-                      <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio"
-                               name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
-                               id="d_<?= (int) $r['id_parameter'] ?>" value="Δ" <?= $h === 'Δ' ? 'checked' : '' ?> required>
-                        <label class="form-check-label text-warning fw-bold" for="d_<?= (int) $r['id_parameter'] ?>">Δ</label>
-                      </div>
-                      <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio"
-                               name="hasil_check[<?= (int) $r['id_parameter'] ?>]"
-                               id="x_<?= (int) $r['id_parameter'] ?>" value="X" <?= $h === 'X' ? 'checked' : '' ?> required>
-                        <label class="form-check-label text-danger fw-bold" for="x_<?= (int) $r['id_parameter'] ?>">X</label>
-                      </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td>
-                    <textarea class="form-control form-control-sm"
-                              name="ulasan[<?= (int) $r['id_parameter'] ?>]"
-                              placeholder="Tulis ulasan/keterangan..."
-                              rows="1"
-                              style="min-height: 38px; resize: vertical; font-size: 0.85rem;"><?= esc($u) ?></textarea>
-                  </td>
-                </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
+                    <td>
+                      <textarea class="form-control form-control-sm"
+                                name="ulasan[<?= (int) $r['id_parameter'] ?>]"
+                                placeholder="Tulis ulasan/keterangan..."
+                                rows="1"
+                                style="min-height: 38px; resize: vertical; font-size: 0.85rem;"><?= esc($u) ?></textarea>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
         <?php endif; ?>
       <?php endif; ?>
 
@@ -318,7 +424,7 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
     </div>
 
     <!-- KETERANGAN CHECK LIST -->
-    <div class="col-lg-3">
+    <div class="col-12 col-lg-3 order-1 order-lg-2">
       <div class="keterangan-box p-3 shadow-sm mb-3">
         <div class="fw-semibold mb-2 text-dark border-bottom pb-2">KETERANGAN CHECK LIST</div>
         <table class="table table-sm mb-0">
@@ -704,6 +810,179 @@ $editUrl = $isEdit ? site_url("riwayat/update/{$idTransaksi}") : site_url("check
       <?php endif; ?>
     </div>
   <?php endif; ?>
+
+  <script>
+    function validateGlobalHeader() {
+        let missingHeader = [];
+        const idMesin = document.getElementById('id_mesin');
+        const namaPic = document.querySelector('select[name="nama_pic"]');
+
+        if (idMesin && !idMesin.value) missingHeader.push('No Mesin');
+        if (namaPic && !namaPic.value) missingHeader.push('PIC');
+
+        if (missingHeader.length > 0) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Data Belum Lengkap!',
+                    text: 'Mohon isi ' + missingHeader.join(' dan ') + ' terlebih dahulu di bagian atas form.',
+                    confirmButtonText: 'Tutup',
+                    returnFocus: false
+                }).then(() => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            } else {
+                alert('Mohon isi ' + missingHeader.join(' dan ') + ' terlebih dahulu di bagian atas form.');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            return false;
+        }
+        return true;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('checklistForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // 1. Check Header First
+                if (!validateGlobalHeader()) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                // 2. Check all checklist rows
+                let missingItems = [];
+                let firstUnchecked = null;
+                let isValid = true;
+                let currentNo = '';
+                let currentBagian = '';
+
+                const tableRows = form.querySelectorAll('tr');
+                tableRows.forEach(row => {
+                    const noCell = row.querySelector('.text-muted');
+                    if (noCell) currentNo = noCell.innerText.trim();
+                    
+                    const bagianCell = row.querySelector('.bagian-cell');
+                    if (bagianCell) currentBagian = bagianCell.innerText.trim();
+                    
+                    const radios = row.querySelectorAll('input[type="radio"]');
+                    if (radios.length > 0) {
+                        const isChecked = row.querySelector('input[type="radio"]:checked');
+                        if (!isChecked) {
+                            isValid = false;
+                            row.classList.add('table-danger');
+                            if (!firstUnchecked) firstUnchecked = row;
+                            
+                            let itemName = currentNo;
+                            if (currentBagian) itemName += ' ' + currentBagian;
+                            missingItems.push(itemName.trim() || 'Item tanpa nama');
+                        } else {
+                            row.classList.remove('table-danger');
+                        }
+                    }
+                });
+
+                if (!isValid && firstUnchecked) {
+                    e.preventDefault(); // Stop submission
+
+                    // Switch page/view if firstUnchecked is on another page
+                    if (firstUnchecked.hasAttribute('data-kategori') && typeof currentView !== 'undefined' && typeof updateView === 'function') {
+                        let targetView = firstUnchecked.getAttribute('data-kategori');
+                        if (targetView && targetView !== currentView) {
+                            currentView = targetView;
+                            updateView();
+                        }
+                    }
+                    
+                    if (firstUnchecked.hasAttribute('data-page') && typeof currentPage !== 'undefined' && typeof updatePageView === 'function') {
+                        let targetPage = parseInt(firstUnchecked.getAttribute('data-page'));
+                        if (!isNaN(targetPage) && targetPage !== currentPage) {
+                            currentPage = targetPage;
+                            updatePageView();
+                        }
+                    }
+
+                    let uniqueMissing = [...new Set(missingItems)];
+                    let missingHtml = '<ul class="text-start" style="max-height: 200px; overflow-y: auto; font-size: 0.9rem;">';
+                    uniqueMissing.forEach(item => {
+                        missingHtml += '<li>' + item + '</li>';
+                    });
+                    missingHtml += '</ul>';
+                    
+                    if (typeof Swal !== 'undefined') {
+                        firstUnchecked.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Data Belum Lengkap!',
+                            html: '<p>Terdapat isian yang belum diisi sebelum disubmit:</p>' + missingHtml,
+                            confirmButtonText: 'Tutup',
+                            returnFocus: false
+                        });
+                    } else {
+                        firstUnchecked.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        alert('Mohon lengkapi isian berikut sebelum submit:\n\n' + uniqueMissing.join('\n'));
+                    }
+                } else {
+                    // Validasi lolos, lakukan pengecekan duplikasi ke server
+                    e.preventDefault(); // Tahan pengiriman form
+
+                    const idMesin = document.getElementById('id_mesin').value;
+                    const jenisCheck = "<?= esc($jenisSlug) ?>";
+                    const kategori = "<?= esc($categorySlug ?? '') ?>";
+                    
+                    if (!idMesin) {
+                        HTMLFormElement.prototype.submit.call(form);
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: 'Memeriksa Data...',
+                        text: 'Mohon tunggu sebentar',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    fetch('<?= site_url("checklist/check-duplicate") ?>', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: 'id_mesin=' + encodeURIComponent(idMesin) + '&jenis_check=' + encodeURIComponent(jenisCheck) + '&kategori=' + encodeURIComponent(kategori)
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.duplicate) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Peringatan Duplikasi',
+                                text: 'Mesin ini sudah pernah dilakukan pengecekan (' + data.kategori + ') pada bulan ini. Apakah Anda yakin ingin mensubmit form pengecekan lagi?',
+                                showCancelButton: true,
+                                confirmButtonText: '<i class="bi bi-check-circle me-1"></i> Ya, Lanjutkan',
+                                cancelButtonText: '<i class="bi bi-x-circle me-1"></i> Batal',
+                                confirmButtonColor: '#0d6efd',
+                                cancelButtonColor: '#dc3545'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    HTMLFormElement.prototype.submit.call(form);
+                                }
+                            });
+                        } else {
+                            HTMLFormElement.prototype.submit.call(form);
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Duplicate Check Error (Submit):", err);
+                        // Jika gagal ngecek, biarkan submit
+                        HTMLFormElement.prototype.submit.call(form);
+                    });
+                }
+            });
+        }
+    });
+  </script>
 </form>
 
 <?= view('layout/footer') ?>

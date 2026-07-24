@@ -22,6 +22,9 @@ $routes->get('dashboard', 'DashboardController::index', ['filter' => 'auth']);
 
 // Checklist Dinamis (magang, member, admin bisa buat pengecekan)
 $routes->group('checklist', ['filter' => 'role:admin,magang,member'], static function ($routes) {
+    // 0. API Check Duplicate
+    $routes->post('check-duplicate', 'ChecklistController::checkDuplicate');
+
     // 1. Pilih Lokasi (mfg1 / mfg2)
     $routes->get('/', 'ChecklistController::pilihLokasi');
     
@@ -43,6 +46,7 @@ $routes->group('checklist', ['filter' => 'role:admin,magang,member'], static fun
 // Riwayat & Detail Transaksi (semua role login, scoping data ditangani di controller)
 $routes->group('riwayat', ['filter' => 'auth'], static function ($routes) {
     $routes->get('/', 'RiwayatController::index');
+    $routes->get('redirect-detail', 'RiwayatController::redirectDetail');
     $routes->get('lokasi/(:segment)', 'RiwayatController::lokasi/$1');
     $routes->get('kategori/(:segment)', 'RiwayatController::kategori/$1');
     $routes->get('download-pdf/(:num)', 'RiwayatController::downloadPdf/$1');

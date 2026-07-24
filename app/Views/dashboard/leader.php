@@ -38,6 +38,119 @@
 
 
 
+<?php
+  $roleSession = session()->get('role');
+  $hasPendingOverhaul = !empty($pendingOverhaul);
+  $hasPendingKontrol  = !empty($pendingKontrol);
+?>
+
+<?php if ($hasPendingOverhaul || $hasPendingKontrol): ?>
+<div class="card border-0 border-start border-warning border-4 shadow-sm rounded-4 overflow-hidden mb-4">
+  <div class="card-header bg-warning bg-opacity-10 pt-3 pb-2 px-4 d-flex align-items-center gap-2">
+    <i class="bi bi-bell-fill text-warning fs-5"></i>
+    <h5 class="fw-bold mb-0 text-dark">Menunggu Approval Anda</h5>
+    <?php $totalPending = count($pendingOverhaul) + count($pendingKontrol); ?>
+    <span class="badge bg-warning text-dark ms-auto"><?= $totalPending ?> dokumen</span>
+  </div>
+  <div class="card-body p-4">
+
+    <?php if ($hasPendingOverhaul): ?>
+    <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-clipboard-check me-2 text-primary"></i>Checklist Report / Overhaul</h6>
+    <div class="table-responsive mb-4">
+      <table class="table table-hover align-middle mb-0 border rounded-3 overflow-hidden">
+        <thead class="table-primary">
+          <tr>
+            <th class="ps-3">No Mesin</th>
+            <th>Kategori</th>
+            <th>Tanggal</th>
+            <th>PIC</th>
+            <th>Status Saat Ini</th>
+            <th class="text-end pe-3">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($pendingOverhaul as $po): ?>
+          <tr>
+            <td class="ps-3 fw-semibold"><?= esc($po['no_mesin'] ?? $po['nama_mesin'] ?? '-') ?></td>
+            <td><?= esc($po['kategori'] ?? '-') ?></td>
+            <td class="text-muted small"><?= !empty($po['waktu_mulai']) ? date('d M Y', strtotime($po['waktu_mulai'])) : '-' ?></td>
+            <td><?= esc($po['nama_pic'] ?? '-') ?></td>
+            <td>
+              <?php $st = $po['status'] ?? 'Pending'; ?>
+              <?php if ($st === 'Pending'): ?>
+                <span class="badge bg-warning text-dark">Pending</span>
+              <?php elseif ($st === 'Approved L1'): ?>
+                <span class="badge bg-info text-dark">Approved L1</span>
+              <?php elseif ($st === 'Approved L2'): ?>
+                <span class="badge bg-primary">Approved L2</span>
+              <?php else: ?>
+                <span class="badge bg-secondary"><?= esc($st) ?></span>
+              <?php endif; ?>
+            </td>
+            <td class="text-end pe-3">
+              <a href="<?= site_url('riwayat/' . $po['id_transaksi']) ?>" class="btn btn-sm btn-warning fw-bold rounded-pill px-3">
+                <i class="bi bi-check-circle me-1"></i> Review & Approve
+              </a>
+            </td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+    <?php endif; ?>
+
+    <?php if ($hasPendingKontrol): ?>
+    <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-grid-3x3-gap me-2 text-success"></i>Checklist Control Bulanan</h6>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 border rounded-3 overflow-hidden">
+        <thead class="table-success">
+          <tr>
+            <th class="ps-3">Lokasi</th>
+            <th>Line</th>
+            <th>Kategori</th>
+            <th>Bulan</th>
+            <th>Status Saat Ini</th>
+            <th class="text-end pe-3">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($pendingKontrol as $pk): ?>
+          <tr>
+            <td class="ps-3 fw-semibold"><?= esc($pk['lokasi'] ?? '-') ?></td>
+            <td><?= esc($pk['line'] ?? '-') ?></td>
+            <td><?= esc($pk['kategori'] ?? '-') ?></td>
+            <td class="text-muted small"><?= esc($pk['bulan_tahun'] ?? '-') ?></td>
+            <td>
+              <?php $pks = $pk['status'] ?? 'Pending'; ?>
+              <?php if ($pks === 'Pending'): ?>
+                <span class="badge bg-warning text-dark">Pending</span>
+              <?php elseif ($pks === 'Approved L1'): ?>
+                <span class="badge bg-info text-dark">Approved L1</span>
+              <?php elseif ($pks === 'Approved L2'): ?>
+                <span class="badge bg-primary">Approved L2</span>
+              <?php else: ?>
+                <span class="badge bg-secondary"><?= esc($pks) ?></span>
+              <?php endif; ?>
+            </td>
+            <td class="text-end pe-3">
+              <?php
+                $kontrolUrl = site_url('kontrol') . '?lokasi=' . urlencode($pk['lokasi'] ?? '') . '&line=' . urlencode($pk['line'] ?? '') . '&kategori=' . urlencode($pk['kategori'] ?? '') . '&bulan=' . urlencode($pk['bulan_tahun'] ?? '');
+              ?>
+              <a href="<?= $kontrolUrl ?>" class="btn btn-sm btn-success fw-bold rounded-pill px-3">
+                <i class="bi bi-check-circle me-1"></i> Review & Approve
+              </a>
+            </td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+    <?php endif; ?>
+
+  </div>
+</div>
+<?php endif; ?>
+
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
   <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center">
     <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-history text-primary me-2"></i>Pengecekan Terbaru (Semua PIC)</h5>

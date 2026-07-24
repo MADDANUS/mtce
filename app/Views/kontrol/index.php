@@ -33,14 +33,15 @@
 
   <div class="card-body p-0">
     <div class="table-responsive" style="border: 1px solid var(--border-strong) !important; border-radius: var(--radius);">
-      <table class="table align-middle text-center mb-0 kontrol-table" style="font-size: 0.85rem; border-collapse: collapse !important;">
+      <table class="table align-middle text-center mb-0 kontrol-table paginated-table" data-rows-per-item="2" style="font-size: 0.85rem; border-collapse: collapse !important;">
         <thead>
           <tr>
             <th rowspan="3" style="width: 5%; font-weight:700; vertical-align: middle;">NO</th>
             <th rowspan="3" style="width: 25%; font-weight:700; vertical-align: middle; text-align: left;" class="ps-4">MESIN</th>
             <th colspan="5" style="width: 35%; font-weight:700;">WAKTU</th>
-            <th rowspan="3" style="width: 15%; font-weight:700; vertical-align: middle;">OUT OF PLAN</th>
-            <th rowspan="3" style="width: 20%; font-weight:700; vertical-align: middle; text-align: left;" class="ps-4">ULASAN</th>
+            <th rowspan="3" style="width: 12%; font-weight:700; vertical-align: middle;">OUT OF PLAN</th>
+            <th rowspan="3" style="width: 16%; font-weight:700; vertical-align: middle; text-align: left;" class="ps-4">ULASAN</th>
+            <th rowspan="3" style="width: 7%; font-weight:700; vertical-align: middle;">DETAIL</th>
           </tr>
           <tr>
             <th colspan="5" style="font-weight:700; text-transform: uppercase;">
@@ -123,6 +124,26 @@
                 <!-- Ulasan (Top cell) -->
                 <td class="text-start ps-4 py-2 text-muted text-truncate" style="max-width: 150px; border-bottom: 1px solid #e7e5e4 !important; background-color: #fff;" title="<?= esc($row['ulasan']) ?>">
                   <?= esc($row['ulasan']) ?: '-' ?>
+                </td>
+
+                <!-- Detail (Top cell) -->
+                <td rowspan="2" class="text-center align-middle" style="border-bottom: 2px solid #d6d3d1 !important; background-color: #fff;">
+                  <?php 
+                    $hasCheck = false;
+                    for ($p = 1; $p <= 5; $p++) {
+                      if (!empty($row['periodes'][$p]) && !empty($row['periodes'][$p]['status_check'])) {
+                        $hasCheck = true;
+                        break;
+                      }
+                    }
+                  ?>
+                  <?php if ($hasCheck): ?>
+                    <a href="<?= site_url('riwayat/redirect-detail?id_mesin=' . rawurlencode($m['id_mesin']) . '&line=' . rawurlencode($line) . '&kategori=' . rawurlencode($kategori) . '&bulan=' . rawurlencode($bulan) . '&lokasi=' . rawurlencode($lokasi)) ?>" class="btn btn-sm btn-outline-primary fw-bold" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" title="Lihat Laporan Full">
+                      Detail
+                    </a>
+                  <?php else: ?>
+                    <span class="text-muted">-</span>
+                  <?php endif; ?>
                 </td>
               </tr>
 
@@ -266,7 +287,63 @@
   </div>
 </div>
 
-<!-- CSS Hover Effects & Strict Borders -->
+<?php
+  $role = session()->get('role');
+  $canApproveKontrol = false;
+  if ($role === 'admin' && $approvalStatus !== 'Approved Final') $canApproveKontrol = true;
+  elseif ($role === 'member' && $approvalStatus === 'Pending') $canApproveKontrol = true;
+  elseif ($role === 'sheadprd' && $approvalStatus === 'Approved L1') $canApproveKontrol = true;
+  elseif ($role === 'sheadmtc' && $approvalStatus === 'Approved L2') $canApproveKontrol = true;
+?>
+
+<?php if (session()->getFlashdata('success')): ?>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i><?= session()->getFlashdata('success') ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<?php endif; ?>
+<?php if (session()->getFlashdata('error')): ?>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i><?= session()->getFlashdata('error') ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<?php endif; ?>
+
+<?php if ($canApproveKontrol): ?>
+<div class="card border-success mt-3 mb-3 shadow-sm">
+  <div class="card-body d-flex justify-content-between align-items-center p-3">
+    <div>
+      <h6 class="mb-1 text-dark fw-bold">Setujui Checklist Control Bulanan</h6>
+      <p class="text-muted small mb-0">Klik tombol Approve jika data checklist control sudah diperiksa dan valid.</p>
+    </div>
+    <form action="<?= site_url('kontrol/approve') ?>" method="post" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui Checklist Control ini?');">
+      <?= csrf_field() ?>
+      <input type="hidden" name="lokasi" value="<?= esc($lokasi) ?>">
+      <input type="hidden" name="line" value="<?= esc($line) ?>">
+      <input type="hidden" name="kategori" value="<?= esc($kategori) ?>">
+      <input type="hidden" name="bulan_tahun" value="<?= esc($bulan) ?>">
+      <div class="d-flex align-items-center gap-2">
+        <?php if ($role === 'member'): ?>
+          <select name="pic_line_nama" class="form-select form-select-sm searchable-select" required style="min-width: 200px;">
+            <option value="">-- Pilih PIC Line (Staff) --</option>
+            <?php
+              $picModel = new \App\Models\PicModel();
+              $staffPicList = $picModel->where('role_pic', 'Staff')->findAll();
+              foreach ($staffPicList as $sp):
+            ?>
+              <option value="<?= esc($sp['nama_pic']) ?>"><?= esc($sp['nama_pic']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        <?php endif; ?>
+        <button type="submit" class="btn btn-success px-4 py-2 fw-semibold shadow-sm">
+          <i class="bi bi-check-circle-fill me-2"></i> Approve (<?= esc($role) ?>)
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<?php endif; ?>
+
 <style>
   .kontrol-table {
     border-collapse: collapse !important;

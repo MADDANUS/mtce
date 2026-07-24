@@ -93,8 +93,15 @@ class TransaksiCheckModel extends Model
             $builder->where('transaksi_check.status', $filters['status']);
         }
 
-        if (!empty($filters['tanggal'])) {
-            $builder->where('DATE(transaksi_check.waktu_mulai)', $filters['tanggal']);
+        if (!empty($filters['bulan'])) {
+            $builder->like('transaksi_check.waktu_mulai', $filters['bulan'], 'after');
+        }
+
+        if (!empty($filters['pic'])) {
+            $builder->groupStart()
+                    ->where('users.nama', $filters['pic'])
+                    ->orLike('transaksi_check.nama_pic', $filters['pic'], 'both')
+                    ->groupEnd();
         }
 
         // Dynamic Sorting
@@ -143,7 +150,7 @@ class TransaksiCheckModel extends Model
     /**
      * Laporan durasi pengecekan (analisis efisiensi) untuk Leader/Admin.
      */
-    public function getLaporanDurasi(?string $lokasi = null): array
+    public function getLaporanDurasi(array $filters = []): array
     {
         $builder = $this->select("transaksi_check.*, users.nama as nama_staff, approver.nama as approver_nama, master_mesin.no_mesin, master_mesin.type_mesin, master_mesin.line, master_mesin.lokasi as lokasi_mesin, TIMESTAMPDIFF(SECOND, transaksi_check.waktu_mulai, transaksi_check.waktu_selesai) as durasi_detik, transaksi_overhaul.bar_feeder_type, transaksi_overhaul.support_pic, transaksi_overhaul.note_recommendation")
                     ->join('users', 'users.id = transaksi_check.id_user')
@@ -151,11 +158,50 @@ class TransaksiCheckModel extends Model
                     ->join('master_mesin', 'master_mesin.id_mesin = transaksi_check.id_mesin')
                     ->join('transaksi_overhaul', 'transaksi_overhaul.id_transaksi = transaksi_check.id_transaksi', 'left');
                     
-        if ($lokasi) {
-            $builder->where('master_mesin.lokasi', $lokasi);
+        if (!empty($filters['lokasi'])) {
+            $builder->where('master_mesin.lokasi', $filters['lokasi']);
+        }
+        if (!empty($filters['line'])) {
+            $builder->where('master_mesin.line', $filters['line']);
+        }
+        if (!empty($filters['id_mesin'])) {
+            $builder->where('transaksi_check.id_mesin', (int)$filters['id_mesin']);
+        }
+        if (!empty($filters['jenis_check'])) {
+            $builder->where('transaksi_check.jenis_check', $filters['jenis_check']);
+        }
+        if (!empty($filters['bulan'])) {
+            $builder->like('transaksi_check.waktu_mulai', $filters['bulan'], 'after');
+        }
+        if (!empty($filters['pic'])) {
+            $builder->groupStart()
+                    ->where('users.nama', $filters['pic'])
+                    ->orLike('transaksi_check.nama_pic', $filters['pic'], 'both')
+                    ->groupEnd();
         }
 
-        return $builder->orderBy('transaksi_check.id_transaksi', 'DESC')
+        // Dynamic Sorting
+        $sortBy = $filters['sort_by'] ?? 'id_transaksi';
+        $order  = strtoupper($filters['order'] ?? 'DESC');
+        if (!in_array($order, ['ASC', 'DESC'], true)) {
+            $order = 'DESC';
+        }
+
+        $allowedSortFields = [
+            'id_transaksi' => 'transaksi_check.id_transaksi',
+            'nama_staff'   => 'users.nama',
+            'no_mesin'     => 'master_mesin.no_mesin',
+            'lokasi_mesin' => 'master_mesin.lokasi',
+            'line'         => 'master_mesin.line',
+            'jenis_check'  => 'transaksi_check.jenis_check',
+            'waktu_mulai'  => 'transaksi_check.waktu_mulai',
+            'waktu_selesai'=> 'transaksi_check.waktu_selesai',
+            'durasi_detik' => 'durasi_detik',
+        ];
+
+        $sortField = $allowedSortFields[$sortBy] ?? 'transaksi_check.id_transaksi';
+
+        return $builder->orderBy($sortField, $order)
                        ->findAll();
     }
 }

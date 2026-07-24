@@ -15,6 +15,7 @@
     this.classList.remove('show');
   });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script>
   document.querySelectorAll('.searchable-select').forEach((el) => {
@@ -29,8 +30,6 @@
     new TomSelect(el, config);
   });
 </script>
+  <script src="<?= base_url('js/table-pagination.js') ?>"></script>
 </body>
 </html>
-
-
-

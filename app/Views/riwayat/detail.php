@@ -1,16 +1,30 @@
 <?= view('layout/header', ['title' => $title]) ?>
 
+<style>
+  /* Memaksa tabel agar tidak menyusut terlalu kecil di layar HP sehingga bisa digeser (swipe) */
+  .checklist-table { min-width: 850px; }
+</style>
+
 <div class="page-header d-flex align-items-center gap-3" style="justify-content: flex-start;">
-  <?php 
-    $lokSlug = strtolower(str_replace(' ', '', $header['lokasi_check']));
-    $jenisParam = urlencode($header['jenis_check']);
-  ?>
-  <a href="<?= site_url('riwayat/lokasi/' . $lokSlug . '?jenis_check=' . $jenisParam) ?>" class="btn btn-sm btn-outline-secondary">
-    <i class="bi bi-arrow-left"></i> Kembali
-  </a>
-  <div>
-    <h5 class="mb-0 fw-bold"><i class="bi bi-clipboard-check me-2 text-primary"></i>Detail Pengecekan</h5>
-  </div>
+  <?php if (isset($from) && $from === 'kontrol'): ?>
+    <?php 
+      $backUrl = site_url('kontrol') . '?lokasi=' . urlencode($cb_lokasi ?? 'MFG 1') . '&line=' . urlencode($cb_line ?? '') . '&kategori=' . urlencode($cb_kategori ?? '') . '&bulan=' . urlencode($cb_bulan ?? '');
+    ?>
+    <a href="<?= $backUrl ?>" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Kembali ke Ceklis Kontrol
+    </a>
+  <?php else: ?>
+    <?php 
+      $lokSlug = strtolower(str_replace(' ', '', $header['lokasi_check']));
+      $jenisParam = urlencode($header['jenis_check']);
+    ?>
+    <a href="<?= site_url('riwayat/lokasi/' . $lokSlug . '?jenis_check=' . $jenisParam) ?>" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Kembali
+    </a>
+  <?php endif; ?>
+    <div>
+      <h5 class="mb-0 fw-bold text-uppercase"><i class="bi bi-clipboard-check me-2 text-primary"></i>Detail Checklist Report</h5>
+    </div>
   <div class="ms-auto d-flex align-items-center gap-2">
     <a href="<?= site_url('riwayat/download-pdf/' . $header['id_transaksi']) ?>" class="btn btn-sm btn-outline-danger shadow-sm" target="_blank">
       <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF
@@ -31,7 +45,7 @@
 <?php if (strtolower($header['jenis_check']) === 'overhaul'): ?>
   <table class="kop-table text-center">
     <tr>
-      <td colspan="7" class="kop-table-title" style="padding: 10px;">INSPECTION REPORT - <?= strtoupper(esc($header['kategori'] ?? 'MESIN CNC')) ?></td>
+      <td colspan="7" class="kop-table-title" style="padding: 10px;">CHECKLIST REPORT - <?= strtoupper(esc($header['kategori'] ?? 'MESIN CNC')) ?></td>
     </tr>
     <tr>
       <td class="kop-label text-start" style="width:12%;">MAIN PIC</td>
@@ -75,7 +89,7 @@
 <?php else: ?>
   <table class="kop-table text-center">
     <tr>
-      <td colspan="7" class="kop-table-title" style="padding: 10px;">INSPECTION REPORT - <?= strtoupper(esc($header['kategori'] ?? 'MESIN CNC')) ?></td>
+      <td colspan="7" class="kop-table-title" style="padding: 10px;">CHECKLIST REPORT - <?= strtoupper(esc($header['kategori'] ?? 'MESIN CNC')) ?></td>
     </tr>
     <tr>
       <td class="kop-label text-start" style="width:12%;">NO MACHINE</td>
@@ -120,9 +134,10 @@
 
 
 
-<div class="card-stat p-3">
+<div class="card-stat p-3" style="overflow: hidden;">
   <?php if (strtolower($header['jenis_check']) === 'overhaul'): ?>
     <!-- OVERHAUL DETAIL TABLE -->
+    <div class="table-responsive">
     <table class="table table-bordered align-middle checklist-table bg-white">
       <thead>
         <tr>
@@ -184,6 +199,7 @@
         <?php endforeach; ?>
       </tbody>
     </table>
+    </div>
     
     <div class="mt-4 border rounded p-3 bg-light shadow-sm">
       <label class="form-label fw-bold text-secondary mb-2" style="letter-spacing: 0.5px;">NOTE AND RECOMMENDATION</label>
@@ -191,6 +207,7 @@
     </div>
   <?php else: ?>
     <!-- PREVENTIVE DETAIL TABLE -->
+    <div class="table-responsive">
     <table class="table table-bordered align-middle checklist-table bg-white">
       <thead>
         <tr>
@@ -229,6 +246,7 @@
         <?php endforeach; ?>
       </tbody>
     </table>
+    </div>
   <?php endif; ?>
 </div>
 
@@ -432,10 +450,20 @@
       <?= csrf_field() ?>
       <div class="d-flex align-items-center gap-2">
         <?php if (!$isOverhaul): ?>
-          <input type="text" name="pic_line_nama" class="form-control form-control-sm" placeholder="Nama PIC Line" required style="min-width: 200px;">
+          <select name="pic_line_nama" class="form-select form-select-sm searchable-select" required style="min-width: 200px;">
+            <option value="">-- Pilih PIC Line (Staff) --</option>
+            <?php foreach ($staffPic ?? [] as $pic): ?>
+              <option value="<?= esc($pic['nama_pic']) ?>"><?= esc($pic['nama_pic']) ?></option>
+            <?php endforeach; ?>
+          </select>
         <?php else: ?>
           <?php if ($role === 'leader'): ?>
-            <input type="text" name="leader_nama" class="form-control form-control-sm" placeholder="Nama Leader" required style="min-width: 200px;">
+            <select name="leader_nama" class="form-select form-select-sm searchable-select" required style="min-width: 200px;">
+              <option value="">-- Pilih Leader (Staff) --</option>
+              <?php foreach ($staffPic ?? [] as $pic): ?>
+                <option value="<?= esc($pic['nama_pic']) ?>"><?= esc($pic['nama_pic']) ?></option>
+              <?php endforeach; ?>
+            </select>
           <?php endif; ?>
         <?php endif; ?>
         <button type="submit" class="btn btn-success px-4 py-2 fw-semibold shadow-sm">

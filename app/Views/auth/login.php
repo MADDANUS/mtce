@@ -242,7 +242,7 @@
 <!-- FULL SCREEN VIDEO BACKGROUND -->
 <div class="video-bg-container">
     <video class="hero-video" autoplay loop muted playsinline>
-        <source src="<?= base_url('videos/mesin_login_2.mp4') ?>" type="video/mp4">
+        <source src="<?= base_url('videos/mesin_kiri.mp4') ?>" type="video/mp4">
     </video>
     <div class="hero-overlay"></div>
 </div>

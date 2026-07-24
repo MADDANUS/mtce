@@ -394,7 +394,8 @@
     /* ---- TABLES ---- */
     .table-responsive {
         border-radius: var(--radius);
-        overflow: hidden;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
         border: 1px solid var(--border-strong) !important;
         box-shadow: var(--shadow-sm);
         background: var(--white);
@@ -605,7 +606,14 @@
         .sidebar-overlay.show { display: block; }
         .main-wrapper { margin-left: 0; }
     }
-</style>
+      /* ---- KOP TABLE (FORM HEADER) ---- */
+      .kop-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.8rem; background-color: #fff; }
+      .kop-table th, .kop-table td { border: 1px solid #1e293b; padding: 6px 10px; vertical-align: middle; }
+      .kop-table-title { background-color: #92b0d6 !important; text-align: center; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; color: #000 !important; }
+      .kop-logo { text-align: center; width: 12%; font-weight: bold; }
+      .kop-label { font-weight: 700; background-color: #f1f5f9; color: #334155; }
+      .kop-val { font-weight: 500; color: #0f172a; }
+  </style>
 </head>
 <body>
 <?php 
@@ -634,16 +642,16 @@ $seg3 = $uri->getTotalSegments() >= 3 ? $uri->getSegment(3) : '';
       
       <?php if (in_array($role, ['magang', 'member', 'admin'], true)): ?>
         <a href="<?= site_url('checklist') ?>" class="menu-item <?= $seg1 === 'checklist' ? 'active' : '' ?>">
-          <i class="bi bi-clipboard-check-fill"></i>Buat Pengecekan
+          <i class="bi bi-clipboard-check-fill"></i>Pengecekan
         </a>
       <?php endif; ?>
 
-      <!-- LAPORAN MENU (COLLAPSE) -->
+      <!-- HISTORY MENU (COLLAPSE) -->
       <?php 
         $isLaporanOpen = ($seg1 === 'riwayat' || $seg1 === 'kontrol' || $seg1 === 'abnormal' || $seg1 === 'laporan');
       ?>
       <a href="#laporanMenu" data-bs-toggle="collapse" class="menu-item <?= $isLaporanOpen ? 'active' : '' ?>">
-        <i class="bi bi-folder-fill"></i>Laporan
+        <i class="bi bi-folder-fill"></i>History
         <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
       </a>
       <div class="collapse <?= $isLaporanOpen ? 'show' : '' ?>" id="laporanMenu">

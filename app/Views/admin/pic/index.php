@@ -41,7 +41,8 @@
                 <thead style="background-color: var(--accent-hover);">
                     <tr>
                         <th class="ps-4 text-white text-uppercase" style="width: 15%; font-size: 0.82rem; letter-spacing: 0.08em; padding: 1rem;">ID PIC</th>
-                        <th class="text-white text-uppercase" style="width: 60%; font-size: 0.82rem; letter-spacing: 0.08em; padding: 1rem;">Nama Lengkap PIC</th>
+                        <th class="text-white text-uppercase" style="width: 40%; font-size: 0.82rem; letter-spacing: 0.08em; padding: 1rem;">Nama Lengkap PIC</th>
+                        <th class="text-white text-uppercase" style="width: 20%; font-size: 0.82rem; letter-spacing: 0.08em; padding: 1rem;">Role</th>
                         <th class="pe-4 text-center text-white text-uppercase" style="width: 25%; font-size: 0.82rem; letter-spacing: 0.08em; padding: 1rem;">Aksi</th>
                     </tr>
                 </thead>
@@ -55,6 +56,13 @@
                             <tr>
                                 <td class="ps-4 fw-bold text-dark" style="font-size: 0.95rem;"><?= esc($p['id_pic']) ?></td>
                                 <td class="fw-medium text-secondary" style="font-size: 0.9rem;"><?= esc($p['nama_pic']) ?></td>
+                                <td class="fw-medium text-secondary" style="font-size: 0.9rem;">
+                                    <?php if(isset($p['role_pic']) && $p['role_pic'] === 'Magang'): ?>
+                                        <span class="badge bg-info text-dark">Magang</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-primary">Staff</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td class="pe-4 text-center">
                                     <div class="d-flex gap-2 justify-content-center">
                                         <a href="<?= site_url('admin/pic/edit/' . $p['id_pic']) ?>" class="btn btn-sm btn-outline-primary" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">

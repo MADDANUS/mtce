@@ -39,7 +39,8 @@ class PicController extends BaseController
 
         $this->picModel->insert([
             'id_pic'   => $this->request->getPost('id_pic'),
-            'nama_pic' => $this->request->getPost('nama_pic')
+            'nama_pic' => $this->request->getPost('nama_pic'),
+            'role_pic' => $this->request->getPost('role_pic') ?: 'Staff'
         ]);
 
         return redirect()->to('/admin/pic')->with('success', 'Data PIC berhasil ditambahkan.');
@@ -81,11 +82,13 @@ class PicController extends BaseController
         if ($postID !== $id) {
             $this->picModel->update($id, [
                 'id_pic'   => $postID,
-                'nama_pic' => $this->request->getPost('nama_pic')
+                'nama_pic' => $this->request->getPost('nama_pic'),
+                'role_pic' => $this->request->getPost('role_pic') ?: 'Staff'
             ]);
         } else {
             $this->picModel->update($id, [
-                'nama_pic' => $this->request->getPost('nama_pic')
+                'nama_pic' => $this->request->getPost('nama_pic'),
+                'role_pic' => $this->request->getPost('role_pic') ?: 'Staff'
             ]);
         }
 

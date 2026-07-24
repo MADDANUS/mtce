@@ -64,7 +64,7 @@
           <div>In Our Hands</div>
         </div>
       </td>
-      <td colspan="6" class="kop-table-title" style="padding: 10px;">INSPECTION REPORT - <?= strtoupper(esc($header['kategori'] ?? 'MESIN CNC')) ?></td>
+      <td colspan="6" class="kop-table-title" style="padding: 10px;">CHECKLIST REPORT - <?= strtoupper(esc($header['kategori'] ?? 'MESIN CNC')) ?></td>
     </tr>
     <tr>
       <td colspan="2" class="fw-bold" style="width: 28%;">NO. DOCUMENT</td>

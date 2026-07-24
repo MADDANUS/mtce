@@ -128,7 +128,7 @@
         <h6 class="modal-title fw-bold" id="editAbnormalModalLabel"><i class="bi bi-pencil-square text-primary me-1.5"></i>Tindak Lanjut Abnormal Condition</h6>
         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form action="<?= site_url('abnormal/update') ?>" method="post">
+      <form action="<?= site_url('abnormal/update') ?>" method="post" id="abnormalUpdateForm" novalidate onsubmit="return validateAbnormalForm(event)">
         <?= csrf_field() ?>
         <input type="hidden" name="id_abnormal" id="modalIdAbnormal">
 
@@ -218,7 +218,34 @@
         editModal.show();
       });
     });
+
+    const form = document.getElementById("abnormalUpdateForm");
+    if (form) {
+      form.addEventListener("submit", validateAbnormalForm);
+    }
   });
+
+  function validateAbnormalForm(e) {
+    const typeSparepart = document.getElementById("modalTypeSparepart").value.trim();
+    const progresStock = document.getElementById("modalProgresStock").value.trim();
+    const progresTanggal = document.getElementById("modalProgresTanggal").value.trim();
+    const action = document.getElementById("modalAction").value.trim();
+    const repairPic = document.getElementById("modalRepairPic").value.trim();
+    const keterangan = document.getElementById("modalKeterangan").value.trim();
+
+    if (!typeSparepart || !progresStock || !progresTanggal || !action || !repairPic || !keterangan) {
+      e.preventDefault(); // Mencegah form dikirim
+      Swal.fire({
+        icon: 'warning',
+        title: 'Form Belum Lengkap',
+        text: 'Harap lengkapi semua isian form Tindak Lanjut sebelum menyimpan!',
+        confirmButtonColor: '#0d6efd',
+        confirmButtonText: 'Oke, Paham'
+      });
+      return false;
+    }
+    return true;
+  }
 </script>
 <?php endif; ?>
 

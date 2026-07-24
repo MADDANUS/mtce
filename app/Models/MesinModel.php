@@ -15,8 +15,11 @@ class MesinModel extends Model
     /**
      * Dropdown mesin untuk lokasi tertentu (dipakai di form MFG 1 Preventive).
      */
-    public function getByLokasi(string $lokasi): array
+    public function getByLokasi(?string $lokasi = null): array
     {
-        return $this->where('lokasi', $lokasi)->orderBy('no_mesin', 'ASC')->findAll();
+        if ($lokasi) {
+            $this->where('lokasi', $lokasi);
+        }
+        return $this->orderBy('no_mesin', 'ASC')->findAll();
     }
 }

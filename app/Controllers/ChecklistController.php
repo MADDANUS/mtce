@@ -231,6 +231,70 @@ class ChecklistController extends BaseController
     }
 
     /**
+     * API untuk mengecek apakah sudah ada transaksi untuk mesin ini di bulan yang sama.
+     */
+    public function checkDuplicate()
+    {
+        $idMesin = $this->request->getPost('id_mesin');
+        $jenisCheckSlug = $this->request->getPost('jenis_check');
+        $kategoriSlug = $this->request->getPost('kategori');
+
+        // Translate slug back to real DB name
+        $jenisCheck = $this->resolveJenis($jenisCheckSlug);
+        
+        // Cek nama kategori
+        $kategori = '';
+        if ($jenisCheckSlug === 'overhaul') {
+            // Overhaul
+            if (isset($this->categoryMap[$kategoriSlug])) {
+                $kategori = $this->categoryMap[$kategoriSlug];
+            } else {
+                $kategori = strtoupper(str_replace('-', ' ', $kategoriSlug));
+            }
+        } else {
+            // Preventive
+            if (isset($this->categoryMap[$kategoriSlug])) {
+                $kategori = $this->categoryMap[$kategoriSlug];
+            }
+        }
+
+        $bulan = date('Y-m'); // "satu mesin hanya satu bulan"
+
+        $db = \Config\Database::connect();
+        $rows = $db->table('transaksi_check')
+                    ->select('id_transaksi, waktu_mulai, created_at, nama_pic')
+                    ->where('id_mesin', $idMesin)
+                    ->where('jenis_check', $jenisCheck)
+                    ->where("DATE_FORMAT(created_at, '%Y-%m')", $bulan)
+                    ->when(!empty($kategori), function($b) use ($kategori) {
+                        $b->where('kategori', $kategori);
+                    })
+                    ->orderBy('id_transaksi', 'DESC')
+                    ->get()->getResultArray();
+
+        $duplicate = count($rows) > 0;
+        $tanggal   = '';
+        $pic       = '';
+        if ($duplicate) {
+            $row     = $rows[0];
+            $waktu   = $row['waktu_mulai'] ?: $row['created_at'];
+            // Format: Kamis, 24 Juli 2026, 08:38
+            $ts      = strtotime($waktu);
+            $bulanId = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+            $hariId  = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+            $tanggal = $hariId[date('w', $ts)] . ', ' . date('d', $ts) . ' ' . $bulanId[(int)date('n', $ts) - 1] . ' ' . date('Y', $ts) . ', ' . date('H:i', $ts);
+            $pic     = $row['nama_pic'] ?? '';
+        }
+
+        return $this->response->setJSON([
+            'duplicate' => $duplicate,
+            'kategori'  => $kategori,
+            'tanggal'   => $tanggal,
+            'pic'       => $pic,
+        ]);
+    }
+
+    /**
      * POST /checklist/(:segment)/(:segment)/store
      */
     public function store(string $lokasiSlug, string $jenisSlug)

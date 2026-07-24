@@ -23,9 +23,17 @@
                         <input type="text" name="id_pic" class="form-control" value="<?= old('id_pic') ?>" placeholder="Contoh: M269" required autofocus>
                     </div>
                     
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label fw-semibold text-secondary">Nama Lengkap PIC <span class="text-danger">*</span></label>
                         <input type="text" name="nama_pic" class="form-control" value="<?= old('nama_pic') ?>" placeholder="Contoh: Rafif Ar Rasad" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold text-secondary">Role PIC <span class="text-danger">*</span></label>
+                        <select name="role_pic" class="form-select" required>
+                            <option value="Staff" <?= old('role_pic') === 'Staff' ? 'selected' : '' ?>>Staff</option>
+                            <option value="Magang" <?= old('role_pic') === 'Magang' ? 'selected' : '' ?>>Magang</option>
+                        </select>
                     </div>
 
                     <div class="d-flex gap-2">

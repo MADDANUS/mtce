@@ -1,4 +1,1 @@
-<?php
-$mysqli = new mysqli('127.0.0.1', 'root', '', 'mtce_db');
-$res = $mysqli->query('SELECT id_transaksi, nama_pic, id_user FROM transaksi_check ORDER BY id_transaksi DESC LIMIT 3');
-while($row = $res->fetch_assoc()) { print_r($row); }
+<?php define("ENVIRONMENT", "development"); require "system/bootstrap.php"; $db = \Config\Database::connect(); $builder = $db->table("transaksi_check")->where("id_mesin", 1)->where("jenis_check", "Checklist Report")->where("DATE_FORMAT(tanggal_check, '%Y-%m')", date("Y-m")); print_r($builder->countAllResults());

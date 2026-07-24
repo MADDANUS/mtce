@@ -15,6 +15,7 @@ class PicModel extends Model
     protected $allowedFields    = [
         'id_pic',
         'nama_pic',
+        'role_pic'
     ];
 
     // Validation

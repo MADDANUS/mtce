@@ -20,22 +20,23 @@ class RiwayatController extends BaseController
         'mesin-cnc-bar-feeder' => 'Mesin CNC & Bar Feeder',
     ];
 
-    private function resolveLokasi(string $slug): string
+    private function resolveLokasi(string $slug): ?string
     {
         return match (strtolower($slug)) {
             'mfg2'  => 'MFG 2',
+            'mfg1'  => 'MFG 1',
+            'semua' => null,
             default => 'MFG 1',
         };
     }
 
     /**
      * GET /riwayat
-     * Halaman pilih lokasi (MFG 1 / MFG 2) untuk melihat riwayat.
+     * Halaman riwayat pengecekan (default semua lokasi)
      */
     public function index()
     {
-        // Redirect default to MFG 1, allowing filter retention if any
-        return redirect()->to('/riwayat/lokasi/mfg1');
+        return redirect()->to('/riwayat/lokasi/semua');
     }
 
     /**
@@ -49,15 +50,22 @@ class RiwayatController extends BaseController
         // Validasi lokasi khusus untuk Leader Produksi
         if (session()->get('role') === 'leader') {
             $userLokasi = session()->get('lokasi');
+            // Jika leader mencoba akses 'semua' atau lokasi yang bukan miliknya
             if ($userLokasi && $userLokasi !== $lokasiName) {
-                return redirect()->to('/dashboard')->with('error', 'Akses ditolak. Anda hanya dapat mengakses riwayat lokasi ' . $userLokasi);
+                if ($lokasiName === null) {
+                    // Paksa ke lokasinya
+                    $lokasiName = $userLokasi;
+                    $lokasiSlug = strtolower(str_replace(' ', '', $userLokasi));
+                } else {
+                    return redirect()->to('/dashboard')->with('error', 'Akses ditolak. Anda hanya dapat mengakses riwayat lokasi ' . $userLokasi);
+                }
             }
         }
 
         $mesinModel = new MesinModel();
         $transaksiModel = new TransaksiCheckModel();
 
-        // Dropdown filter mesin dinamis (hanya mesin yang terdaftar di lokasi ini)
+        // Dropdown filter mesin dinamis (semua mesin jika lokasi null)
         $daftarMesin = $mesinModel->getByLokasi($lokasiName);
 
         // Ambil input filter pencarian
@@ -65,12 +73,13 @@ class RiwayatController extends BaseController
         
         $filters = [
             'lokasi'      => $lokasiName,
-            'id_mesin'    => $this->request->getGet('id_mesin') ?: null,
-            'line'        => $userLine ?: ($this->request->getGet('line') ?: null),
-            'jenis_check' => $this->request->getGet('jenis_check') ?: null,
-            'kategori'    => $this->request->getGet('kategori') ?: null,
-            'tanggal'     => $this->request->getGet('tanggal') ?: null,
-            'status'      => $this->request->getGet('status') ?: null,
+            'id_mesin'    => $this->request->getGet('id_mesin') === 'all' ? null : ($this->request->getGet('id_mesin') ?: null),
+            'line'        => $userLine ?: ($this->request->getGet('line') === 'all' ? null : ($this->request->getGet('line') ?: null)),
+            'jenis_check' => $this->request->getGet('jenis_check') === 'all' ? null : ($this->request->getGet('jenis_check') ?: null),
+            'kategori'    => $this->request->getGet('kategori') === 'all' ? null : ($this->request->getGet('kategori') ?: null),
+            'bulan'       => $this->request->getGet('bulan') === 'all' ? null : ($this->request->getGet('bulan') ?: null),
+            'status'      => $this->request->getGet('status') === 'all' ? null : ($this->request->getGet('status') ?: null),
+            'pic'         => $this->request->getGet('pic') === 'all' ? null : ($this->request->getGet('pic') ?: null),
             'sort_by'     => $this->request->getGet('sort_by') ?: 'id_transaksi',
             'order'       => $this->request->getGet('order') ?: 'desc',
         ];
@@ -107,12 +116,45 @@ class RiwayatController extends BaseController
             $availableLines = ['CG', 'Second'];
         }
 
+        // Ambil daftar PIC dinamis berdasarkan transaksi yang ada
+        $db = \Config\Database::connect();
+        $picQuery = $db->table('transaksi_check')
+                       ->select('transaksi_check.nama_pic, users.nama as nama_staff')
+                       ->join('users', 'users.id = transaksi_check.id_user')
+                       ->where('transaksi_check.lokasi_check', $lokasiName);
+        if (!empty($filters['jenis_check'])) {
+            $picQuery->where('transaksi_check.jenis_check', $filters['jenis_check']);
+        }
+        $rawPics = $picQuery->distinct()->get()->getResultArray();
+        $availablePics = [];
+        foreach ($rawPics as $row) {
+            $raw = $row['nama_pic'] ?: $row['nama_staff'];
+            $parts = explode(' - ', $raw);
+            $name = end($parts);
+            if ($name) {
+                $availablePics[] = trim($name);
+            }
+        }
+        $availablePics = array_unique($availablePics);
+        sort($availablePics);
+
+        // List bulan untuk dropdown filter
+        $bulanList = [];
+        for ($i = 0; $i < 12; $i++) {
+            $time = \CodeIgniter\I18n\Time::now()->subMonths($i);
+            $val  = $time->format('Y-m');
+            $label = $time->toLocalizedString('MMMM yyyy');
+            $bulanList[$val] = $label;
+        }
+
         return view('riwayat/index', [
             'title'           => $title,
             'jenisLabel'      => $jenisLabel,
             'lokasiSlug'      => $lokasiSlug,
-            'lokasiName'      => $lokasiName,
+            'lokasiName'      => $lokasiName ?? 'Semua Lokasi',
             'availableLines'  => $availableLines,
+            'availablePics'   => $availablePics,
+            'bulanList'       => $bulanList,
             'userLine'        => $userLine,
             'daftarMesin'     => $daftarMesin,
             'categories'      => $categoriesList,
@@ -164,7 +206,46 @@ class RiwayatController extends BaseController
             'header'      => $header,
             'details'     => $details,
             'durasiDetik' => $durasiDetik,
+            'staffPic'    => (new \App\Models\PicModel())->where('role_pic', 'Staff')->findAll(),
+            'from'        => $this->request->getGet('from'),
+            'cb_lokasi'   => $this->request->getGet('lokasi'),
+            'cb_line'     => $this->request->getGet('line'),
+            'cb_kategori' => $this->request->getGet('kategori'),
+            'cb_bulan'    => $this->request->getGet('bulan'),
         ]);
+    }
+
+    public function redirectDetail()
+    {
+        $idMesin  = $this->request->getGet('id_mesin');
+        $kategori = $this->request->getGet('kategori');
+        $bulan    = $this->request->getGet('bulan');
+        $line     = $this->request->getGet('line');
+        $lokasi   = $this->request->getGet('lokasi');
+
+        $db = \Config\Database::connect();
+        $tx = $db->table('transaksi_check')
+                 ->select('id_transaksi')
+                 ->where('id_mesin', $idMesin)
+                 ->where('kategori', $kategori)
+                 ->like('waktu_mulai', $bulan, 'after')
+                 ->orderBy('id_transaksi', 'DESC')
+                 ->get()
+                 ->getRowArray();
+
+        if ($tx) {
+            $qs = http_build_query([
+                'from'     => 'kontrol',
+                'lokasi'   => $lokasi,
+                'line'     => $line,
+                'kategori' => $kategori,
+                'bulan'    => $bulan,
+            ]);
+            return redirect()->to('/riwayat/' . $tx['id_transaksi'] . '?' . $qs);
+        } else {
+            // Fallback ke daftar riwayat jika tidak ada transaksi
+            return redirect()->to('/riwayat/lokasi/' . rawurlencode($lokasi) . '?line=' . rawurlencode($line) . '&kategori=' . rawurlencode($kategori) . '&bulan=' . rawurlencode($bulan) . '&id_mesin=' . rawurlencode($idMesin))->with('error', 'Belum ada laporan untuk mesin ini di bulan yang dipilih.');
+        }
     }
 
     /**
@@ -256,6 +337,7 @@ class RiwayatController extends BaseController
             'daftarMesin'       => $mesinModel->getByLokasi($header['lokasi_check']),
             'rows'              => $parameterModel->getFormRows($header['lokasi_check'], $header['jenis_check'], $header['kategori']),
             'masterPic'         => (new \App\Models\PicModel())->findAll(),
+            'staffPic'          => (new \App\Models\PicModel())->where('role_pic', 'Staff')->findAll(),
             'namaPic'           => $header['nama_pic'],
             'namaStaff'         => $header['nama_staff'],
             'waktuMulai'        => $header['waktu_mulai'],

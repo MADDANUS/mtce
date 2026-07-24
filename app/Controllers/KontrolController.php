@@ -315,10 +315,10 @@ class KontrolController extends BaseController
     private function summary()
     {
         $bulan = $this->request->getGet('bulan') ?: date('Y-m');
-        $filterLokasi = $this->request->getGet('filter_lokasi') ?: '';
-        $filterLine = $this->request->getGet('filter_line') ?: '';
-        $filterKategori = $this->request->getGet('filter_kategori') ?: '';
-        $filterStatus = $this->request->getGet('filter_status') ?: '';
+        $filterLokasi = $this->request->getGet('filter_lokasi') === 'all' ? '' : ($this->request->getGet('filter_lokasi') ?: '');
+        $filterLine = $this->request->getGet('filter_line') === 'all' ? '' : ($this->request->getGet('filter_line') ?: '');
+        $filterKategori = $this->request->getGet('filter_kategori') === 'all' ? '' : ($this->request->getGet('filter_kategori') ?: '');
+        $filterStatus = $this->request->getGet('filter_status') === 'all' ? '' : ($this->request->getGet('filter_status') ?: '');
         $sortBy = $this->request->getGet('sort_by') ?: 'lokasi';
         $order = strtolower($this->request->getGet('order') ?: 'asc');
 
@@ -380,6 +380,7 @@ class KontrolController extends BaseController
 
         // Build flat array for summary rows
         $summaryRows = [];
+        $notCheckedRows = [];
         foreach ($kategoriByLokasi as $lokasi => $categories) {
             if (!empty($filterLokasi) && $lokasi !== $filterLokasi) continue;
             
@@ -396,6 +397,16 @@ class KontrolController extends BaseController
                     if ($total == 0) continue; 
                     
                     $checked = $checkedData[$lokasi][$line][$kategori] ?? 0;
+                    
+                    if ($checked == 0) {
+                        $notCheckedRows[] = [
+                            'lokasi'   => $lokasi,
+                            'line'     => $line,
+                            'kategori' => $kategori
+                        ];
+                        continue;
+                    }
+                    
                     $percent = $total > 0 ? round(($checked / $total) * 100) : 0;
                     
                     $status = $approvalData[$lokasi][$line][$kategori] ?? '';
@@ -446,17 +457,39 @@ class KontrolController extends BaseController
             return ($order === 'asc') ? $cmp : -$cmp;
         });
 
+        // Determine available lines and categories for the dropdowns
+        $availableLines = [];
+        $availableCategories = [];
+        if (!empty($filterLokasi)) {
+            $availableLines = isset($linesByLokasi[$filterLokasi]) ? array_unique($linesByLokasi[$filterLokasi]) : [];
+            $availableCategories = isset($kategoriByLokasi[$filterLokasi]) ? array_unique($kategoriByLokasi[$filterLokasi]) : [];
+        } else {
+            foreach ($linesByLokasi as $lines) {
+                $availableLines = array_merge($availableLines, $lines);
+            }
+            $availableLines = array_unique($availableLines);
+            foreach ($kategoriByLokasi as $cats) {
+                $availableCategories = array_merge($availableCategories, $cats);
+            }
+            $availableCategories = array_unique($availableCategories);
+        }
+        sort($availableLines);
+        sort($availableCategories);
+
         return view('kontrol/summary', [
             'title'            => 'Ringkasan Checklist Control',
             'bulan'            => $bulan,
             'bulanList'        => $bulanList,
             'summaryRows'      => $summaryRows,
+            'notCheckedRows'   => $notCheckedRows,
             'filterLokasi'     => $filterLokasi,
             'filterLine'       => $filterLine,
             'filterKategori'   => $filterKategori,
             'filterStatus'     => $filterStatus,
             'sortBy'           => $sortBy,
             'order'            => $order,
+            'availableLines'   => $availableLines,
+            'availableCategories'=> $availableCategories,
         ]);
     }
 

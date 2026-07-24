@@ -182,10 +182,10 @@ class AbnormalController extends BaseController
     private function summary()
     {
         $bulan = $this->request->getGet('bulan') ?: date('Y-m');
-        $filterLokasi = $this->request->getGet('filter_lokasi') ?: '';
-        $filterLine = $this->request->getGet('filter_line') ?: '';
-        $filterKategori = $this->request->getGet('filter_kategori') ?: '';
-        $filterStatus = $this->request->getGet('filter_status') ?: '';
+        $filterLokasi = $this->request->getGet('filter_lokasi') === 'all' ? '' : ($this->request->getGet('filter_lokasi') ?: '');
+        $filterLine = $this->request->getGet('filter_line') === 'all' ? '' : ($this->request->getGet('filter_line') ?: '');
+        $filterKategori = $this->request->getGet('filter_kategori') === 'all' ? '' : ($this->request->getGet('filter_kategori') ?: '');
+        $filterStatus = $this->request->getGet('filter_status') === 'all' ? '' : ($this->request->getGet('filter_status') ?: '');
         $sortBy = $this->request->getGet('sort_by') ?: 'lokasi';
         $order = strtolower($this->request->getGet('order') ?: 'asc');
 
@@ -202,20 +202,24 @@ class AbnormalController extends BaseController
             $linesByLokasi[$m['lokasi']][] = $m['line'];
         }
 
-        // Hitung abnormal terbuka (belum ada action) per lokasi, line, kategori
-        $openAbnormal = $db->table('laporan_abnormal')
-                           ->select('master_mesin.lokasi, master_mesin.line, transaksi_check.kategori, COUNT(laporan_abnormal.id_abnormal) as total')
+        // Hitung abnormal terbuka (belum ada action) dan total abnormal per lokasi, line, kategori
+        $allAbnormal = $db->table('laporan_abnormal')
+                           ->select('master_mesin.lokasi, master_mesin.line, transaksi_check.kategori, 
+                                     SUM(CASE WHEN laporan_abnormal.action IS NULL OR laporan_abnormal.action = \'\' THEN 1 ELSE 0 END) as totalOpen,
+                                     COUNT(laporan_abnormal.id_abnormal) as totalAll')
                            ->join('master_mesin', 'master_mesin.id_mesin = laporan_abnormal.id_mesin')
                            ->join('transaksi_check', 'transaksi_check.id_transaksi = laporan_abnormal.id_transaksi', 'left')
-                           ->where("(laporan_abnormal.action IS NULL OR laporan_abnormal.action = '')")
                            ->like('laporan_abnormal.pengecekan_tanggal', $bulan . '-', 'after')
                            ->groupBy('master_mesin.lokasi, master_mesin.line, transaksi_check.kategori')
                            ->get()->getResultArray();
                            
         $abnormalData = [];
-        foreach($openAbnormal as $oa) {
+        foreach($allAbnormal as $oa) {
             $kategori = $oa['kategori'] ?: 'Penerangan'; // Default fallback
-            $abnormalData[$oa['lokasi']][$oa['line']][$kategori] = (int) $oa['total'];
+            $abnormalData[$oa['lokasi']][$oa['line']][$kategori] = [
+                'totalOpen' => (int) $oa['totalOpen'],
+                'totalAll'  => (int) $oa['totalAll']
+            ];
         }
 
         $kategoriByLokasi = [
@@ -246,12 +250,19 @@ class AbnormalController extends BaseController
                 foreach ($categories as $kategori) {
                     if (!empty($filterKategori) && $kategori !== $filterKategori) continue;
                     
-                    $totalOpen = $abnormalData[$lokasi][$line][$kategori] ?? 0;
-                    if ($totalOpen == 0) continue; 
+                    $abData = $abnormalData[$lokasi][$line][$kategori] ?? ['totalOpen' => 0, 'totalAll' => 0];
+                    $totalOpen = $abData['totalOpen'];
+                    $totalAll  = $abData['totalAll'];
                     
-                    // Di Laporan Abnormal, jika totalOpen > 0 berarti belum selesai
-                    $badgeClass = 'bg-danger';
-                    $statusText = 'Belum Ada Action';
+                    if ($totalAll == 0) continue; 
+                    
+                    if ($totalOpen > 0) {
+                        $badgeClass = 'bg-danger';
+                        $statusText = 'Belum Perbaikan';
+                    } else {
+                        $badgeClass = 'bg-success';
+                        $statusText = 'Sudah Perbaikan';
+                    }
                     
                     if (!empty($filterStatus) && $statusText !== $filterStatus) continue;
 
@@ -278,6 +289,25 @@ class AbnormalController extends BaseController
             return ($order === 'asc') ? $cmp : -$cmp;
         });
 
+        // Determine available lines and categories for the dropdowns
+        $availableLines = [];
+        $availableCategories = [];
+        if (!empty($filterLokasi)) {
+            $availableLines = isset($linesByLokasi[$filterLokasi]) ? array_unique($linesByLokasi[$filterLokasi]) : [];
+            $availableCategories = isset($kategoriByLokasi[$filterLokasi]) ? array_unique($kategoriByLokasi[$filterLokasi]) : [];
+        } else {
+            foreach ($linesByLokasi as $lines) {
+                $availableLines = array_merge($availableLines, $lines);
+            }
+            $availableLines = array_unique($availableLines);
+            foreach ($kategoriByLokasi as $cats) {
+                $availableCategories = array_merge($availableCategories, $cats);
+            }
+            $availableCategories = array_unique($availableCategories);
+        }
+        sort($availableLines);
+        sort($availableCategories);
+
         return view('abnormal/summary', [
             'title'            => 'Ringkasan Laporan Abnormal',
             'bulan'            => $bulan,
@@ -289,6 +319,8 @@ class AbnormalController extends BaseController
             'filterStatus'     => $filterStatus,
             'sortBy'           => $sortBy,
             'order'            => $order,
+            'availableLines'   => $availableLines,
+            'availableCategories'=> $availableCategories,
         ]);
     }
 
